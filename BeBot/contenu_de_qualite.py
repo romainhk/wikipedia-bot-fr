@@ -21,17 +21,24 @@ class ContenuDeQualite:
         return resultat
 
     def sauvegarder(self):
+        """ Sauvegarder dans une base de données
+        """
         pass
+
     def charger(self):
+        """ Charger dans une base de données
+        """
         pass
 
     def date(self, titre):
+        """ À partir du nom d'un article, donne la date à laquel il a été labellisé ou ''
+        """
         try:
             page = wikipedia.Page(self.site, titre).get()
         except pywikibot.exceptions.NoPage:
             return u''
-        #TODO : peu faire mieux
         dateRE = re.compile("\|date=(\d{1,2} \w{3,9} \d{2,4})", re.LOCALE)
+        #TODO : peut mieux faire
         d = dateRE.search(page)
         if d:
             return d.group(1)
@@ -44,6 +51,7 @@ class ContenuDeQualite:
             cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False)
             for p in cpg:
                 self.qualite.append( [ p.title(), cat, self.date(p.title()) ] )
+        #Comparer avec le contenu de la bdd
 
 def main():
     site = wikipedia.getSite()

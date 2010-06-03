@@ -57,6 +57,8 @@ class PreparationWikimag:
         self.articleRE = re.compile("\* ?\{\{a-label\|([^\|\}]+)\}\}")
 
     def __str__(self):
+        """ Page à publier 
+        """
         resultat = u"''Préparation du [[Wikipédia:Wikimag|wikimag]] allant du " \
             + self.lasemaine + u" au " + self.date_fin.strftime("%A %d %B %Y") + u".''\n"
 
@@ -83,7 +85,8 @@ class PreparationWikimag:
         return resultat
 
     def page_ligne_par_ligne(self, nompage):
-        " Lit une wikipage ligne par ligne "
+        """ Lit une wikipage ligne par ligne
+        """
         try:
             page = wikipedia.Page(self.site, nompage).get()
         except pywikibot.exceptions.NoPage:

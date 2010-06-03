@@ -1,6 +1,6 @@
 == wikipedia-bot-fr ==
 
-Ce dépôt permet aux développeurs de bot sur wikipedia (fr) de centraliser leurs codes.
+Ce dépôt permet aux développeurs de bots sur wikipedia (fr) de centraliser leurs codes-source.
 
 Chaque sous-répertoire correspond à un bot.
 
