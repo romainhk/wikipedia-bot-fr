@@ -68,7 +68,7 @@ class PreparationWikimag:
 
         resultat += u"\n== Images du jour ==\n"
         for i in self.jours:
-            resultat += u'* {{m|Wikipédia:Image du jour/'+i.strftime("%d %B %Y")+u"|namespace=Wikipédia}}\n"
+            resultat += u'* {{m|Wikipédia:Image du jour/'+i.strftime("%e %B %Y")+u"|namespace=Wikipédia}}\n"
 
         resultat += u"\n== Labels =="
         resultat += u"\n=== AdQ ===\n"
@@ -79,7 +79,7 @@ class PreparationWikimag:
             resultat += u'* [[' + a + u']]\n'
 
         if len(self.inconnu) > 0:
-            resultat += u"\n=== Inconnu ===\n"
+            resultat += u"\n=== Inconnus ===\n"
             for a in self.inconnu:
                 resultat += u'* [[' + a + u']]\n'
         return resultat
