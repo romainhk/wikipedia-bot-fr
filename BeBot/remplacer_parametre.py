@@ -1,16 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-__version__ = 'RemplacerParametre 20100521'
+__version__ = 'RemplacerParametre 20100617'
 import sys, re
 from wikipedia import *
 import pagegenerators, replace
 
 class RemplacerParametre:
-    summary = u'Remplacement du paramètre «mémoire morte» par «espace disque» sur les [[' + modele + u']]'
-
     def __init__(self, generator, modele):
         self.generator = generator
         self.modele = modele
+        self.summary = u'Remplacement du paramètre «mémoire morte» par «espace disque» sur les [[' + self.modele + u']]'
 
     def run(self):
         remplacements = []
@@ -28,7 +27,7 @@ def main():
     refPage = wikipedia.Page(site, modele)
     gen = pagegenerators.ReferringPageGenerator(refPage)
     gen = pagegenerators.NamespaceFilterPageGenerator(gen, [0])
-    rp = RemplacerParametre(gen)
+    rp = RemplacerParametre(gen, modele)
     rp.run()
 
 if __name__ == "__main__":

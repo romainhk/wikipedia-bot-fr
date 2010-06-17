@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-__version__ = 'ContenuDeQualité 20100604'
+__version__ = 'ContenuDeQualité 20100609'
 import re, datetime, MySQLdb
 from MySQLdb.constants import ER
 from wikipedia import *
@@ -36,8 +36,9 @@ class PasDeDate(Exception):
 
 class ContenuDeQualite:
     """ Contenu de Qualité
-        Tri et sauvegarde les AdQ/BA existants par date.
+        Tri et sauvegarde les AdQ/BA existants par date. (Persistance du nom de l'article, de son espace de nom, de la date de labellisation et de son label.)
         TODO : les intentions de proposition au label.
+		TODO : comparer la cat AdQ/BA avec la cat "Maintenance des "
     """
     def __init__(self, site):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
