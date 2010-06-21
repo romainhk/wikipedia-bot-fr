@@ -119,13 +119,13 @@ class ContenuDeQualite:
             page = wikipedia.Page(self.site, titre).get()
         except pywikibot.exceptions.NoPage:
             raise PasDeDate(titre, u'')
-        dateRE = re.compile("\| *date *= *\{{0,2}(\d{1,2})[^ 0-9]*\}{0,2} ([^\| \{\}0-9]{3,9}) (\d{2,4})", re.LOCALE)
-        #TODO : peut mieux faire
+        dateRE = re.compile(u"\{\{(Article de qualit|Article_de_qualit|Bon article|Bon_article|AdQ dat)[^\}]*" \
+                + u"\| *date *= *\{{0,2}(\d{1,2})[^ 0-9]*\}{0,2} ([^\| \{\}0-9]{3,9}) (\d{2,4})", re.LOCALE)
         d = dateRE.search(page)
         if d:
-            mti = moistoint(d.group(2))
+            mti = moistoint(d.group(3))
             if mti > 0:
-                return datetime.date(int(d.group(3)), moistoint(d.group(2)), int(d.group(1)))
+                return datetime.date(int(d.group(4)), moistoint(d.group(3)), int(d.group(2)))
         raise PasDeDate(titre, page)
 
     def run(self):
@@ -152,7 +152,6 @@ class ContenuDeQualite:
                         self.pasdedate.append(pdd.page)
                         continue
                     self.qualite.append( [ p.title(), p.namespace(), date, cat ] )
-        print u'Connait déjà : ' + ', '.join(self.connaitdeja)
 
         c = catlib.Category(self.site, u'Ancien article de qualité')
         cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False)
@@ -171,7 +170,7 @@ def main():
     cdq.run()
 
     page_resultat = wikipedia.Page(site, u'Utilisateur:BeBot/Contenu de qualité')
-    page_resultat.put(unicode(cdq))
+    page_resultat.put(unicode(cdq), comment=u'Log "contenu de qualité"')
 
 if __name__ == "__main__":
     try:
