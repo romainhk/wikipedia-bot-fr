@@ -10,17 +10,17 @@ def moistoint(mois):
     " Convertit une chaîne de caractètre correspondant à un mois, en un entier i (1≤i≤12). "
     mois = mois.lower()
     if mois == u'janvier':     return 1
-    elif mois == u'février':  return 2
+    elif mois == u'février':   return 2
     elif mois == u'mars':      return 3
     elif mois == u'avril':     return 4
     elif mois == u'mai':       return 5
     elif mois == u'juin':      return 6
     elif mois == u'juillet':   return 7
-    elif mois == u'août':     return 8
+    elif mois == u'août':      return 8
     elif mois == u'septembre':  return 9
     elif mois == u'octobre':    return 10
     elif mois == u'novembre':   return 11
-    elif mois == u'décembre':  return 12
+    elif mois == u'décembre':   return 12
     else:
         wikipedia.output(u'Mois « %s » non reconnu' % mois)
     return 0
@@ -47,7 +47,7 @@ class ContenuDeQualite:
         self.site = site
         self.qualite = []       # Nouveaux articles promus
         self.connaitdeja = []   # Articles déjà listés
-        self.pasdedate = []     # Article de qualité dont la date est inconnue
+        self.pasdedate = []     # Articles de qualité dont la date est inconnue
         self.dechu = []         # Articles déchus
         self.db = MySQLdb.connect(db="u_romainhk", read_default_file="/home/romainhk/.my.cnf")
 
@@ -123,8 +123,9 @@ class ContenuDeQualite:
         #TODO : peut mieux faire
         d = dateRE.search(page)
         if d:
-            print repr(d.groups())
-            return datetime.date(int(d.group(3)), moistoint(d.group(2)), int(d.group(1)))
+            mti = moistoint(d.group(2))
+            if mti > 0:
+                return datetime.date(int(d.group(3)), moistoint(d.group(2)), int(d.group(1)))
         raise PasDeDate(titre, page)
 
     def run(self):
