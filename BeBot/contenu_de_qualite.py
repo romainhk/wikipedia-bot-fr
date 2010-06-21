@@ -36,7 +36,9 @@ class PasDeDate(Exception):
 
 class ContenuDeQualite:
     """ Contenu de Qualité
-        Tri et sauvegarde les AdQ/BA existants par date. (Persistance du nom de l'article, de son espace de nom, de la date de labellisation et de son label.)
+        Tri et sauvegarde les AdQ/BA existants par date.
+		(Persistance du nom de l'article, de son espace de nom, de la date de labellisation et de son label.)
+
         TODO : les intentions de proposition au label.
 		TODO : comparer la cat AdQ/BA avec la cat "Maintenance des "
     """
@@ -53,9 +55,9 @@ class ContenuDeQualite:
     def __str__(self):
         """ Log à publier
         """
-        resultat = u"''Contenu de Qualité''"
+        resultat = u"''Contenu de Qualité''\n"
         resultat += str(self.qualite)
-        resultat += u"\n''Articles déchus''"
+        resultat += u"\n''Articles déchus de puis la dernière sauvegarde''\n"
         resultat += str(self.dechu)
         return resultat
 
@@ -79,8 +81,6 @@ class ContenuDeQualite:
                     print "Erreur %d: %s" % (e.args[0], e.args[1])
                 continue
 
-#        for q in self.dechu:
-
     def charger(self):
         """ Charger la liste de labels depuis une base de données
         """
@@ -89,7 +89,7 @@ class ContenuDeQualite:
         c.execute(req)
         return c.fetchall()
 
-    def date(self, titre):
+    def date_label(self, titre):
         """ Donne la date de labellisation d'un article
         """
         try:
@@ -105,8 +105,8 @@ class ContenuDeQualite:
 
     def run(self):
         connus = self.charger()
-        #cat_qualite = [ u'Article de qualité',  u'Bon article']
-        cat_qualite = [ u'Article de qualité' ]
+        cat_qualite = [ u'Article de qualité',  u'Bon article']
+        #cat_qualite = [ u'Article de qualité' ]
         connaitdeja = []
         for cat in cat_qualite:
             c = catlib.Category(self.site, cat)
@@ -122,9 +122,9 @@ class ContenuDeQualite:
                 if prendre:
                     #Prise des dates
                     try:
-                        date = self.date(p.title())
+                        date = self.date_label(p.title())
                     except PasDeDate as pdd:
-                        wikipedia.output(u'Exception : Pas de date pour ' + pdd.page)
+                        wikipedia.output(u'## Exception : Pas de date pour ' + pdd.page)
                         continue
                     self.qualite.append( [ p.title(), p.namespace(), date, cat ] )
         print u'Connait déjà : ' + ', '.join(connaitdeja)
@@ -138,7 +138,7 @@ class ContenuDeQualite:
         """
             for p in cpg:
                 try:
-                    date = self.date(p.title())
+                    date = self.date_label(p.title())
                 except PasDeDate as pdd:
                     wikipedia.output(u'Exception : Pas de date pour ' + pdd.page)
                     continue
