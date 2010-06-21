@@ -37,15 +37,17 @@ class PasDeDate(Exception):
 class ContenuDeQualite:
     """ Contenu de Qualité
         Tri et sauvegarde les AdQ/BA existants par date.
-		(Persistance du nom de l'article, de son espace de nom, de la date de labellisation et de son label.)
+        (Persistance du nom de l'article, de son espace de nom, de la date de labellisation et de son label.)
 
         TODO : les intentions de proposition au label.
-		TODO : comparer la cat AdQ/BA avec la cat "Maintenance des "
+        TODO : comparer la cat AdQ/BA avec la cat "Maintenance des "
     """
     def __init__(self, site):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
         self.site = site
-        self.qualite = []       # Article promus actuellements
+        self.qualite = []       # Nouveaux articles promus
+        self.connaitdeja = []   # Articles déjà listés
+        self.pasdedate = []     # Article de qualité dont la date est inconnue
         self.dechu = []         # Articles déchus
         self.db = MySQLdb.connect(db="u_romainhk", read_default_file="/home/romainhk/.my.cnf")
 
@@ -55,11 +57,32 @@ class ContenuDeQualite:
     def __str__(self):
         """ Log à publier
         """
-        resultat = u"''Contenu de Qualité''\n"
-        resultat += str(self.qualite)
-        resultat += u"\n''Articles déchus de puis la dernière sauvegarde''\n"
-        resultat += str(self.dechu)
+        resultat =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité » du " \
+                + datetime.date.today().strftime("%A %d %B %Y") + u"'''</center>\n\n"
+        resultat += str(len(self.qualite)) + u" nouvels articles labellisés trouvés (plus " + str(len(self.pasdedate)) + u" sans dates). "
+        resultat += str(len(self.dechu)) + u" ont été déchus depuis la dernières exécussion.\n"
+        resultat += u"\nTotal : " + str(len(self.qualite) + len(self.connaitdeja) + len(self.pasdedate)) + u" articles labellisés.\n"
+        resultat += u"\n== Nouveau contenu de Qualité ==\n"
+        resultat += self.liste_article(self.qualite)
+        resultat += u"\n=== Articles de qualité sans date ===\n"
+        resultat += self.liste_article(self.pasdedate)
+        resultat += u"\n== Articles déchus depuis la dernière sauvegarde ==\n"
+        resultat += self.liste_article(self.dechu)
         return resultat
+
+    def liste_article(self, table):
+        """ Génère une liste à partir d'un tableau d'articles
+        """
+        if len(table) > 0:
+            r = []
+            if type(table[0]) == type(u""):
+                for p in table:
+                    r.append(u"[[" + unicode(p) + u"]]")
+            elif type(table[0]) == type([]):
+                for p in table:
+                    r.append(u"[[" + unicode(p[0]) + u"]]")
+            return ', '.join(r)
+        return u''
 
     def sauvegarder(self):
         """ Sauvegarder dans une base de données
@@ -107,7 +130,6 @@ class ContenuDeQualite:
         connus = self.charger()
         cat_qualite = [ u'Article de qualité',  u'Bon article']
         #cat_qualite = [ u'Article de qualité' ]
-        connaitdeja = []
         for cat in cat_qualite:
             c = catlib.Category(self.site, cat)
             cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False)
@@ -116,7 +138,7 @@ class ContenuDeQualite:
                 prendre = True
                 for con in connus:
                     if p.title() == unicode(con[0].decode('latin1')):
-                        connaitdeja.append(p.title())
+                        self.connaitdeja.append(p.title())
                         prendre = False
                         break
                 if prendre:
@@ -125,9 +147,10 @@ class ContenuDeQualite:
                         date = self.date_label(p.title())
                     except PasDeDate as pdd:
                         wikipedia.output(u'## Exception : Pas de date pour ' + pdd.page)
+                        self.pasdedate.append(pdd.page)
                         continue
                     self.qualite.append( [ p.title(), p.namespace(), date, cat ] )
-        print u'Connait déjà : ' + ', '.join(connaitdeja)
+        print u'Connait déjà : ' + ', '.join(self.connaitdeja)
 
         c = catlib.Category(self.site, u'Ancien article de qualité')
         cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False)
@@ -135,23 +158,16 @@ class ContenuDeQualite:
             for con in connus:
                 if p.toggleTalkPage.title() == unicode(con[0].decode('latin1')):
                     self.dechu.append( p.title() )
-        """
-            for p in cpg:
-                try:
-                    date = self.date_label(p.title())
-                except PasDeDate as pdd:
-                    wikipedia.output(u'Exception : Pas de date pour ' + pdd.page)
-                    continue
-                self.qualite.append( [ p.title(), p.namespace(), date, cat ] )
-        self.sauvegarder()
-            """
+
+        #self.sauvegarder()
 
 def main():
     site = wikipedia.getSite()
     cdq = ContenuDeQualite(site)
     cdq.run()
 
-    wikipedia.output(unicode(cdq))
+    page_resultat = wikipedia.Page(site, u'Utilisateur:BeBot/Contenu de qualité')
+    page_resultat.put(unicode(cdq))
 
 if __name__ == "__main__":
     try:
