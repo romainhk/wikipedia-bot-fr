@@ -132,7 +132,8 @@ class ContenuDeQualite:
         #cat_qualite = [ u'Article de qualité' ]
         for cat in cat_qualite:
             c = catlib.Category(self.site, cat)
-            cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False)
+            #cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False)
+            cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False, start='V')
             #Comparer avec le contenu de la bdd
             for p in cpg:
                 prendre = True
@@ -146,7 +147,6 @@ class ContenuDeQualite:
                     try:
                         date = self.date_label(p.title())
                     except PasDeDate as pdd:
-                        wikipedia.output(u'## Exception : Pas de date pour ' + pdd.page)
                         self.pasdedate.append(pdd.page)
                         continue
                     self.qualite.append( [ p.title(), p.namespace(), date, cat ] )
@@ -155,9 +155,11 @@ class ContenuDeQualite:
         c = catlib.Category(self.site, u'Ancien article de qualité')
         cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False)
         for p in cpg:
-            for con in connus:
-                if p.toggleTalkPage.title() == unicode(con[0].decode('latin1')):
-                    self.dechu.append( p.title() )
+            if p.namespace == 0:
+                pdd = p.toggleTalkPage.title()
+                for con in connus:
+                    if pdd == unicode(con[0].decode('latin1')):
+                        self.dechu.append( p.title() )
 
         #self.sauvegarder()
 
