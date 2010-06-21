@@ -9,17 +9,17 @@ import pagegenerators, catlib
 def moistoint(mois):
     " Convertit une chaîne de caractètre correspondant à un mois, en un entier i (1≤i≤12). "
     mois = mois.lower()
-    if mois == 'janvier':     return 1
+    if mois == u'janvier':     return 1
     elif mois == u'février':  return 2
-    elif mois == 'mars':      return 3
-    elif mois == 'avril':     return 4
-    elif mois == 'mai':       return 5
-    elif mois == 'juin':      return 6
-    elif mois == 'juillet':   return 7
+    elif mois == u'mars':      return 3
+    elif mois == u'avril':     return 4
+    elif mois == u'mai':       return 5
+    elif mois == u'juin':      return 6
+    elif mois == u'juillet':   return 7
     elif mois == u'août':     return 8
-    elif mois == 'septembre':  return 9
-    elif mois == 'octobre':    return 10
-    elif mois == 'novembre':   return 11
+    elif mois == u'septembre':  return 9
+    elif mois == u'octobre':    return 10
+    elif mois == u'novembre':   return 11
     elif mois == u'décembre':  return 12
     else:
         wikipedia.output(u'Mois « %s » non reconnu' % mois)
@@ -119,10 +119,11 @@ class ContenuDeQualite:
             page = wikipedia.Page(self.site, titre).get()
         except pywikibot.exceptions.NoPage:
             raise PasDeDate(titre, u'')
-        dateRE = re.compile("\| *date *= *(\d{1,2}) (\w{3,9}) (\d{2,4})", re.LOCALE)
+        dateRE = re.compile("\| *date *= *\{{0,2}(\d{1,2})[^ 0-9]*\}{0,2} ([^\| \{\}0-9]{3,9}) (\d{2,4})", re.LOCALE)
         #TODO : peut mieux faire
         d = dateRE.search(page)
         if d:
+            print repr(d.groups())
             return datetime.date(int(d.group(3)), moistoint(d.group(2)), int(d.group(1)))
         raise PasDeDate(titre, page)
 
