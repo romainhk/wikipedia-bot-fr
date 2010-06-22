@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-__version__ = 'ContenuDeQualité 20100609'
+__version__ = 'ContenuDeQualité 20100622'
 import re, datetime, MySQLdb
 from MySQLdb.constants import ER
 from wikipedia import *
@@ -26,11 +26,11 @@ def moistoint(mois):
     return 0
 
 class PasDeDate(Exception):
-    """ Impossible de trouver de date valide dans la page
     """
-    def __init__(self, page, contenu):
+    Impossible de trouver de date valide dans la page
+    """
+    def __init__(self, page):
         self.page = page
-        self.contenu = contenu
     def __str__(self):
         return repr(self.page)
 
@@ -42,9 +42,11 @@ class ContenuDeQualite:
         TODO : les intentions de proposition au label.
         TODO : comparer la cat AdQ/BA avec la cat "Maintenance des "
     """
-    def __init__(self, site):
+    def __init__(self, site, precedent):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
+        self.precedent = precedent      # Date de l'exécution précédente
         self.site = site
+
         self.qualite = []       # Nouveaux articles promus
         self.connaitdeja = []   # Articles déjà listés
         self.pasdedate = []     # Articles de qualité dont la date est inconnue
@@ -55,23 +57,29 @@ class ContenuDeQualite:
         self.db.close()
 
     def __str__(self):
-        """ Log à publier
+        """
+        Log à publier
         """
         resultat =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité » du " \
                 + datetime.date.today().strftime("%A %d %B %Y") + u"'''</center>\n\n"
-        resultat += str(len(self.qualite)) + u" nouvels articles labellisés trouvés (plus " + str(len(self.pasdedate)) + u" sans dates). "
+        resultat += str(len(self.qualite)) + u" nouvels articles labellisés trouvés (plus " \
+                + str(len(self.pasdedate)) + u" sans dates). "
         resultat += str(len(self.dechu)) + u" ont été déchus depuis la dernières exécussion.\n"
         resultat += u"\nTotal : " + str(len(self.qualite) + len(self.connaitdeja) + len(self.pasdedate)) + u" articles labellisés.\n"
-        resultat += u"\n== Nouveau contenu de Qualité ==\n"
-        resultat += self.liste_article(self.qualite)
-        resultat += u"\n=== Articles de qualité sans date ===\n"
-        resultat += self.liste_article(self.pasdedate)
-        resultat += u"\n== Articles déchus depuis la dernière sauvegarde ==\n"
-        resultat += self.liste_article(self.dechu)
+        resultat += u"\n== Nouveau contenu de qualité ==\n"
+        resultat += self.lister_article(self.qualite)
+        resultat += u"\n=== Articles sans date de labellisation ===\n"
+        resultat += self.lister_article(self.pasdedate)
+        resultat += u"\n== Articles déchus depuis la dernière sauvegarde "
+        if self.precedent:
+            resultat += u"(" + self.precedent + u") "
+        resultat += u"==\n"
+        resultat += self.lister_article(self.dechu)
         return resultat
 
-    def liste_article(self, table):
-        """ Génère une liste à partir d'un tableau d'articles
+    def lister_article(self, table):
+        """ __str__
+        Génère une wiki-liste à partir d'un tableau d'articles
         """
         if len(table) > 0:
             r = []
@@ -80,12 +88,14 @@ class ContenuDeQualite:
                     r.append(u"[[" + unicode(p) + u"]]")
             elif type(table[0]) == type([]):
                 for p in table:
-                    r.append(u"[[" + unicode(p[0]) + u"]]")
-            return ', '.join(r)
+                    r.append(u"[[" + unicode(p[0]) + u"]] (" + unicode(p[3]) \
+                            + u' depuis le ' + unicode(p[2]) + u')')
+            return u'* ' + '\n* '.join(r) + u'\n'
         return u''
 
     def sauvegarder(self):
-        """ Sauvegarder dans une base de données
+        """
+        Sauvegarder dans une base de données
         """
         c = self.db.cursor()
         for q in self.qualite:
@@ -104,29 +114,39 @@ class ContenuDeQualite:
                     print "Erreur %d: %s" % (e.args[0], e.args[1])
                 continue
 
+        for d in self.dechu:
+            req = u"DELETE FROM contenu_de_qualite WHERE page='" + unicode(d) + u"'"
+            try:
+                c.execute(req)
+            except:
+                wikipedia.output(u"# DELETE échoué sur " + unicode(d))
+
+
     def charger(self):
-        """ Charger la liste de labels depuis une base de données
+        """
+        Charger la liste des articles dont le label est connu depuis une base de données
         """
         c = self.db.cursor()
         req = "SELECT * FROM contenu_de_qualite"
         c.execute(req)
         return c.fetchall()
 
-    def date_label(self, titre):
-        """ Donne la date de labellisation d'un article
+    def date_labellisation(self, titre):
+        """
+        Donne la date de labellisation d'un article
         """
         try:
             page = wikipedia.Page(self.site, titre).get()
         except pywikibot.exceptions.NoPage:
-            raise PasDeDate(titre, u'')
-        dateRE = re.compile(u"\{\{(Article de qualit|Article_de_qualit|Bon article|Bon_article|AdQ dat)[^\}]*" \
+            raise PasDeDate(titre)
+        dateRE = re.compile(u"\{\{([aA]rticle de qualit|[aA]rticle_de_qualit|[bB]on article|[bB]on_article|[aA]dQ dat)[^\}]*" \
                 + u"\| *date *= *\{{0,2}(\d{1,2})[^ 0-9]*\}{0,2} ([^\| \{\}0-9]{3,9}) (\d{2,4})", re.LOCALE)
         d = dateRE.search(page)
         if d:
             mti = moistoint(d.group(3))
             if mti > 0:
                 return datetime.date(int(d.group(4)), moistoint(d.group(3)), int(d.group(2)))
-        raise PasDeDate(titre, page)
+        raise PasDeDate(titre)
 
     def run(self):
         connus = self.charger()
@@ -135,7 +155,7 @@ class ContenuDeQualite:
         for cat in cat_qualite:
             c = catlib.Category(self.site, cat)
             #cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False)
-            cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False, start='V')
+            cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False, start='T')
             #Comparer avec le contenu de la bdd
             for p in cpg:
                 prendre = True
@@ -147,7 +167,7 @@ class ContenuDeQualite:
                 if prendre:
                     #Prise des dates
                     try:
-                        date = self.date_label(p.title())
+                        date = self.date_labellisation(p.title())
                     except PasDeDate as pdd:
                         self.pasdedate.append(pdd.page)
                         continue
@@ -166,11 +186,18 @@ class ContenuDeQualite:
 
 def main():
     site = wikipedia.getSite()
-    cdq = ContenuDeQualite(site)
-    cdq.run()
-
     page_resultat = wikipedia.Page(site, u'Utilisateur:BeBot/Contenu de qualité')
-    page_resultat.put(unicode(cdq), comment=u'Log "contenu de qualité"')
+
+    precedentRE = re.compile(u"<center[^>]*>'''Log.* (\d{1,2} [^ <]+ \d{4})'''</center>")
+    precedent = precedentRE.search(page_resultat.get())
+    if precedent:
+        precedent = precedent.group(1)
+    else:
+        precedent = u''
+    cdq = ContenuDeQualite(site, precedent)
+    cdq.run()
+    
+    page_resultat.put(unicode(cdq), comment=cdq.resume)
 
 if __name__ == "__main__":
     try:
