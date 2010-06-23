@@ -42,6 +42,7 @@ class ContenuDeQualite:
         TODO : les intentions de proposition au label.
         TODO : comparer la cat AdQ/BA avec la cat "Maintenance des "
         TODO : les portails/themes de qualité
+        TODO : différencer ajout (qualite) et maj (connaitdeja)
     """
     def __init__(self, site, log):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
@@ -53,7 +54,7 @@ class ContenuDeQualite:
         self.connaitdeja = []   # Articles déjà listés
         self.pasdedate = []     # Articles de qualité dont la date est inconnue
         self.dechu = []         # Articles déchus
-        self.db = MySQLdb.connect(db="u_romainhk", read_default_file="/home/romainhk/.my.cnf")
+        self.db = MySQLdb.connect(db="u_romainhk", read_default_file="/home/romainhk/.my.cnf", use_unicode=True, charset='utf8')
 
         rev = self.page_resultat.getVersionHistory(revCount=1)[0][1]
         self.precedent = rev[:10]    # Date de la dernière sauvegarde
@@ -102,19 +103,19 @@ class ContenuDeQualite:
         """
         Sauvegarder dans une base de données
         """
-        c = self.db.cursor()
+        curseur = self.db.cursor()
         for q in self.qualite:
-            donnees = u'"' + unicode(q[0]) + u'", ' + str(q[1]) + u', "' \
+            donnees = u'"' + q[0] + u'", ' + str(q[1]) + u', "' \
                     + q[2].strftime("%Y-%m-%d") + u'", "' + q[3] + u'"'
             req = u"INSERT INTO contenu_de_qualite(page, espacedenom, date, label) VALUES ("+ donnees + u")"
             try:
-                c.execute(req)
+                curseur.execute(req)
             except MySQLdb.Error, e:
                 if e.args[0] == ER.DUP_ENTRY:
                     req = u"UPDATE contenu_de_qualite SET espacedenom=" + str(q[1]) \
                         + ', date="' + q[2].strftime("%Y-%m-%d") + '", label="' + q[3] \
                         + '" WHERE page="' + q[0] + '"'
-                    c.execute(req)
+                    curseur.execute(req)
                 else:
                     print "Erreur %d: %s" % (e.args[0], e.args[1])
                 continue
@@ -122,7 +123,7 @@ class ContenuDeQualite:
         for d in self.dechu:
             req = u"DELETE FROM contenu_de_qualite WHERE page='" + unicode(d) + u"'"
             try:
-                c.execute(req)
+                curseur.execute(req)
             except:
                 wikipedia.output(u"# DELETE échoué sur " + unicode(d))
 
@@ -130,10 +131,10 @@ class ContenuDeQualite:
         """
         Charger la liste des articles dont le label est connu depuis une base de données
         """
-        c = self.db.cursor()
+        curseur = self.db.cursor()
         req = "SELECT * FROM contenu_de_qualite"
-        c.execute(req)
-        return c.fetchall()
+        curseur.execute(req)
+        return curseur.fetchall()
 
     def date_labellisation(self, titre):
         """
@@ -156,8 +157,8 @@ class ContenuDeQualite:
         connus = self.charger()
         cat_qualite = [ u'Article de qualité',  u'Bon article']
         for cat in cat_qualite:
-            c = catlib.Category(self.site, cat)
-            cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False, start='T')
+            categorie = catlib.Category(self.site, cat)
+            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='T')
             #Comparer avec le contenu de la bdd
             for p in cpg:
                 prendre = True
@@ -174,14 +175,18 @@ class ContenuDeQualite:
                         continue
                     self.qualite.append( [ p.title(), p.namespace(), date, cat ] )
 
-        c = catlib.Category(self.site, u'Ancien article de qualité')
-        cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False)
+        categorie = catlib.Category(self.site, u'Ancien article de qualité')
+        cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
         for p in cpg:
             if p.namespace == 0:
                 pdd = p.toggleTalkPage.title()
                 for con in connus:
                     if pdd == unicode(con[0].decode('latin1')):
                         self.dechu.append( p.title() )
+
+        wikipedia.output(u"Total: " + str(len(self.qualite)) + u" ajouts, " \
+                + str(len(self.connaitdeja)) + u" déjà connus ; " \
+                + str(len(self.dechu)) + u" déchus ; " + str(len(self.pasdedate)) + u" sans date.")
 
 def main():
     site = wikipedia.getSite()
