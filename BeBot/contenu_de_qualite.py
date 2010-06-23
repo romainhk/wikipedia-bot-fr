@@ -55,11 +55,8 @@ class ContenuDeQualite:
         self.dechu = []         # Articles déchus
         self.db = MySQLdb.connect(db="u_romainhk", read_default_file="/home/romainhk/.my.cnf")
 
-        self.precedent = u''    # Date de la dernière sauvegarde
-        precedentRE = re.compile(u"<!--SAUVEGARDE PRECEDENTE:(\d{1,2} [^ -<>]+ \d{4})-->")
-        precedent = precedentRE.search(self.page_resultat.get())
-        if precedent:
-            self.precedent = precedent.group(1)
+        rev = self.page_resultat.getVersionHistory(revCount=1)[0][1]
+        self.precedent = rev[:10]    # Date de la dernière sauvegarde
 
     def __del__(self):
         self.db.close()
@@ -80,7 +77,7 @@ class ContenuDeQualite:
         resultat += self.lister_article(self.pasdedate)
         resultat += u"\n== Articles déchus depuis la dernière sauvegarde "
         if self.precedent:
-            resultat += u"(" + self.precedent + u" ?) "
+            resultat += u"(le " + self.precedent + u" ?) "
         resultat += u"==\n"
         resultat += self.lister_article(self.dechu)
         return resultat
@@ -107,9 +104,9 @@ class ContenuDeQualite:
         """
         c = self.db.cursor()
         for q in self.qualite:
-            donnees = u'"' + q[0] + u'", ' + str(q[1]) + u', "' \
+            donnees = u'"' + unicode(q[0]) + u'", ' + str(q[1]) + u', "' \
                     + q[2].strftime("%Y-%m-%d") + u'", "' + q[3] + u'"'
-            req = u"INSERT INTO contenu_de_qualite(page, espacedenom, date, label) VALUES ("+ donnees +")"
+            req = u"INSERT INTO contenu_de_qualite(page, espacedenom, date, label) VALUES ("+ donnees + u")"
             try:
                 c.execute(req)
             except MySQLdb.Error, e:
@@ -128,9 +125,6 @@ class ContenuDeQualite:
                 c.execute(req)
             except:
                 wikipedia.output(u"# DELETE échoué sur " + unicode(d))
-
-        # Ajouter la date de la dernière sauvegarde
-        add_text.add_text( page=self.page_resultat, addText=u"<!--SAUVEGARDE PRECEDENTE:" + datetime.date.today().strftime("%d %B %Y")+u"-->", summary=u'Précision de la date de dernière sauvegarde', up=True, always=True)
 
     def charger(self):
         """
@@ -163,7 +157,6 @@ class ContenuDeQualite:
         cat_qualite = [ u'Article de qualité',  u'Bon article']
         for cat in cat_qualite:
             c = catlib.Category(self.site, cat)
-            #cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False)
             cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False, start='T')
             #Comparer avec le contenu de la bdd
             for p in cpg:
