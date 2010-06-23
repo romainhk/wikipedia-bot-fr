@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-__version__ = 'ContenuDeQualité 20100622'
+__version__ = 'ContenuDeQualité 20100623'
 import re, datetime, MySQLdb
 from MySQLdb.constants import ER
 from wikipedia import *
-import pagegenerators, catlib
+import pagegenerators, catlib, add_text
 
 def moistoint(mois):
     " Convertit une chaîne de caractètre correspondant à un mois, en un entier i (1≤i≤12). "
@@ -41,17 +41,25 @@ class ContenuDeQualite:
 
         TODO : les intentions de proposition au label.
         TODO : comparer la cat AdQ/BA avec la cat "Maintenance des "
+        TODO : les portails/themes de qualité
     """
-    def __init__(self, site, precedent):
+    def __init__(self, site, log):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
-        self.precedent = precedent      # Date de l'exécution précédente
         self.site = site
+        self.log = log      # Nom de la page de log
+        self.page_resultat = wikipedia.Page(site, log)
 
         self.qualite = []       # Nouveaux articles promus
         self.connaitdeja = []   # Articles déjà listés
         self.pasdedate = []     # Articles de qualité dont la date est inconnue
         self.dechu = []         # Articles déchus
         self.db = MySQLdb.connect(db="u_romainhk", read_default_file="/home/romainhk/.my.cnf")
+
+        self.precedent = u''    # Date de la dernière sauvegarde
+        precedentRE = re.compile(u"<!--SAUVEGARDE PRECEDENTE:(\d{1,2} [^ -<>]+ \d{4})-->")
+        precedent = precedentRE.search(self.page_resultat.get())
+        if precedent:
+            self.precedent = precedent.group(1)
 
     def __del__(self):
         self.db.close()
@@ -72,7 +80,7 @@ class ContenuDeQualite:
         resultat += self.lister_article(self.pasdedate)
         resultat += u"\n== Articles déchus depuis la dernière sauvegarde "
         if self.precedent:
-            resultat += u"(" + self.precedent + u") "
+            resultat += u"(" + self.precedent + u" ?) "
         resultat += u"==\n"
         resultat += self.lister_article(self.dechu)
         return resultat
@@ -121,6 +129,8 @@ class ContenuDeQualite:
             except:
                 wikipedia.output(u"# DELETE échoué sur " + unicode(d))
 
+        # Ajouter la date de la dernière sauvegarde
+        add_text.add_text( page=self.page_resultat, addText=u"<!--SAUVEGARDE PRECEDENTE:" + datetime.date.today().strftime("%d %B %Y")+u"-->", summary=u'Précision de la date de dernière sauvegarde', up=True, always=True)
 
     def charger(self):
         """
@@ -139,7 +149,7 @@ class ContenuDeQualite:
             page = wikipedia.Page(self.site, titre).get()
         except pywikibot.exceptions.NoPage:
             raise PasDeDate(titre)
-        dateRE = re.compile(u"\{\{([aA]rticle de qualit|[aA]rticle_de_qualit|[bB]on article|[bB]on_article|[aA]dQ dat)[^\}]*" \
+        dateRE = re.compile(u"\{\{([aA]rticle[ _]de[ _]qualit|[bB]on[ _]article|[aA]dQ[ _]dat)[^\}]*" \
                 + u"\| *date *= *\{{0,2}(\d{1,2})[^ 0-9]*\}{0,2} ([^\| \{\}0-9]{3,9}) (\d{2,4})", re.LOCALE)
         d = dateRE.search(page)
         if d:
@@ -151,7 +161,6 @@ class ContenuDeQualite:
     def run(self):
         connus = self.charger()
         cat_qualite = [ u'Article de qualité',  u'Bon article']
-        #cat_qualite = [ u'Article de qualité' ]
         for cat in cat_qualite:
             c = catlib.Category(self.site, cat)
             #cpg = pagegenerators.CategorizedPageGenerator(c, recurse=False)
@@ -164,8 +173,7 @@ class ContenuDeQualite:
                         self.connaitdeja.append(p.title())
                         prendre = False
                         break
-                if prendre:
-                    #Prise des dates
+                if prendre:   # Récupération des dates
                     try:
                         date = self.date_labellisation(p.title())
                     except PasDeDate as pdd:
@@ -182,22 +190,18 @@ class ContenuDeQualite:
                     if pdd == unicode(con[0].decode('latin1')):
                         self.dechu.append( p.title() )
 
-        #self.sauvegarder()
-
 def main():
     site = wikipedia.getSite()
-    page_resultat = wikipedia.Page(site, u'Utilisateur:BeBot/Contenu de qualité')
+    log = u'Utilisateur:BeBot/Contenu de qualité'
 
-    precedentRE = re.compile(u"<center[^>]*>'''Log.* (\d{1,2} [^ <]+ \d{4})'''</center>")
-    precedent = precedentRE.search(page_resultat.get())
-    if precedent:
-        precedent = precedent.group(1)
-    else:
-        precedent = u''
-    cdq = ContenuDeQualite(site, precedent)
+    cdq = ContenuDeQualite(site, log)
     cdq.run()
     
-    page_resultat.put(unicode(cdq), comment=cdq.resume)
+    wikipedia.Page(site, log).put(unicode(cdq), comment=cdq.resume, minorEdit=False)
+
+    choix = wikipedia.inputChoice(u"Sauvegarder dans la base de donnees ?", ['oui', 'non'], ['o', 'n'], 'o')
+    if choix == "o" or choix == "oui":
+        cdq.sauvegarder()
 
 if __name__ == "__main__":
     try:
