@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-__version__ = 'PreparationWikimag 20100529'
+__version__ = 'PreparationWikimag 20100628'
 import re, datetime
 from wikipedia import *
 
@@ -68,7 +68,8 @@ class PreparationWikimag:
 
         resultat += u"\n== Images du jour ==\n"
         for i in self.jours:
-            resultat += u'* {{m|Wikipédia:Image du jour/'+i.strftime("%e %B %Y")+u"|namespace=Wikipédia}}\n"
+            resultat += u'* {{m|Wikipédia:Image du jour/' + str(int(i.strftime("%d"))) \
+                    + i.strftime(" %B %Y") + u"|namespace=Wikipédia}}\n"
 
         resultat += u"\n== Labels =="
         resultat += u"\n=== AdQ ===\n"
@@ -177,7 +178,6 @@ def main():
     pw = PreparationWikimag(site)
     pw.run()
 
-#    wikipedia.output(unicode(pw))
     page_resultat = wikipedia.Page(site, u'Utilisateur:BeBot/Préparation Wikimag')
     page_resultat.put(unicode(pw))
 

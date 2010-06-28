@@ -184,7 +184,7 @@ class ContenuDeQualite:
                     if pdd == unicode(con[0].decode('latin1')):
                         self.dechu.append( p.title() )
 
-        wikipedia.output(u"Total: " + str(len(self.qualite)) + u" ajouts, " \
+        wikipedia.output(u"Total: " + str(len(self.qualite)) + u" ajouts ; " \
                 + str(len(self.connaitdeja)) + u" déjà connus ; " \
                 + str(len(self.dechu)) + u" déchus ; " + str(len(self.pasdedate)) + u" sans date.")
 
