@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-__version__ = 'PreparationWikimag 20100628'
+__version__ = 'PreparationWikimag 20100705'
 import re, datetime
 from wikipedia import *
 
@@ -41,7 +41,7 @@ class PreparationWikimag:
         while jour != 0:
             self.date = self.date - unjour
             jour = self.date.weekday()
-        self.lasemaine = self.date.strftime("%A %d %B %Y")
+        self.lasemaine = self.date.strftime("%A %e %B %Y")
         self.date_fin = self.date + datetime.timedelta(days=7)
 
         self.jours = []
@@ -54,13 +54,13 @@ class PreparationWikimag:
         wikipedia.setAction(self.resume)
         if self.date_fin.month == u'janvier':
             wikipedia.output(self.date.strftime("%Y/%m/%d")+u" : Attention, certaines données de l'année %i ne seront pas prises en compte" % int(self.date_fin.year)-1)
-        self.articleRE = re.compile("\* ?\{\{a-label\|([^\|\}]+)\}\}")
+        self.articleRE = re.compile("\* [^\{]*\{\{a-label\|([^\|\}]+)\}\}")
 
     def __str__(self):
         """ Page à publier 
         """
         resultat = u"''Préparation du [[Wikipédia:Wikimag|wikimag]] allant du " \
-            + self.lasemaine + u" au " + self.date_fin.strftime("%A %d %B %Y") + u".''\n"
+            + self.lasemaine + u" au " + self.date_fin.strftime("%A %e %B %Y") + u".''\n"
 
         resultat += u"\n== Annonces ==\n"
         for a in self.annonces:

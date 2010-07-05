@@ -43,6 +43,7 @@ class ContenuDeQualite:
         TODO : comparer la cat AdQ/BA avec la cat "Maintenance des "
         TODO : les portails/themes de qualité
         TODO : différencer ajout (qualite) et maj (connaitdeja)
+        TODO : comparaison des nom d'article accentués
     """
     def __init__(self, site, log):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
