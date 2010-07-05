@@ -128,6 +128,8 @@ class PreparationWikimag:
         for a in articles:
             try:
                 page = wikipedia.Page(self.site, a).get()
+            except pywikibot.exceptions.IsRedirectPage:
+                page = wikipedia.Page(self.site, a.getRedirectTarget()).get()
             except pywikibot.exceptions.NoPage:
                 self.inconnu.append(a)
                 continue
