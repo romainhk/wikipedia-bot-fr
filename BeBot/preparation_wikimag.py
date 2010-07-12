@@ -1,24 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-__version__ = 'PreparationWikimag 20100705'
+__version__ = 'PreparationWikimag 20100712'
 import re, datetime
 from wikipedia import *
 
 def moistoint(mois):
     " Convertit une chaîne de caractètre correspondant à un mois, en un entier i (1≤i≤12). "
     mois = mois.lower()
-    if mois == 'janvier':     return 1
-    elif mois == u'février':  return 2
-    elif mois == 'mars':      return 3
-    elif mois == 'avril':     return 4
-    elif mois == 'mai':       return 5
-    elif mois == 'juin':      return 6
-    elif mois == 'juillet':   return 7
-    elif mois == u'août':     return 8
-    elif mois == 'septembre':  return 9
-    elif mois == 'octobre':    return 10
-    elif mois == 'novembre':   return 11
-    elif mois == u'décembre':  return 12
+    if mois in 'janvier    january':   return 1
+    elif mois in u'février febuary':   return 2
+    elif mois in 'mars     march':     return 3
+    elif mois in 'avril    april':     return 4
+    elif mois in 'mai      may':       return 5
+    elif mois in 'juin     june':      return 6
+    elif mois in 'juillet  july':      return 7
+    elif mois in u'août    august':    return 8
+    elif mois in 'septembre  september':  return 9
+    elif mois in 'octobre    october':    return 10
+    elif mois in 'novembre   november':   return 11
+    elif mois in u'décembre  december':   return 12
     else:
         wikipedia.output(u'Mois « %s » non reconnu' % mois)
     return 0
