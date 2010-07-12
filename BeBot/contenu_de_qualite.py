@@ -44,6 +44,9 @@ class ContenuDeQualite:
         TODO : les portails/themes de qualité
         TODO : différencer ajout (qualite) et maj (connaitdeja)
         TODO : comparaison des nom d'article accentués
+        TODO : ajouter "langue" et rendre plus internationale
+        TODO : traduction ?
+        TODO : infos sur l'article (taille, inclusions...)
     """
     def __init__(self, site, log):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
