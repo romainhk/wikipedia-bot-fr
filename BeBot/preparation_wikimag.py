@@ -154,7 +154,7 @@ class PreparationWikimag:
         # Annonces
         moisRE = re.compile("==== *(\w+) *====", re.LOCALE)
         annonceRE = re.compile("\{\{[aA]nnonce[^\|]*\|(\d+)\|")
-        mois_courant = 0
+        mois_courant = int(self.date.strftime("%m"))
         for ligne in self.page_ligne_par_ligne(u'Wikipédia:Annonces'):
             if re.match(r'== *Voir ', ligne): break     # Fin des annonces
             m = moisRE.search(ligne)
