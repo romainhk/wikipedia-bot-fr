@@ -182,7 +182,7 @@ class ContenuDeQualite:
         cat_qualite = [ u'Article de qualité',  u'Bon article']
         for cat in cat_qualite:
             categorie = catlib.Category(self.site, cat)
-            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='T')
+            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='S')
             #Comparer avec le contenu de la bdd
             for p in cpg:
                 article_connu = False
@@ -190,18 +190,18 @@ class ContenuDeQualite:
                     if p.title() == html2unicode(con[0]):
                         article_connu = True
                         break
-                try:
-                    date = self.date_labellisation(p.title())   # Récupération de la date
-                except PasDeDate as pdd:
-                    self.pasdedate.append(pdd.page)
-                    continue
-                if article_connu:
-                    if self.maj_stricte:
+                if not article_connu or self.maj_stricte:
+                    try:
+                        date = self.date_labellisation(p.title())   # Récupération de la date
+                    except PasDeDate as pdd:
+                        self.pasdedate.append(pdd.page)
+                        continue
+                    if article_connu:
                         self.connaitdeja.append( [ p.title(), p.namespace(), date, cat ] )
                     else:
-                        self.connaitdeja.append( p.title() )
+                        self.nouveau.append( [ p.title(), p.namespace(), date, cat ] )
                 else:
-                    self.nouveau.append( [ p.title(), p.namespace(), date, cat ] )
+                    self.connaitdeja.append( p.title() )
 
         categorie = catlib.Category(self.site, u'Ancien article de qualité')
         cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
