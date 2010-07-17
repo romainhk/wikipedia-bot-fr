@@ -43,10 +43,9 @@ class ContenuDeQualite:
         TODO : comparer la cat AdQ/BA avec la cat "Maintenance des "
         TODO : les portails/themes de qualité
         TODO : différencer ajout (qualite) et maj (connaitdeja)
-        TODO : comparaison des nom d'article accentués
         TODO : ajouter "langue" et rendre plus internationale
         TODO : traduction ?
-        TODO : infos sur l'article (taille, inclusions...)
+        TODO : infos sur l'article (taille, inclusions, nombre de contributeurs...)
     """
     def __init__(self, site, log):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
@@ -82,7 +81,7 @@ class ContenuDeQualite:
         resultat += self.lister_article(self.pasdedate)
         resultat += u"\n== Articles déchus depuis la dernière sauvegarde "
         if self.precedent:
-            resultat += u"(le " + self.precedent + u" ?) "
+            resultat += u"(du " + self.precedent + u" ?) "
         resultat += u"==\n"
         resultat += self.lister_article(self.dechu)
         return resultat
@@ -109,7 +108,7 @@ class ContenuDeQualite:
         """
         curseur = self.db.cursor()
         for q in self.qualite:
-            donnees = u'"' + q[0] + u'", ' + str(q[1]) + u', "' \
+            donnees = u'"' + unicode2html(q[0], 'ascii') + u'", ' + str(q[1]) + u', "' \
                     + q[2].strftime("%Y-%m-%d") + u'", "' + q[3] + u'"'
             req = u"INSERT INTO contenu_de_qualite(page, espacedenom, date, label) VALUES ("+ donnees + u")"
             try:
@@ -117,8 +116,8 @@ class ContenuDeQualite:
             except MySQLdb.Error, e:
                 if e.args[0] == ER.DUP_ENTRY:
                     req = u"UPDATE contenu_de_qualite SET espacedenom=" + str(q[1]) \
-                        + ', date="' + q[2].strftime("%Y-%m-%d") + '", label="' + q[3] \
-                        + '" WHERE page="' + q[0] + '"'
+                        + u', date="' + q[2].strftime("%Y-%m-%d") + u'", label="' + q[3] \
+                        + u'" WHERE page="' + unicode2html(q[0], 'ascii') + u'"'
                     curseur.execute(req)
                 else:
                     print "Erreur %d: %s" % (e.args[0], e.args[1])
@@ -167,11 +166,11 @@ class ContenuDeQualite:
             for p in cpg:
                 prendre = True
                 for con in connus:
-                    if p.title() == unicode(con[0].decode('latin1')):
+                    if p.title() == html2unicode(con[0]):
                         self.connaitdeja.append(p.title())
                         prendre = False
                         break
-                if prendre:   # Récupération des dates
+                if prendre:   # Récupération de la date
                     try:
                         date = self.date_labellisation(p.title())
                     except PasDeDate as pdd:
@@ -185,7 +184,7 @@ class ContenuDeQualite:
             if p.namespace == 0:
                 pdd = p.toggleTalkPage.title()
                 for con in connus:
-                    if pdd == unicode(con[0].decode('latin1')):
+                    if pdd == html2unicode(con[0]):
                         self.dechu.append( p.title() )
 
         wikipedia.output(u"Total: " + str(len(self.qualite)) + u" ajouts ; " \
