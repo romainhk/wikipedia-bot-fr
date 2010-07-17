@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-__version__ = 'ContenuDeQualité 20100623'
-import re, datetime, MySQLdb
+__version__ = 'ContenuDeQualité 20100717'
+import re, datetime, MySQLdb, getopt, sys
 from MySQLdb.constants import ER
 from wikipedia import *
 import pagegenerators, catlib, add_text
@@ -39,17 +39,27 @@ class ContenuDeQualite:
         Tri et sauvegarde les AdQ/BA existants par date.
         (Persistance du nom de l'article, de son espace de nom, de la date de labellisation et de son label.)
 
+    Paramètres:
+    * Site wikipedia où travailler
+    * Nom de la page pour le log
+    * Mode de mise à jour : en mode strict, les informations des articles déjà connus seront systématiquement mises à jour (UPDATE). Pour l'activer, utiliser l'option "-s".
+
         TODO : les intentions de proposition au label.
         TODO : comparer la cat AdQ/BA avec la cat "Maintenance des "
         TODO : les portails/themes de qualité
         TODO : internationalisation : ajouter un champ "langue"
         TODO : infos sur l'article (taille, inclusions, nombre de contributeurs...)
     """
-    def __init__(self, site, log):
+    def __init__(self, site, log, mode_maj):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
         self.site = site
-        self.log = log      # Nom de la page de log
+        self.log = log
         self.page_resultat = wikipedia.Page(site, log)
+        if mode_maj == "strict":
+            self.maj_stricte = True
+            wikipedia.output(u'# Mode de mise à jour "strict" actif (tous les updates seront effectués)')
+        else:
+            self.maj_stricte = False
 
         self.nouveau = []       # Nouveaux articles promus
         self.connaitdeja = []   # Articles déjà listés
@@ -118,8 +128,9 @@ class ContenuDeQualite:
                     print "Erreur %d: %s" % (e.args[0], e.args[1])
                 continue
 
-        for q in self.connaitdeja:
-            self.sauvegarde_update(curseur, q)
+        if self.maj_stricte:
+            for q in self.connaitdeja:
+                self.sauvegarde_update(curseur, q)
 
         for d in self.dechu:
             req = u"DELETE FROM contenu_de_qualite WHERE page='" + unicode(d) + u"'"
@@ -185,7 +196,10 @@ class ContenuDeQualite:
                     self.pasdedate.append(pdd.page)
                     continue
                 if article_connu:
-                    self.connaitdeja.append( [ p.title(), p.namespace(), date, cat ] )
+                    if self.maj_stricte:
+                        self.connaitdeja.append( [ p.title(), p.namespace(), date, cat ] )
+                    else:
+                        self.connaitdeja.append( p.title() )
                 else:
                     self.nouveau.append( [ p.title(), p.namespace(), date, cat ] )
 
@@ -203,10 +217,21 @@ class ContenuDeQualite:
                 + str(len(self.dechu)) + u" déchus ; " + str(len(self.pasdedate)) + u" sans date.")
 
 def main():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "s")
+    except getopt.GetoptError, err:
+        print str(err)
+        usage()
+        sys.exit(2)
+    mode = u'nouveaux-seulement'
+    for o, a in opts:
+        if o == '-s':
+            mode = "strict"
+
     site = wikipedia.getSite()
     log = u'Utilisateur:BeBot/Contenu de qualité'
 
-    cdq = ContenuDeQualite(site, log)
+    cdq = ContenuDeQualite(site, log, mode)
     cdq.run()
     
     wikipedia.Page(site, log).put(unicode(cdq), comment=cdq.resume, minorEdit=False)
