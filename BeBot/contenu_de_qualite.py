@@ -42,9 +42,7 @@ class ContenuDeQualite:
         TODO : les intentions de proposition au label.
         TODO : comparer la cat AdQ/BA avec la cat "Maintenance des "
         TODO : les portails/themes de qualité
-        TODO : différencer ajout (qualite) et maj (connaitdeja)
-        TODO : ajouter "langue" et rendre plus internationale
-        TODO : traduction ?
+        TODO : internationalisation : ajouter un champ "langue"
         TODO : infos sur l'article (taille, inclusions, nombre de contributeurs...)
     """
     def __init__(self, site, log):
@@ -53,7 +51,7 @@ class ContenuDeQualite:
         self.log = log      # Nom de la page de log
         self.page_resultat = wikipedia.Page(site, log)
 
-        self.qualite = []       # Nouveaux articles promus
+        self.nouveau = []       # Nouveaux articles promus
         self.connaitdeja = []   # Articles déjà listés
         self.pasdedate = []     # Articles de qualité dont la date est inconnue
         self.dechu = []         # Articles déchus
@@ -70,13 +68,13 @@ class ContenuDeQualite:
         Log à publier
         """
         resultat =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité » du " \
-                + datetime.date.today().strftime("%A %d %B %Y") + u"'''</center>\n\n"
-        resultat += str(len(self.qualite)) + u" nouvels articles labellisés trouvés (plus " \
-                + str(len(self.pasdedate)) + u" sans dates). "
+                + datetime.date.today().strftime("%A %e %B %Y") + u"'''</center>\n\n"
+        resultat += str(len(self.nouveau)) + u" nouvels articles labellisés trouvés (plus " \
+                + str(len(self.pasdedate)) + u" sans dates, et " + str(len(self.connaitdeja)) + u" déjà connus). "
         resultat += str(len(self.dechu)) + u" ont été déchus depuis la dernières exécussion.\n"
-        resultat += u"\nTotal : " + str(len(self.qualite) + len(self.connaitdeja) + len(self.pasdedate)) + u" articles labellisés.\n"
+        resultat += u"\nTotal : " + str(len(self.nouveau) + len(self.connaitdeja) + len(self.pasdedate)) + u" articles labellisés.\n"
         resultat += u"\n== Nouveau contenu de qualité ==\n"
-        resultat += self.lister_article(self.qualite)
+        resultat += self.lister_article(self.nouveau)
         resultat += u"\n=== Articles sans date de labellisation ===\n"
         resultat += self.lister_article(self.pasdedate)
         resultat += u"\n== Articles déchus depuis la dernière sauvegarde "
@@ -107,7 +105,7 @@ class ContenuDeQualite:
         Sauvegarder dans une base de données
         """
         curseur = self.db.cursor()
-        for q in self.qualite:
+        for q in self.nouveau:
             donnees = u'"' + unicode2html(q[0], 'ascii') + u'", ' + str(q[1]) + u', "' \
                     + q[2].strftime("%Y-%m-%d") + u'", "' + q[3] + u'"'
             req = u"INSERT INTO contenu_de_qualite(page, espacedenom, date, label) VALUES ("+ donnees + u")"
@@ -115,13 +113,13 @@ class ContenuDeQualite:
                 curseur.execute(req)
             except MySQLdb.Error, e:
                 if e.args[0] == ER.DUP_ENTRY:
-                    req = u"UPDATE contenu_de_qualite SET espacedenom=" + str(q[1]) \
-                        + u', date="' + q[2].strftime("%Y-%m-%d") + u'", label="' + q[3] \
-                        + u'" WHERE page="' + unicode2html(q[0], 'ascii') + u'"'
-                    curseur.execute(req)
+                    self.sauvegarde_update(curseur, q)
                 else:
                     print "Erreur %d: %s" % (e.args[0], e.args[1])
                 continue
+
+        for q in self.connaitdeja:
+            self.sauvegarde_update(curseur, q)
 
         for d in self.dechu:
             req = u"DELETE FROM contenu_de_qualite WHERE page='" + unicode(d) + u"'"
@@ -129,6 +127,18 @@ class ContenuDeQualite:
                 curseur.execute(req)
             except:
                 wikipedia.output(u"# DELETE échoué sur " + unicode(d))
+
+    def sauvegarde_update(self, curseur, q):
+        """
+        Mise à jour un champ de la base de données
+        """
+        req = u"UPDATE contenu_de_qualite SET espacedenom=" + str(q[1]) \
+            + u', date="' + q[2].strftime("%Y-%m-%d") + u'", label="' + q[3] \
+            + u'" WHERE page="' + unicode2html(q[0], 'ascii') + u'"'
+        try:
+            curseur.execute(req)
+        except MySQLdb.Error, e:
+            print "Update error %d: %s" % (e.args[0], e.args[1])
 
     def charger(self):
         """
@@ -164,19 +174,20 @@ class ContenuDeQualite:
             cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='T')
             #Comparer avec le contenu de la bdd
             for p in cpg:
-                prendre = True
+                article_connu = False
                 for con in connus:
                     if p.title() == html2unicode(con[0]):
-                        self.connaitdeja.append(p.title())
-                        prendre = False
+                        article_connu = True
                         break
-                if prendre:   # Récupération de la date
-                    try:
-                        date = self.date_labellisation(p.title())
-                    except PasDeDate as pdd:
-                        self.pasdedate.append(pdd.page)
-                        continue
-                    self.qualite.append( [ p.title(), p.namespace(), date, cat ] )
+                try:
+                    date = self.date_labellisation(p.title())   # Récupération de la date
+                except PasDeDate as pdd:
+                    self.pasdedate.append(pdd.page)
+                    continue
+                if article_connu:
+                    self.connaitdeja.append( [ p.title(), p.namespace(), date, cat ] )
+                else:
+                    self.nouveau.append( [ p.title(), p.namespace(), date, cat ] )
 
         categorie = catlib.Category(self.site, u'Ancien article de qualité')
         cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
@@ -187,7 +198,7 @@ class ContenuDeQualite:
                     if pdd == html2unicode(con[0]):
                         self.dechu.append( p.title() )
 
-        wikipedia.output(u"Total: " + str(len(self.qualite)) + u" ajouts ; " \
+        wikipedia.output(u"Total: " + str(len(self.nouveau)) + u" ajouts ; " \
                 + str(len(self.connaitdeja)) + u" déjà connus ; " \
                 + str(len(self.dechu)) + u" déchus ; " + str(len(self.pasdedate)) + u" sans date.")
 
