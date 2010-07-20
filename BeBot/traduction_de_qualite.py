@@ -16,39 +16,37 @@ class TraductionDeQualite:
         self.page_resultat = wikipedia.Page(site, log)
         self.pages = [] # Liste des pages de traduction contenant un modele lien
 
-        """
         self.traductions = [] # Pages en cours de traduction
         cats = []
         cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article à traduire")))
-        cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article à relire")))
-        cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article en cours de traduction")))
-        cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article en cours de relecture")))
+        #cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article à relire")))
+        #cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article en cours de traduction")))
+        #cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article en cours de relecture")))
         for t in pagegenerators.CombinedPageGenerator(cats):
             self.traductions.append(t)
-        """
+        #Retirer ceux qui sont déjà avec le paramètre adq/ba
 
     def __str__(self):
         """
         Log à publier
         """
-        resultat = u'' + unicode(self.pages)
+        resultat = unicode(len(self.pages)) + u' candidats :'
+        for p in self.pages:
+            resultat += u', ' + p.title()
         return resultat
 
     def run(self):
         cats = []
         cats.append(pagegenerators.ReferringPageGenerator(wikipedia.Page(self.site, u"Modèle:Lien AdQ"), followRedirects=True, withTemplateInclusion=True))
-        cats.append(pagegenerators.ReferringPageGenerator(wikipedia.Page(self.site, u"Modèle:Lien BA"), followRedirects=True, withTemplateInclusion=True))
+        #cats.append(pagegenerators.ReferringPageGenerator(wikipedia.Page(self.site, u"Modèle:Lien BA"), followRedirects=True, withTemplateInclusion=True))
         for m in pagegenerators.CombinedPageGenerator(cats):
-            if m.namespace == 0:
+            if m.namespace() == 0:
                 #Prendre la page de trad
-                m = m.toggleTalkPage()
-                tradpage = wikipedia.Page(self.site, m.title()+"/Traduction")
-                if tradpage.exist():
-                   self.pages.append(tradpage)
-                   # for t in self.traductions:
-                   #    if t == m:
-                   #         self.pages.append(tradpage)
-                   #         break;
+                tradpage = wikipedia.Page(self.site, m.toggleTalkPage().title()+"/Traduction")
+                for t in self.traductions:
+                   if t.title() == tradpage.title():
+                        self.pages.append(tradpage)
+                        break;
 
 def main():
     site = wikipedia.getSite()
