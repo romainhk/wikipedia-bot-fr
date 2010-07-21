@@ -55,6 +55,7 @@ class ContenuDeQualite:
         self.site = site
         self.log = log
         self.page_resultat = wikipedia.Page(site, log)
+        self.cat_qualite = [ u'Article de qualité',  u'Bon article']
         if mode_maj == "strict":
             self.maj_stricte = True
             wikipedia.output(u'# Mode de mise à jour "strict" actif (tous les updates seront effectués)')
@@ -77,12 +78,16 @@ class ContenuDeQualite:
         """
         Log à publier
         """
-        resultat =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité » du " \
-                + datetime.date.today().strftime("%A %e %B %Y") + u"'''</center>\n\n"
-        resultat += str(len(self.nouveau)) + u" nouvels articles labellisés trouvés (plus " \
-                + str(len(self.pasdedate)) + u" sans dates, et " + str(len(self.connaitdeja)) + u" déjà connus). "
-        resultat += str(len(self.dechu)) + u" ont été déchus depuis la dernières exécussion.\n"
-        resultat += u"\nTotal : " + str(len(self.nouveau) + len(self.connaitdeja) + len(self.pasdedate)) + u" articles labellisés.\n"
+        resultat =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »''' ; exécuté le " \
+                + datetime.date.today().strftime("%A %e %B %Y") + u"</center>\n\n"
+        resultat += str(len(self.nouveau)) + u" nouveaux articles labellisés trouvés : " \
+                + str(self.denombrer(self.cat_qualite[0], [self.nouveau]) ) + u" AdQ et " \
+                + str(self.denombrer(self.cat_qualite[1], [self.nouveau]) ) + u" BA.\n\n"
+        resultat += str(len(self.dechu)) + u" ont été déchus depuis la dernière vérification. " \
+                + str(len(self.pasdedate)) + u" n'ont pas de date précisé, et " + str(len(self.connaitdeja)) + u" sont déjà connus." \
+        resultat += u"\n\n* Total après sauvegarde : " + str( len(self.nouveau) + len(self.connaitdeja) ) + u" articles labellisés"
+        resultat += u" (" + str(self.denombrer( self.cat_qualite[0], [self.nouveau, self.connaitdeja]) ) + " AdQ et " \
+                + str(self.denombrer( self.cat_qualite[1], [self.nouveau, self.connaitdeja]) ) + " BA).\n"
         resultat += u"\n== Nouveau contenu de qualité ==\n"
         resultat += self.lister_article(self.nouveau)
         resultat += u"\n=== Articles sans date de labellisation ===\n"
@@ -93,6 +98,17 @@ class ContenuDeQualite:
         resultat += u"==\n"
         resultat += self.lister_article(self.dechu)
         return resultat
+
+    def denombrer(self, label, tab):
+        """
+        Dénombre les articles (contenus dans les tableaux de tab) correspondants à un label
+        """
+        i = 0
+        for l in tab:
+            for n in l:
+                if n[3] == label:
+                    i += 1
+        return i
 
     def lister_article(self, table):
         """ __str__
@@ -179,10 +195,9 @@ class ContenuDeQualite:
 
     def run(self):
         connus = self.charger()
-        cat_qualite = [ u'Article de qualité',  u'Bon article']
-        for cat in cat_qualite:
+        for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
-            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='S')
+            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
             #Comparer avec le contenu de la bdd
             for p in cpg:
                 article_connu = False
@@ -201,7 +216,7 @@ class ContenuDeQualite:
                     else:
                         self.nouveau.append( [ p.title(), p.namespace(), date, cat ] )
                 else:
-                    self.connaitdeja.append( p.title() )
+                    self.connaitdeja.append( [ p.title(), p.namespace(), date, cat ] )
 
         categorie = catlib.Category(self.site, u'Ancien article de qualité')
         cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
