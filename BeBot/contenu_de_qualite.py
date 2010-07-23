@@ -1,10 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-__version__ = 'ContenuDeQualité 20100717'
 import re, datetime, MySQLdb, getopt, sys
 from MySQLdb.constants import ER
 from wikipedia import *
-import pagegenerators, catlib, add_text
+import pagegenerators, catlib
 
 def moistoint(mois):
     " Convertit une chaîne de caractètre correspondant à un mois, en un entier i (1≤i≤12). "
@@ -48,7 +47,7 @@ class ContenuDeQualite:
         TODO : comparer la cat AdQ/BA avec la cat "Maintenance des "
         TODO : les portails/themes de qualité
         TODO : internationalisation : ajouter un champ "langue"
-        TODO : infos sur l'article (taille, inclusions, nombre de contributeurs...)
+        TODO : infos sur l'article (nombre inclusions, de contributeurs...)
     """
     def __init__(self, site, log, mode_maj):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
@@ -76,17 +75,17 @@ class ContenuDeQualite:
 
     def __str__(self):
         """
-        Log à publier
+        Log des modifications trouvées
         """
-        resultat =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »''' ; exécuté le " \
+        resultat =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »''' ; exécussion du " \
                 + datetime.date.today().strftime("%A %e %B %Y") + u"</center>\n\n"
         resultat += str(len(self.nouveau)) + u" nouveaux articles labellisés trouvés : " \
                 + str(self.denombrer(self.cat_qualite[0], [self.nouveau]) ) + u" AdQ et " \
                 + str(self.denombrer(self.cat_qualite[1], [self.nouveau]) ) + u" BA.\n\n"
-        resultat += str(len(self.dechu)) + u" ont été déchus depuis la dernière vérification. " \
-                + str(len(self.pasdedate)) + u" n'ont pas de date précisé, et " + str(len(self.connaitdeja)) + u" sont déjà connus." \
-        resultat += u"\n\n* Total après sauvegarde : " + str( len(self.nouveau) + len(self.connaitdeja) ) + u" articles labellisés"
-        resultat += u" (" + str(self.denombrer( self.cat_qualite[0], [self.nouveau, self.connaitdeja]) ) + " AdQ et " \
+        resultat += u"Au reste, il y a " + str(len(self.dechu)) + u" articles déchus depuis la dernière vérification, " \
+                + str(len(self.pasdedate)) + u" sans date précisée, et " + str(len(self.connaitdeja)) + u" déjà connus."
+        resultat += u"\n\n* Total après sauvegarde : " + str( len(self.nouveau) + len(self.connaitdeja) ) + u" articles labellisés" \
+                + u" (" + str(self.denombrer( self.cat_qualite[0], [self.nouveau, self.connaitdeja]) ) + " AdQ et " \
                 + str(self.denombrer( self.cat_qualite[1], [self.nouveau, self.connaitdeja]) ) + " BA).\n"
         resultat += u"\n== Nouveau contenu de qualité ==\n"
         resultat += self.lister_article(self.nouveau)
@@ -122,7 +121,7 @@ class ContenuDeQualite:
             elif type(table[0]) == type([]):
                 for p in table:
                     r.append(u"[[" + unicode(p[0]) + u"]] (" + unicode(p[3]) \
-                            + u' depuis le ' + unicode(p[2]) + u')')
+                            + u' au ' + unicode(p[2]) + u')')
             return u'* ' + '\n* '.join(r) + u'\n'
         return u''
 
@@ -133,8 +132,8 @@ class ContenuDeQualite:
         curseur = self.db.cursor()
         for q in self.nouveau:
             donnees = u'"' + unicode2html(q[0], 'ascii') + u'", ' + str(q[1]) + u', "' \
-                    + q[2].strftime("%Y-%m-%d") + u'", "' + q[3] + u'"'
-            req = u"INSERT INTO contenu_de_qualite(page, espacedenom, date, label) VALUES ("+ donnees + u")"
+                    + q[2].strftime("%Y-%m-%d") + u'", "' + q[3] + u'", "' + str(q[4]) + u'"'
+            req = u"INSERT INTO contenu_de_qualite(page, espacedenom, date, label, taille) VALUES ("+ donnees + u")"
             try:
                 curseur.execute(req)
             except MySQLdb.Error, e:
@@ -160,7 +159,7 @@ class ContenuDeQualite:
         Mise à jour un champ de la base de données
         """
         req = u"UPDATE contenu_de_qualite SET espacedenom=" + str(q[1]) \
-            + u', date="' + q[2].strftime("%Y-%m-%d") + u'", label="' + q[3] \
+            + u', date="' + q[2].strftime("%Y-%m-%d") + u'", label="' + q[3] + u'", taille="' + str(q[4]) \
             + u'" WHERE page="' + unicode2html(q[0], 'ascii') + u'"'
         try:
             curseur.execute(req)
@@ -193,6 +192,12 @@ class ContenuDeQualite:
                 return datetime.date(int(d.group(4)), moistoint(d.group(3)), int(d.group(2)))
         raise PasDeDate(titre)
 
+    def taille(self, page):
+        """
+        Retourne la taille d'une page en millier de caractères
+        """
+        return len(page.get())/1000
+
     def run(self):
         connus = self.charger()
         for cat in self.cat_qualite:
@@ -212,11 +217,11 @@ class ContenuDeQualite:
                         self.pasdedate.append(pdd.page)
                         continue
                     if article_connu:
-                        self.connaitdeja.append( [ p.title(), p.namespace(), date, cat ] )
+                        self.connaitdeja.append( [ p.title(), p.namespace(), date, cat, self.taille(p) ] )
                     else:
-                        self.nouveau.append( [ p.title(), p.namespace(), date, cat ] )
+                        self.nouveau.append( [ p.title(), p.namespace(), date, cat, self.taille(p) ] )
                 else:
-                    self.connaitdeja.append( [ p.title(), p.namespace(), date, cat ] )
+                    self.connaitdeja.append( [ p.title(), p.namespace(), '1970-01-01', cat, 0 ] )
 
         categorie = catlib.Category(self.site, u'Ancien article de qualité')
         cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
