@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-__version__ = 'PreparationWikimag 20100712'
 import re, datetime
 from wikipedia import *
 
@@ -41,7 +40,7 @@ class PreparationWikimag:
         while jour != 0:
             self.date = self.date - unjour
             jour = self.date.weekday()
-        self.lasemaine = self.date.strftime("%A %e %B %Y")
+        self.lasemaine = unicode(self.date.strftime("%A %e %B %Y"), "utf-8")
         self.date_fin = self.date + datetime.timedelta(days=7)
 
         self.jours = []
@@ -60,7 +59,7 @@ class PreparationWikimag:
         """ Page à publier 
         """
         resultat = u"''Préparation du [[Wikipédia:Wikimag|wikimag]] allant du " \
-            + self.lasemaine + u" au " + self.date_fin.strftime("%A %e %B %Y") + u".''\n"
+            + self.lasemaine + u" au " + unicode(self.date_fin.strftime("%A %e %B %Y"), "utf-8") + u".''\n"
 
         resultat += u"\n== Annonces ==\n"
         for a in self.annonces:
@@ -69,7 +68,7 @@ class PreparationWikimag:
         resultat += u"\n== Images du jour ==\n"
         for i in self.jours:
             resultat += u'* {{m|Wikipédia:Image du jour/' + str(int(i.strftime("%d"))) \
-                    + i.strftime(" %B %Y") + u"|namespace=Wikipédia}}\n"
+                    + unicode(i.strftime(" %B %Y"), "utf-8") + u"|namespace=Wikipédia}}\n"
 
         resultat += u"\n== Labels =="
         resultat += u"\n=== AdQ ===\n"
