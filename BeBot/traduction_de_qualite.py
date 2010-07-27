@@ -27,8 +27,8 @@ class TraductionDeQualite:
         cats = []
         cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article à traduire")))
         cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article à relire")))
-        #cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article en cours de traduction")))
-        #cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article en cours de relecture")))
+        cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article en cours de traduction")))
+        cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article en cours de relecture")))
         for t in pagegenerators.CombinedPageGenerator(cats):
             self.traductions.append(t)
         
@@ -45,13 +45,13 @@ class TraductionDeQualite:
         self.ignor_list[self.site.family.name] = {'fr':tmp}
 
         self.trads = [ [], [], [], [], [], [] ] # Pages de traductions d'articles de qualité classées par statut
-        self.term_et_label = [ [], [], [] ]   # Traductions terminés sans label, en attente de label, labellisées
+        self.term_et_label = [ [], [], [] ]   # Traductions terminées sans label, en attente de label, ou labellisées
 
     def __str__(self):
         """
         Log à publier
         """
-        resultat =  u'{{Sommaire à droite}}\nActivités de [[Utilisateur:BeBot]] le ' + datetime.date.today().strftime("%A %e %B %Y") \
+        resultat =  u'{{Sommaire à droite}}\nActivités du ' + datetime.date.today().strftime("%A %e %B %Y") \
                 + u' concernant les articles associés au Projet:Traduction qui sont labellisés sur un autre Wikipédia.\n'
         resultat += u'== Candidats au suivi ==\n'
         resultat += u'Voici une liste des pages de suivi de traduction dont le paramètre « intérêt » pourrait être mis à "adq" ou "ba".\n\n'
@@ -60,8 +60,8 @@ class TraductionDeQualite:
             resultat += u'* [[' + p[0].title() + u']] ('+ p[1] +')\n'
 
         resultat +=  u'\n== Suivi des traductions ==\n'
-        resultat +=  u'Mise à jour du suivi des traductions ([[Projet:Suivi des articles de qualité des autres wikipédias/Traduction]]).\n\nStatut : ### en cours de développement ###\n\n'
-        resultat +=  u'\nTraductions par statut : ' + str(len(self.trads[1])) + u' demandes, ' \
+        resultat +=  u'Mise à jour du suivi des traductions ([[Projet:Suivi des articles de qualité des autres wikipédias/Traduction]]).\n\n'
+        resultat +=  u'Traductions par statut : ' + str(len(self.trads[1])) + u' demandes, ' \
                 + str(len(self.trads[2])) + u' traductions en cours, ' + str(len(self.trads[3])) + u' demandes de relecture, ' \
                 + str(len(self.trads[4])) + u' relectures en cours, ' + str(len(self.trads[5])) + u' terminées (' \
                 + str(len(self.term_et_label[0])) + u' sans label, ' + str(len(self.term_et_label[2])) + u' labellisées).\n\n'
@@ -102,32 +102,32 @@ class TraductionDeQualite:
             else:
                 return [u'IMPOSSIBLE']
 
-    def genererListing(self, liste, simple = False):
+    def publier(self, souspage, liste, soustableau=0, simple=False):
         """
-        Génère une page-listing prête à publier à partir d'une liste de pages.
-        Mettre "simple" à vrai permet d'obtenir un affichage simplifié sous form de liste de liens.
+        Racourci pour publier une liste d'article sur une souspage du P:SAdQaW
+        La paramètre « simple » permet d'obtenir un affichage simplifié sous forme d'une liste de liens.
         """
         if simple:
             m = []
-            for t in liste:
+            for t in liste[soustableau]:
                 m.append(t.title())
-            retour = u'[[' + u']], [['.join(m) + u']]'
-            return retour
+            return u'<noinclude>[[' + u']], [['.join(m) + u']].</noinclude>\n'
         else:
             retour = u''
 
-        for i, t in enumerate(liste):
-            retour += u'* {{' + t.title() + u'}}'
-            if i == 12: r += u'<noinclude>'
+        for i, t in enumerate(liste[soustableau]):
+            retour += u'{{' + t.title() + u'}}'
+            if i == 12: retour += u'<noinclude>'
+            retour += u'\n'
         retour += u'\n</noinclude>'
-        return retour
-
+        wikipedia.Page(self.site, u'Projet:Suivi des articles de qualité des autres wikipédias/Traduction/' + souspage).put(retour, comment=self.resumeListing)
+        
     def run(self):
         ##################################
         #####     Candidatures
         cats = []
         cats.append(pagegenerators.PageTitleFilterPageGenerator(pagegenerators.ReferringPageGenerator(wikipedia.Page(self.site, u"Modèle:Lien AdQ"), followRedirects=True, withTemplateInclusion=True), self.ignor_list))
-        #cats.append(pagegenerators.PageTitleFilterPageGenerator(pagegenerators.ReferringPageGenerator(wikipedia.Page(self.site, u"Modèle:Lien BA"), followRedirects=True, withTemplateInclusion=True), self.ignor_list))
+        cats.append(pagegenerators.PageTitleFilterPageGenerator(pagegenerators.ReferringPageGenerator(wikipedia.Page(self.site, u"Modèle:Lien BA"), followRedirects=True, withTemplateInclusion=True), self.ignor_list))
         for m in pagegenerators.CombinedPageGenerator(cats):
             if m.namespace() == 0: # ... alors prendre la page de trad
                 tradpage = self.togglePageTrad(m)
@@ -166,22 +166,23 @@ class TraductionDeQualite:
             self.trads[statut].append(tq)
 
         ### Publication des listings
-        wikipedia.Page(self.site, u'Projet:Suivi des articles de qualité des autres wikipédias/Traduction/DemandeTraduction').put(self.genererListing(self.trads[1]), comment=self.resumeListing)
-        wikipedia.Page(self.site, u'Projet:Suivi des articles de qualité des autres wikipédias/Traduction/EnTraduction').put(self.genererListing(self.trads[2]), comment=self.resumeListing)
-#        wikipedia.Page(self.site, u'Projet:Suivi des articles de qualité des autres wikipédias/Traduction/DemandeRelecture').put(self.genererListing(self.trads[3]), comment=self.resumeListing)
-#        wikipedia.Page(self.site, u'Projet:Suivi des articles de qualité des autres wikipédias/Traduction/EnRelecture').put(self.genererListing(self.trads[4]), comment=self.resumeListing)
+        self.publier(u'DemandeTraduction', self.trads, 1)
+        self.publier(u'EnTraduction', self.trads, 2)
+        self.publier(u'DemandeRelecture', self.trads, 3)
+        self.publier(u'EnRelecture', self.trads, 4)
 
         # Cas de statut 5 (terminé)
         for pt in self.trads[5]:
+            etat_label = 0
             for cat in self.togglePageTrad(pt).categories(api=True):
                 if cat.title() == u"Catégorie:Article de qualité" or cat.title() == u'Catégorie:Bon article' :  #1
-                    self.term_et_label[2].append(pt)
+                    etat_label = 2
                     break
-                self.term_et_label[0].append(pt)
+            self.term_et_label[etat_label].append(pt)
 
-        wikipedia.Page(self.site, u'Projet:Suivi des articles de qualité des autres wikipédias/Traduction/Labellisées').put(self.genererListing(self.term_et_label[2], simple=True), comment=self.resumeListing)
+        self.publier(u'Labellisées', self.term_et_label, 2, True)
 #        wikipedia.Page(self.site, u"Projet:Suivi des articles de qualité des autres wikipédias/Traduction/En attente d'être labellisées").put(self.genererListing(self.term_et_label[1]), comment=self.resumeListing)
-        wikipedia.Page(self.site, u'Projet:Suivi des articles de qualité des autres wikipédias/Traduction/Terminées sans label').put(self.genererListing(self.term_et_label[0]), comment=self.resumeListing)
+        self.publier(u'Terminées sans label', self.term_et_label, 0, False)
 
 def main():
     site = wikipedia.getSite()
