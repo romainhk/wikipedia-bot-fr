@@ -60,13 +60,14 @@ class TraductionDeQualite:
             resultat += u'* [[' + p[0].title() + u']] ('+ p[1] +')\n'
 
         resultat +=  u'\n== Suivi des traductions ==\n'
-        resultat +=  u'Mise à jour du suivi des traductions ([[Projet:Suivi des articles de qualité des autres wikipédias/Traduction]]).\n\n'
+        resultat +=  u'Mise à jour du suivi des ' + str(len(self.trads[1]) + len(self.trads[2]) \
+                + len(self.trads[3]) + len(self.trads[4]) + len(self.trads[5]) ) \
+                + u' traductions ([[Projet:Suivi des articles de qualité des autres wikipédias/Traduction]]).\n\n'
         resultat +=  u'Traductions par statut : ' + str(len(self.trads[1])) + u' demandes, ' \
                 + str(len(self.trads[2])) + u' traductions en cours, ' + str(len(self.trads[3])) + u' demandes de relecture, ' \
                 + str(len(self.trads[4])) + u' relectures en cours, ' + str(len(self.trads[5])) + u' terminées (' \
                 + str(len(self.term_et_label[0])) + u' sans label, ' + str(len(self.term_et_label[2])) + u' labellisées).\n\n'
-        # TODO: mettre un petit icone "attention"
-        resultat +=  u"=== Traductions sans statut ===\nIl n'a pas été possible de trouver le statut de ces traductions :\n"
+        resultat +=  u"=== [[Image:Nuvola apps important yellow.svg|30px|À vérifier]] Traductions sans statut ===\nIl n'a pas été possible de trouver le statut de ces traductions :\n"
         for t in self.trads[0]:
             resultat += u'* [[' + t.title() + u']]\n'
 
@@ -80,7 +81,7 @@ class TraductionDeQualite:
             return wikipedia.Page(self.site, page.toggleTalkPage().title()+"/Traduction")
         else:
             # Espace de discussion
-            return wikipedia.Page(self.site, page.toggleTalkPage().title().strip('/Traduction'))
+            return wikipedia.Page(self.site, page.toggleTalkPage().title().split('/Traduction')[0])
 
     def langueCible(self, page):
         """
@@ -107,19 +108,22 @@ class TraductionDeQualite:
         Racourci pour publier une liste d'article sur une souspage du P:SAdQaW
         La paramètre « simple » permet d'obtenir un affichage simplifié sous forme d'une liste de liens.
         """
+        retour = str(len(liste[soustableau])) + u' page(s).\n\n'
         if simple:
             m = []
             for t in liste[soustableau]:
                 m.append(t.title())
-            return u'<noinclude>[[' + u']], [['.join(m) + u']].</noinclude>\n'
+            retour += u'<noinclude>[[' + u']], [['.join(m) + u']].\n</noinclude>\n'
         else:
-            retour = u''
-
-        for i, t in enumerate(liste[soustableau]):
-            retour += u'{{' + t.title() + u'}}'
-            if i == 12: retour += u'<noinclude>'
-            retour += u'\n'
-        retour += u'\n</noinclude>'
+            noinclude = False
+            for i, t in enumerate(liste[soustableau]):
+                retour += u'{{' + t.title() + u'}}'
+                if i == 11:
+                    retour += u'<noinclude>'
+                    noinclude = True
+                retour += u'\n'
+            if noinclude:
+                retour += u'</noinclude>'
         wikipedia.Page(self.site, u'Projet:Suivi des articles de qualité des autres wikipédias/Traduction/' + souspage).put(retour, comment=self.resumeListing)
         
     def run(self):
@@ -175,7 +179,7 @@ class TraductionDeQualite:
         for pt in self.trads[5]:
             etat_label = 0
             for cat in self.togglePageTrad(pt).categories(api=True):
-                if cat.title() == u"Catégorie:Article de qualité" or cat.title() == u'Catégorie:Bon article' :  #1
+                if cat.title() == u"Catégorie:Article de qualité" or cat.title() == u'Catégorie:Bon article' :
                     etat_label = 2
                     break
             self.term_et_label[etat_label].append(pt)
