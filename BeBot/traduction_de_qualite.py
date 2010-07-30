@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
 import re, datetime
+import BeBot
 from wikipedia import *
 import pagegenerators, catlib
 
@@ -39,7 +40,7 @@ class TraductionDeQualite:
         cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Traduction d'un Article de Qualité")))
         cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Traduction d'un Bon Article")))
         for tion in pagegenerators.CombinedPageGenerator(cats):
-            tmp.append(self.togglePageTrad(tion).title())
+            tmp.append(BeBot.togglePageTrad(self.site, tion).title())
             self.tradQualite.append(tion)
 
         self.ignor_list[self.site.family.name] = {'fr':tmp}
@@ -73,16 +74,6 @@ class TraductionDeQualite:
 
         return resultat
 
-    def togglePageTrad(self, page):
-        """
-        Retourne la page de traduction associée à un page, ou la page associée à une traduction
-        """
-        if (page.namespace() % 2) == 0:
-            return wikipedia.Page(self.site, page.toggleTalkPage().title()+"/Traduction")
-        else:
-            # Espace de discussion
-            return wikipedia.Page(self.site, page.toggleTalkPage().title().split('/Traduction')[0])
-
     def langueCible(self, page):
         """
         Détermine la langue ciblée par une traduction et par le modèle {{Lien AdQ/BA}}.
@@ -108,7 +99,7 @@ class TraductionDeQualite:
         Racourci pour publier une liste d'article sur une souspage du P:SAdQaW
         La paramètre « simple » permet d'obtenir un affichage simplifié sous forme d'une liste de liens.
         """
-        retour = str(len(liste[soustableau])) + u' page(s).\n\n'
+        retour = str(len(liste[soustableau])) + u' pages.\n\n'
         if simple:
             m = []
             for t in liste[soustableau]:
@@ -134,7 +125,7 @@ class TraductionDeQualite:
         cats.append(pagegenerators.PageTitleFilterPageGenerator(pagegenerators.ReferringPageGenerator(wikipedia.Page(self.site, u"Modèle:Lien BA"), followRedirects=True, withTemplateInclusion=True), self.ignor_list))
         for m in pagegenerators.CombinedPageGenerator(cats):
             if m.namespace() == 0: # ... alors prendre la page de trad
-                tradpage = self.togglePageTrad(m)
+                tradpage = BeBot.togglePageTrad(self.site, m)
                 for t in self.traductions:
                    if t.title() == tradpage.title():
                         #Vérification de la correspondance des langues cibles
@@ -145,6 +136,7 @@ class TraductionDeQualite:
                                 self.candidats.append([tradpage, cibleTrad])
                                 break;
                         break;
+        # Faux positifs : Timée (Platon), Les Époux Arnolfini (Jan van Eyck), Forest Park (parc), Europe (lune)
 
         ##################################
         #####     Mise à jour du suivi
@@ -178,7 +170,7 @@ class TraductionDeQualite:
         # Cas de statut 5 (terminé)
         for pt in self.trads[5]:
             etat_label = 0
-            for cat in self.togglePageTrad(pt).categories(api=True):
+            for cat in BeBot.togglePageTrad(self.site, pt).categories(api=True):
                 if cat.title() == u"Catégorie:Article de qualité" or cat.title() == u'Catégorie:Bon article' :
                     etat_label = 2
                     break

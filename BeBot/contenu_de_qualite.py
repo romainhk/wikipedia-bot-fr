@@ -2,27 +2,9 @@
 # -*- coding: utf-8  -*-
 import re, datetime, MySQLdb, getopt, sys
 from MySQLdb.constants import ER
+import BeBot
 from wikipedia import *
 import pagegenerators, catlib
-
-def moistoint(mois):
-    " Convertit une chaîne de caractètre correspondant à un mois, en un entier i (1≤i≤12). "
-    mois = mois.lower()
-    if mois == u'janvier':     return 1
-    elif mois == u'février':   return 2
-    elif mois == u'mars':      return 3
-    elif mois == u'avril':     return 4
-    elif mois == u'mai':       return 5
-    elif mois == u'juin':      return 6
-    elif mois == u'juillet':   return 7
-    elif mois == u'août':      return 8
-    elif mois == u'septembre':  return 9
-    elif mois == u'octobre':    return 10
-    elif mois == u'novembre':   return 11
-    elif mois == u'décembre':   return 12
-    else:
-        wikipedia.output(u'Mois « %s » non reconnu' % mois)
-    return 0
 
 class PasDeDate(Exception):
     """
@@ -44,7 +26,7 @@ class ContenuDeQualite:
     * Mode de mise à jour : en mode strict, les informations des articles déjà connus seront systématiquement mises à jour (UPDATE). Pour l'activer, utiliser l'option "-s".
 
         TODO : les intentions de proposition au label.
-        TODO : comparer la cat AdQ/BA avec la cat "Maintenance des "
+        TODO : la sous-page de traduction, si elle existe
         TODO : les portails/themes de qualité
         TODO : internationalisation : ajouter un champ "langue"
         TODO : infos sur l'article (nombre inclusions, de contributeurs...)
@@ -54,7 +36,7 @@ class ContenuDeQualite:
         self.site = site
         self.log = log
         self.page_resultat = wikipedia.Page(site, log)
-        self.cat_qualite = [ u'Article de qualité',  u'Bon article']
+        self.cat_qualite = [ u'Article de qualité',  u'Bon article'] # Nom des catégories des deux labels
         if mode_maj == "strict":
             self.maj_stricte = True
             wikipedia.output(u'# Mode de mise à jour "strict" actif (tous les updates seront effectués)')
@@ -187,16 +169,10 @@ class ContenuDeQualite:
                 + u"\| *date *= *\{{0,2}(\d{1,2})[^ 0-9]*\}{0,2} ([^\| \{\}0-9]{3,9}) (\d{2,4})", re.LOCALE)
         d = dateRE.search(page)
         if d:
-            mti = moistoint(d.group(3))
+            mti = BeBot.moistoint(d.group(3))
             if mti > 0:
-                return datetime.date(int(d.group(4)), moistoint(d.group(3)), int(d.group(2)))
+                return datetime.date(int(d.group(4)), BeBot.moistoint(d.group(3)), int(d.group(2)))
         raise PasDeDate(titre)
-
-    def taille(self, page):
-        """
-        Retourne la taille d'une page en millier de caractères
-        """
-        return len(page.get())/1000
 
     def run(self):
         connus = self.charger()
@@ -217,9 +193,9 @@ class ContenuDeQualite:
                         self.pasdedate.append(pdd.page)
                         continue
                     if article_connu:
-                        self.connaitdeja.append( [ p.title(), p.namespace(), date, cat, self.taille(p) ] )
+                        self.connaitdeja.append( [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p) ] )
                     else:
-                        self.nouveau.append( [ p.title(), p.namespace(), date, cat, self.taille(p) ] )
+                        self.nouveau.append( [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p) ] )
                 else:
                     self.connaitdeja.append( [ p.title(), p.namespace(), '1970-01-01', cat, 0 ] )
 
