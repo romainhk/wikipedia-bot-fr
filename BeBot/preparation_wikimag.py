@@ -1,26 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
 import re, datetime
+import BeBot
 from wikipedia import *
-
-def moistoint(mois):
-    " Convertit une chaîne de caractètre correspondant à un mois, en un entier i (1≤i≤12). "
-    mois = mois.lower()
-    if mois in 'janvier    january':   return 1
-    elif mois in u'février febuary':   return 2
-    elif mois in 'mars     march':     return 3
-    elif mois in 'avril    april':     return 4
-    elif mois in 'mai      may':       return 5
-    elif mois in 'juin     june':      return 6
-    elif mois in 'juillet  july':      return 7
-    elif mois in u'août    august':    return 8
-    elif mois in 'septembre  september':  return 9
-    elif mois in 'octobre    october':    return 10
-    elif mois in 'novembre   november':   return 11
-    elif mois in u'décembre  december':   return 12
-    else:
-        wikipedia.output(u'Mois « %s » non reconnu' % mois)
-    return 0
 
 class PreparationWikimag:
     """ Préparation d'un wikimag : 
@@ -84,17 +66,6 @@ class PreparationWikimag:
                 resultat += u'* [[' + a + u']]\n'
         return resultat
 
-    def page_ligne_par_ligne(self, nompage):
-        """ Lit une wikipage ligne par ligne
-        """
-        try:
-            page = wikipedia.Page(self.site, nompage).get()
-        except pywikibot.exceptions.NoPage:
-            wikipedia.output(u"La page « %s » n'est pas accessible." % nompage)
-            return
-        for ligne in page.split("\n"):
-            yield ligne
-
     def articles_promus(self, nompage, RE):
         """ Traitement pour les articles promus
         * listage des articles à vérifier
@@ -111,10 +82,10 @@ class PreparationWikimag:
         moisRE = re.compile("=== *([^\s\d=]+) *===", re.LOCALE)
 
         # Listage des articles des mois courants
-        for ligne in self.page_ligne_par_ligne(nompage):
+        for ligne in BeBot.page_ligne_par_ligne(self.site, nompage):
             m = moisRE.search(ligne)
             if m:                                   # Changement de mois
-                mc = moistoint(m.group(1))
+                mc = BeBot.moistoint(m.group(1))
                 if mc not in mois: mc = ""
                 continue
             a = self.articleRE.match(ligne)
@@ -138,7 +109,7 @@ class PreparationWikimag:
                 d = dateRE.search(date)
                 if d:
                     jour = d.group(1)
-                    mois = moistoint(d.group(2))
+                    mois = BeBot.moistoint(d.group(2))
                     annee = d.group(3)
                     date_adq = datetime.date(day=int(jour), month=mois, year=int(annee))
                     if not (self.date > date_adq) and not (self.date_fin <= date_adq):
@@ -154,11 +125,11 @@ class PreparationWikimag:
         moisRE = re.compile("==== *(\w+) *====", re.LOCALE)
         annonceRE = re.compile("\{\{[aA]nnonce[^\|]*\|(\d+)\|")
         mois_courant = int(self.date.strftime("%m"))
-        for ligne in self.page_ligne_par_ligne(u'Wikipédia:Annonces'):
+        for ligne in BeBot.page_ligne_par_ligne(self.site, u'Wikipédia:Annonces'):
             if re.match(r'== *Voir ', ligne): break     # Fin des annonces
             m = moisRE.search(ligne)
             if m:                                   # Changement de mois
-                mois_courant = moistoint(m.group(1))
+                mois_courant = BeBot.moistoint(m.group(1))
                 continue
             a = annonceRE.match(ligne)
             if a:                                   # Une annonce
