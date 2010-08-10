@@ -74,35 +74,34 @@ languages = [
         [ 'wuu', 'wu',      "le&nbsp;" ]
     ]
 
-cats = [[u'Article à traduire', 'Demande de traduction', 'Demandes', 'Demandes de traduction'],
-        [u'Article en cours de traduction', 'Traduction en cours', 'En cours', 'Traductions en cours'],
-        [u'Article à relire', u'Traduction à relire', 'A relire', u'Traductions à relire'],
-        [u'Article en cours de relecture', u'Relecture en cours', 'En relecture', 'Relectures en cours'],
-        [u'Traduction terminée', u'Traduction terminée', u'Terminée', u'Traductions terminées']]
+cats = [[u'Article à traduire', 'Demande de traduction',        'Demandes', 'Demandes de traduction'],
+        [u'Article en cours de traduction', 'Traduction en cours',  'En cours', 'Traductions en cours'],
+        [u'Article à relire', u'Traduction à relire',           'A relire', u'Traductions à relire'],
+        [u'Article en cours de relecture', u'Relecture en cours',   'En relecture', 'Relectures en cours'],
+        [u'Traduction terminée', u'Traduction terminée',        u'Terminée', u'Traductions terminées']]
 
 int2month = [u'placeholder_zero', u'janvier', u'février', u'mars', u'avril',
              u'mai', u'juin', u'juillet', u'août', u'septembre', u'octobre',
              u'novembre', u'décembre']
 month2int = dict((month, i) for i, month in enumerate(int2month))
 
-#site = pywikibot.Site('fr', 'wikipedia')
-site = pywikibot.Site('fr', 'perso2')
+site = pywikibot.Site('fr', 'wikipedia')
 
 pywikibot.setAction(u'Robot : Màj hebdomadaire des pages de suivi du Projet:Traduction')
 
+#Résultats
 bylang = {}
 bystatus = {}
 
+#RE
 re_date = re.compile(u'\|\s*jour\s*=.*(?P<day>(?:(?<=\D)\d|\d{2}))\s*\|\s*mois\s*=\s*(?P<month>[\wéû]+)\s*\|\s*année\s*=\s*(?P<year>\d{4})')
 re_lang = re.compile(u'\{\{(Translation/Information|Traduction/Suivi)\s*\|(?P<code>\w{2,8})\|')
 
-# TODO : 
-# * lister les pages sans date trouvée
-
 def datecmp(x, y):
-    """x, y are [datetime, Page] elements.
-       Sort by date, let newer dates get first."""
-
+    """
+        x, y are [datetime, Page] elements.
+        Sort by date, let newer dates get first.
+    """
     if x[0] < y[0]:
         return 1
     elif x[0] > y[0]:
@@ -112,7 +111,7 @@ def datecmp(x, y):
 
 def put_page(page, new):
     """
-    Prints diffs between orginal and new (text), puts new text for page
+        Prints diffs between orginal and new (text), puts new text for page
     """
     pywikibot.output(u"\n\n>>> \03{lightpurple}%s\03{default} <<<"
                      % page.title())
@@ -121,7 +120,7 @@ def put_page(page, new):
     except pywikibot.NoPage:
         pywikibot.showDiff("", new)
     try:
-        page.put(new)
+        page.put(new, minorEdit=False)
     except pywikibot.EditConflict:
         pywikibot.warning(u'Skipping %s because of edit conflict'
                           % (page,))
@@ -183,9 +182,9 @@ for item in cats:
                 if bylang.has_key(lang.group('code')):
                     bylang[lang.group('code')][cat].append(elem)
                 else:
-                    pywikibot.output(u'Mauvaise langue cible sur %s' % page.title(asLink=True) )
+                    pywikibot.warning(u'mauvaise langue cible sur %s' % page.title(asLink=True) )
             else:
-                pywikibot.output(u'Pas de langue cible pour %s' % page.title(asLink=True) )
+                pywikibot.warning(u'pas de langue cible pour %s' % page.title(asLink=True) )
 
 # Okay, we now have two sorted collections containing the info we needed.
 ###############################
@@ -194,6 +193,8 @@ for l in bylang.itervalues():
     for m in l.itervalues():
         m.sort(cmp=datecmp)
 header_pattern = u'{{Translation/IntroLang|code langue=%s|langue=%s|article=%s}}'
+LIMITE_CHAPITRE = 50
+LIMITE_DEROULANT = 15
 for code, nomlong, pre in languages:
     langpage = pywikibot.Page(site, u'Projet:Traduction/*/Lang/%s' % code)
     new_text = header_pattern % (code, nomlong, pre) + '\n\n'
@@ -206,7 +207,7 @@ for code, nomlong, pre in languages:
     # Limitation du nombre de modèles affichés
     k = lengths.keys()
     v = lengths.values()
-    while sum(v) > 150:
+    while sum(v) > 90:
         m = max(v)
         ind = v.index(m)
         m = m*3/4
@@ -220,14 +221,14 @@ for code, nomlong, pre in languages:
         new_text += u'== %s ==\n' % nomlong
         length = len(bylang[code][status])
         found += length
-        if length > 80:
-            length = 80
+        if length > LIMITE_CHAPITRE:
+            length = LIMITE_CHAPITRE
             bylang[code][status] = bylang[code][status][:length]
-        if length > 20:
+        if length > LIMITE_DEROULANT:
             new_text += u'{{Boîte déroulante début|titre=%s/%s %s}}\n' % (length, lengths[status], item[3])
         for elem in bylang[code][status]:
             new_text += u'{{%s}}\n' % elem[1].title()
-        if length > 20:
+        if length > LIMITE_DEROULANT:
             new_text += u'{{Boîte déroulante fin}}\n'
         new_text += '\n'
     if not langpage.exists():
@@ -273,6 +274,5 @@ for item in cats:
         text = before % ttype + text
         put_page(page, text)
 
-# TODO : log de statistique
-
+pywikibot.output(u'Total : %s demandes, %s terminées' % ( str(len(bystatus[cats[0][0]])), str(len(bystatus[cats[5][0]])) ) )
 print 'DONE.'
