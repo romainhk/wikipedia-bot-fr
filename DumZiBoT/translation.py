@@ -18,59 +18,60 @@ import re
 from datetime import datetime
 
 languages = [
-        [ 'en', 'anglais', "l'" ],
+        [ 'en', 'anglais',  "l'" ],
         [ 'de', 'allemand', "l'" ],
         [ 'pl', 'polonais', "le&nbsp;" ],
         [ 'ja', 'japonais', "le&nbsp;" ],
         [ 'nl', u'néerlandais', "le&nbsp;" ],
-        [ 'it', 'italien', "l'" ],
-        [ 'pt', 'portugais', "le&nbsp;" ],
+        [ 'it', 'italien',  "l'" ],
+        [ 'pt', 'portugais',    "le&nbsp;" ],
         [ 'sv', u'suédois', "le&nbsp;" ],
         [ 'es', 'espagnol', "l'" ],
-        [ 'ru', 'russe', "le&nbsp;" ],
-        [ 'zh', 'chinois', "le&nbsp;" ],
-        [ 'fi', 'finnois', "le&nbsp;" ],
-        [ 'no', u'norvégien', "le&nbsp;" ],
-        [ 'eo', 'esperanto', "l'" ],
-        [ 'lv', 'letton', "le&nbsp;" ],
+        [ 'ru', 'russe',    "le&nbsp;" ],
+        [ 'zh', 'chinois',  "le&nbsp;" ],
+        [ 'fi', 'finnois',  "le&nbsp;" ],
+        [ 'no', u'norvégien',   "le&nbsp;" ],
+        [ 'eo', 'esperanto',    "l'" ],
+        [ 'lv', 'letton',   "le&nbsp;" ],
         [ 'sk', 'slovaque', "le&nbsp;" ],
-        [ 'da', 'danois', "le&nbsp;" ],
+        [ 'da', 'danois',   "le&nbsp;" ],
         [ 'cs', u'tchèque', "le&nbsp;" ],
-        [ 'he', u'hébreu', "l'" ],
-        [ 'ca', 'catalan', "le&nbsp;" ],
-        [ 'id', u'indonésien', "l'" ],
+        [ 'he', u'hébreu',  "l'" ],
+        [ 'ca', 'catalan',  "le&nbsp;" ],
+        [ 'id', u'indonésien',  "l'" ],
         [ 'hu', 'hongrois', "le&nbsp;" ],
-        [ 'ro', 'roumain', "le&nbsp;" ],
-        [ 'uk', 'ukrainien', "l'" ],
-        [ 'tr', 'turc', "le&nbsp;" ],
-        [ 'sr', 'serbe', "le&nbsp;" ],
-        [ 'lt', 'lithuanien', "le&nbsp;" ],
-        [ 'sl', u'slovène', "le&nbsp;" ],
-        [ 'bg', 'bulgare', "le&nbsp;" ],
-        [ 'ko', u'coréen', "le&nbsp;" ],
+        [ 'ro', 'roumain',  "le&nbsp;" ],
+        [ 'uk', 'ukrainien',    "l'" ],
+        [ 'tr', 'turc',     "le&nbsp;" ],
+        [ 'sr', 'serbe',    "le&nbsp;" ],
+        [ 'lt', 'lithuanien',   "le&nbsp;" ],
+        [ 'sl', u'slovène',     "le&nbsp;" ],
+        [ 'bg', 'bulgare',  "le&nbsp;" ],
+        [ 'ko', u'coréen',  "le&nbsp;" ],
         [ 'et', 'estonien', "l'" ],
-        [ 'te', u'télougou', "le&nbsp;" ],
-        [ 'hr', 'croate', "le&nbsp;" ],
-        [ 'ar', 'arabe', "l'" ],
+        [ 'te', u'télougou',    "le&nbsp;" ],
+        [ 'hr', 'croate',   "le&nbsp;" ],
+        [ 'ar', 'arabe',    "l'" ],
         [ 'gl', 'galicien', "le&nbsp;" ],
         [ 'nn', u'norvégien nynorsk', "le&nbsp;" ],
-        [ 'th', u'thaï', "le&nbsp;" ],
-        [ 'fa', 'persan', "le&nbsp;" ],
+        [ 'th', u'thaï',    "le&nbsp;" ],
+        [ 'fa', 'persan',   "le&nbsp;" ],
         [ 'el', 'grec moderne', "le&nbsp;" ],
-        [ 'ms', 'malais', "le&nbsp;" ],
-        [ 'eu', 'basque', "le&nbsp;" ],
-        [ 'io', 'ido', "l'" ],
-        [ 'ka', u'géorgien', "le&nbsp;" ],
-        [ 'nap', 'napolitain', "le&nbsp;" ],
-        [ 'bn', 'bengali', "le&nbsp;" ],
-        [ 'is', 'islandais', "l'" ],
-        [ 'vi', 'vietnamien', "le&nbsp;" ],
+        [ 'ms', 'malais',   "le&nbsp;" ],
+        [ 'eu', 'basque',   "le&nbsp;" ],
+        [ 'io', 'ido',      "l'" ],
+        [ 'ka', u'géorgien',    "le&nbsp;" ],
+        [ 'nap', 'napolitain',  "le&nbsp;" ],
+        [ 'bn', 'bengali',  "le&nbsp;" ],
+        [ 'is', 'islandais',    "l'" ],
+        [ 'vi', 'vietnamien',   "le&nbsp;" ],
         [ 'simple', 'anglais simple', "l'" ],
-        [ 'bs', 'bosnien', "le&nbsp;" ],
+        [ 'bs', 'bosnien',  "le&nbsp;" ],
         [ 'lb', 'luxembourgeois', "le&nbsp;" ],
-        [ 'br', 'breton', "le&nbsp;" ],
-        [ 'la', 'latin', "le&nbsp;" ],
-        [ 'wuu', 'wu', "le&nbsp;" ]
+        [ 'br', 'breton',   "le&nbsp;" ],
+        [ 'la', 'latin',    "le&nbsp;" ],
+        [ 'wa', 'wallon',   "le&nbsp;" ],
+        [ 'wuu', 'wu',      "le&nbsp;" ]
     ]
 
 cats = [[u'Article à traduire', 'Demande de traduction', 'Demandes', 'Demandes de traduction'],
@@ -158,7 +159,6 @@ for lang, x, y in languages:
 for item in cats:
     cat = item[0]
     pywikibot.output(u'Processing category "%s"...' % cat)
-#    if not bystatus.has_key(cat):
     bystatus[cat] = []
     cur_cat = pywikibot.Page(site, u'Catégorie:%s' % cat)
     gen = site.categorymembers(cur_cat, step=4900)
@@ -190,6 +190,9 @@ for item in cats:
 # Okay, we now have two sorted collections containing the info we needed.
 ###############################
 ##### Page-lang
+for l in bylang.itervalues():
+    for m in l.itervalues():
+        m.sort(cmp=datecmp)
 header_pattern = u'{{Translation/IntroLang|code langue=%s|langue=%s|article=%s}}'
 for code, nomlong, pre in languages:
     langpage = pywikibot.Page(site, u'Projet:Traduction/*/Lang/%s' % code)
@@ -200,7 +203,7 @@ for code, nomlong, pre in languages:
         length = len(bylang[code][item[0]])
         lengths[item[0]] = length
 
-    """
+    # Limitation du nombre de modèles affichés
     k = lengths.keys()
     v = lengths.values()
     while sum(v) > 150:
@@ -210,7 +213,6 @@ for code, nomlong, pre in languages:
         v[ind] = m
         ind = k[ind]
         bylang[code][ind] = bylang[code][ind][:m]
-    """
 
     for item in cats:
         status = item[0]
