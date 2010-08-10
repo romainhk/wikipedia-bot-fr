@@ -18,11 +18,6 @@ import re
 from datetime import datetime
 
 languages = [
-        [ 'it', 'italien', "l'" ],
-        [ 'en', 'anglais', "l'" ],
-        [ 'pl', 'polonais', "le&nbsp;" ] ]
-"""
-languages = [
         [ 'en', 'anglais', "l'" ],
         [ 'de', 'allemand', "l'" ],
         [ 'pl', 'polonais', "le&nbsp;" ],
@@ -77,7 +72,6 @@ languages = [
         [ 'la', 'latin', "le&nbsp;" ],
         [ 'wuu', 'wu', "le&nbsp;" ]
     ]
-"""
 
 cats = [[u'Article à traduire', 'Demande de traduction', 'Demandes', 'Demandes de traduction'],
         [u'Article en cours de traduction', 'Traduction en cours', 'En cours', 'Traductions en cours'],
@@ -103,10 +97,7 @@ re_date = re.compile(u'\|\s*jour\s*=.*(?P<day>(?:(?<=\D)\d|\d{2}))\s*\|\s*mois\s
 re_lang = re.compile(u'\{\{(Translation/Information|Traduction/Suivi)\s*\|(?P<code>\w{2,8})\|')
 
 # TODO : 
-# * modifier re_date (nouveaux paramètres jour/mois/année)
-# * nouvelles catégories : séparation des catégories "statut" et "langue" -> séparation du code d'initialisation
-# * m : en-tête/pied de page différents
-# * lister les page sans date trouvée
+# * lister les pages sans date trouvée
 
 def datecmp(x, y):
     """x, y are [datetime, Page] elements.
@@ -144,6 +135,7 @@ def put_page(page, new):
     except pywikibot.ServerError, e:
         pywikibot.warning(u'Server Error : %s' % e)
 
+"""
 def genFromList(gen):
     for item in gen:
         tmp = item[1].title()
@@ -151,6 +143,7 @@ def genFromList(gen):
         tradpage.traddate = item[0]
         tradpage.tradpage = item[1]
         yield tradpage
+"""
 
 def get_on_regexp(page, reg):
     """
@@ -192,7 +185,7 @@ for item in cats:
                 date = datetime(int(match.group('year')),
                     month2int[match.group('month')], int(match.group('day')))
             except KeyError:
-                pywikibot.output(u'Mois « %s » non définit sur %s' % (match.group('month'), page.title(asLink=True)) )
+                pywikibot.warning(u"mois « %s » non définit sur l'article %s" % (match.group('month'), page.title(asLink=True)) )
                 continue
             elem = [date, page]
             bystatus[cat].append(elem)
@@ -217,27 +210,22 @@ for page in endgen:
         continue
 temp.sort(cmp=datecmp)
 bylang[lang][u'Traduction terminée'] = temp
-        """
-for list in bystatus.itervalues():
-    list.sort(cmp=datecmp)
+    """
 
-site = pywikibot.getSite()
-
-print bylang
 # Okay, we now have two sorted collections containing the info we needed.
 ###############################
 ##### Page-lang
 header_pattern = u'{{Translation/IntroLang|code langue=%s|langue=%s|article=%s}}'
-for code, long, pre in languages:
+for code, nomlong, pre in languages:
     langpage = pywikibot.Page(site, u'Projet:Traduction/*/Lang/%s' % code)
-    exists = langpage.exists()
-    header = header_pattern % (code, long, pre)
-    new_text = header + '\n\n'
+    new_text = header_pattern % (code, nomlong, pre) + '\n\n'
     found = 0
     lengths = {}
     for item in cats:
         length = len(bylang[code][item[0]])
         lengths[item[0]] = length
+
+    """
     k = lengths.keys()
     v = lengths.values()
     while sum(v) > 150:
@@ -247,25 +235,25 @@ for code, long, pre in languages:
         v[ind] = m
         ind = k[ind]
         bylang[code][ind] = bylang[code][ind][:m]
+    """
 
     for item in cats:
         status = item[0]
-        long = item[1]
-        new_text += u'== %s ==\n' % long
+        nomlong = item[1]
+        new_text += u'== %s ==\n' % nomlong
         length = len(bylang[code][status])
         found += length
-        if length > 100:
-            bylang[code][status] = bylang[code][status][:100]
-            length = 100
-        if length > 30:
+        if length > 80:
+            length = 80
+            bylang[code][status] = bylang[code][status][:length]
+        if length > 20:
             new_text += u'{{Boîte déroulante début|titre=%s/%s %s}}\n' % (length, lengths[status], item[3])
         for elem in bylang[code][status]:
             new_text += u'{{%s}}\n' % elem[1].title()
-        if length > 30:
+        if length > 20:
             new_text += u'{{Boîte déroulante fin}}\n'
         new_text += '\n'
-    #new_text += u'\n[[Catégorie:Projet Traduction|Lang/%s]]\n' % code
-    if not exists:
+    if not langpage.exists():
         if not found:
             pywikibot.output('Still no entries for %s' % langpage)
         else:
@@ -278,10 +266,10 @@ for code, long, pre in languages:
 
 ###############################
 ##### Page-status
+for l in bystatus.itervalues():
+    l.sort(cmp=datecmp)
 date_now = datetime.now().date()
-#before = u"<noinclude>{{Projet:Traduction/Entete|Demandes classées par mois|Demandes du mois de '''{{ucfirst:{{SUBPAGENAME}} }}''' }}</noinclude>\n\n"
-before = u"<noinclude>{{Projet:Traduction/Entete/ListeMensuelle|%s}}</noinclude>"
-#after = u"<noinclude>\n[[Catégorie:Liste des articles à traduire par mois|{{SUBPAGENAME}}]]</noinclude>"
+before = u"<noinclude>{{Projet:Traduction/Entete/ListeMensuelle|%s}}</noinclude>\n"
 pattern = u'Projet:Traduction/*/%s/%s %s'
 
 for item in cats:
@@ -307,5 +295,7 @@ for item in cats:
     if text or page.exists():
         text = before % ttype + text
         put_page(page, text)
+
+# TODO : log de statistique
 
 print 'DONE.'
