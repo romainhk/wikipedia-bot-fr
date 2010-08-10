@@ -18,6 +18,11 @@ import re
 from datetime import datetime
 
 languages = [
+        [ 'it', 'italien', "l'" ],
+        [ 'en', 'anglais', "l'" ],
+        [ 'pl', 'polonais', "le&nbsp;" ] ]
+"""
+languages = [
         [ 'en', 'anglais', "l'" ],
         [ 'de', 'allemand', "l'" ],
         [ 'pl', 'polonais', "le&nbsp;" ],
@@ -72,6 +77,7 @@ languages = [
         [ 'la', 'latin', "le&nbsp;" ],
         [ 'wuu', 'wu', "le&nbsp;" ]
     ]
+"""
 
 cats = [[u'Article à traduire', 'Demande de traduction', 'Demandes', 'Demandes de traduction'],
         [u'Article en cours de traduction', 'Traduction en cours', 'En cours', 'Traductions en cours'],
@@ -84,16 +90,23 @@ int2month = [u'placeholder_zero', u'janvier', u'février', u'mars', u'avril',
              u'novembre', u'décembre']
 month2int = dict((month, i) for i, month in enumerate(int2month))
 
-site = pywikibot.Site('fr', 'wikipedia')
+#site = pywikibot.Site('fr', 'wikipedia')
+site = pywikibot.Site('fr', 'perso2')
 
-pywikibot.setAction(u'Robot : Màj quotidienne des pages de suivi du Projet:Traduction')
+pywikibot.setAction(u'Robot : Màj hebdomadaire des pages de suivi du Projet:Traduction')
 
 bylang = {}
 bystatus = {}
 
-re_date = re.compile(u'\|\s*demandeur\s*=.*(?P<day>(?:(?<=\D)\d|\d{2})) (?P<month>[\wéû]+) (?P<year>\d{4}) à (?P<hour>\d{1,2}):(?P<minutes>\d{1,2}) \(CES?T\)')
+#re_date = re.compile(u'\|\s*demandeur\s*=.*(?P<day>(?:(?<=\D)\d|\d{2})) (?P<month>[\wéû]+) (?P<year>\d{4}) à (?P<hour>\d{1,2}):(?P<minutes>\d{1,2}) \(CES?T\)')
+re_date = re.compile(u'\|\s*jour\s*=.*(?P<day>(?:(?<=\D)\d|\d{2}))\s*\|\s*mois\s*=\s*(?P<month>[\wéû]+)\s*\|\s*année\s*=\s*(?P<year>\d{4})')
+re_lang = re.compile(u'\{\{(Translation/Information|Traduction/Suivi)\s*\|(?P<code>\w{2,8})\|')
 
-always = True
+# TODO : 
+# * modifier re_date (nouveaux paramètres jour/mois/année)
+# * nouvelles catégories : séparation des catégories "statut" et "langue" -> séparation du code d'initialisation
+# * m : en-tête/pied de page différents
+# * lister les page sans date trouvée
 
 def datecmp(x, y):
     """x, y are [datetime, Page] elements.
@@ -139,63 +152,81 @@ def genFromList(gen):
         tradpage.tradpage = item[1]
         yield tradpage
 
-for lang, long, pre in languages:
+def get_on_regexp(page, reg):
+    """
+       Load the page's text from the wiki and apply a regexp
+    """
+    try:
+        text = page.get()
+    except pywikibot.NoPage:
+        pywikibot.output(u'Page %s not found' % page.title(asLink=True))
+        return
+    except pywikibot.IsRedirectPage:
+        pywikibot.output(u'Page %s is a redirect' % page.title(asLink=True))
+        return
+    return reg.search(text)
+
+#Init
+for lang, x, y in languages:
     bylang[lang] = {}
-    pywikibot.output(u'Processing language %s...' % lang)
-    for item in cats:
-        cat = item[0]
-        if not bystatus.has_key(cat):
-            bystatus[cat] = []
-        bylang[lang][cat]= []
-        cur_cat = pywikibot.Page(site, u'Catégorie:%s/%s' % (cat, lang))
-        gen = site.categorymembers(cur_cat, namespaces=[102], step=4900)
-        gen = site.preloadpages(gen, groupsize=200)
-        for page in gen:
-            try:
-                # Load the page's text from the wiki
-                text = page.get()
-            except pywikibot.NoPage:
-                pywikibot.output(u'Page %s not found' % page.title(asLink=True))
-                continue
-            except pywikibot.IsRedirectPage:
-                pywikibot.output(u'Page %s is a redirect' % page.title(asLink=True))
-                continue
-            match = re_date.search(text)
+    for cat, a, b, c in cats:
+        bylang[lang][cat] = []
+
+#Traitement
+for item in cats:
+    cat = item[0]
+    pywikibot.output(u'Processing category "%s"...' % cat)
+#    if not bystatus.has_key(cat):
+    bystatus[cat] = []
+    cur_cat = pywikibot.Page(site, u'Catégorie:%s' % cat)
+    gen = site.categorymembers(cur_cat, step=4900)
+    gen = site.preloadpages(gen, groupsize=200)
+    for page in gen:
+        if (page.namespace() % 2) == 1 : # = espace de discussion
+            match = get_on_regexp(page, re_date)
             if not match:
                 pywikibot.warning(u'date not found on %s' % page.title(asLink=True))
                 continue
 
-            date = datetime(int(match.group('year')),
-                            month2int[match.group('month')],
-                            int(match.group('day')),
-                            int(match.group('hour')),
-                            int(match.group('minutes')))
+            try:
+                date = datetime(int(match.group('year')),
+                    month2int[match.group('month')], int(match.group('day')))
+            except KeyError:
+                pywikibot.output(u'Mois « %s » non définit sur %s' % (match.group('month'), page.title(asLink=True)) )
+                continue
             elem = [date, page]
-            bylang[lang][cat].append(elem)
             bystatus[cat].append(elem)
-    temp = []
-    endgen = site.preloadpages(genFromList(bylang[lang][u'Traduction terminée']), groupsize=100)
-    for page in endgen:
-        try:
-            # Load the page's text from the wiki
-            if re.search(u'(?i){{(%s|Traduction)' % page.tradpage.title(), page.get()) is not None:
-                temp.append([page.traddate, page.tradpage])
-        except pywikibot.NoPage:
-            pywikibot.output(u'Page %s not found' % page.title(asLink=True))
-            continue
-        except pywikibot.IsRedirectPage:
-            pywikibot.output(u'Page %s is a redirect' % page.title(asLink=True))
-            continue
-    temp.sort(cmp=datecmp)
-    bylang[lang][u'Traduction terminée'] = temp
-
+            lang = get_on_regexp(page, re_lang)
+            if lang:
+                bylang[lang.group('code')][cat].append(elem)
+            else:
+                pywikibot.output(u'Pas de langue cible pour %s' % page.title(asLink=True) )
+    """
+temp = []
+endgen = site.preloadpages(genFromList(bylang[lang][u'Traduction terminée']), groupsize=100)
+for page in endgen:
+    try:
+        # Load the page's text from the wiki
+        if re.search(u'(?i){{(%s|Traduction)' % page.tradpage.title(), page.get()) is not None:
+            temp.append([page.traddate, page.tradpage])
+    except pywikibot.NoPage:
+        pywikibot.output(u'Page %s not found' % page.title(asLink=True))
+        continue
+    except pywikibot.IsRedirectPage:
+        pywikibot.output(u'Page %s is a redirect' % page.title(asLink=True))
+        continue
+temp.sort(cmp=datecmp)
+bylang[lang][u'Traduction terminée'] = temp
+        """
 for list in bystatus.itervalues():
     list.sort(cmp=datecmp)
 
 site = pywikibot.getSite()
 
+print bylang
 # Okay, we now have two sorted collections containing the info we needed.
-# Let's put them live !!
+###############################
+##### Page-lang
 header_pattern = u'{{Translation/IntroLang|code langue=%s|langue=%s|article=%s}}'
 for code, long, pre in languages:
     langpage = pywikibot.Page(site, u'Projet:Traduction/*/Lang/%s' % code)
@@ -245,9 +276,11 @@ for code, long, pre in languages:
         else:
             put_page(langpage, new_text)
 
+###############################
+##### Page-status
 date_now = datetime.now().date()
 #before = u"<noinclude>{{Projet:Traduction/Entete|Demandes classées par mois|Demandes du mois de '''{{ucfirst:{{SUBPAGENAME}} }}''' }}</noinclude>\n\n"
-before = u"<noinclude>{{Projet:Traduction/Entete/ListeMensuel|{{ucfirst:{{SUBPAGENAME}}}}}}</noinclude>"
+before = u"<noinclude>{{Projet:Traduction/Entete/ListeMensuelle|%s}}</noinclude>"
 #after = u"<noinclude>\n[[Catégorie:Liste des articles à traduire par mois|{{SUBPAGENAME}}]]</noinclude>"
 pattern = u'Projet:Traduction/*/%s/%s %s'
 
@@ -264,7 +297,7 @@ for item in cats:
             month = edate.month
             year = edate.year
             if text or page.exists():
-                text = before + text
+                text = before % ttype + text
                 put_page(page, text)
             text = ""
             page = pywikibot.Page(site, pattern % (ttype,
@@ -272,7 +305,7 @@ for item in cats:
                                                    year))
         text += u'{{%s}}\n' % elem[1].title()
     if text or page.exists():
-        text = before + text
+        text = before % ttype + text
         put_page(page, text)
 
 print 'DONE.'
