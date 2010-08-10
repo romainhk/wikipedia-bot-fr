@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
+import re
 from wikipedia import *
 
 # Bibliothèque BeBot
@@ -46,7 +47,9 @@ def togglePageTrad(site, page):
     """
     Retourne la page de traduction associée à un page, ou la page associée à une traduction
     """
-    if (page.namespace() % 2) == 0:
+    trad = re.compile(u"/Traduction$", re.LOCALE)
+#    if (page.namespace() % 2) == 0:
+    if not trad.search(page.title()):
         return wikipedia.Page(site, page.toggleTalkPage().title()+"/Traduction")
     else:
         # Espace de discussion
