@@ -33,14 +33,13 @@ class TraductionDeQualite:
         for t in pagegenerators.CombinedPageGenerator(cats):
             self.traductions.append(t)
         
-        # On ignore les pages qui ont déjà le paramètre adq/ba
         cats = []
-        self.ignor_list = {}
+        self.ignor_list = {}  # On ignore les pages qui ont déjà le paramètre adq/ba
         tmp = []
         cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Traduction d'un Article de Qualité")))
         cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Traduction d'un Bon Article")))
-        for tion in pagegenerators.CombinedPageGenerator(cats):
-            tmp.append(BeBot.togglePageTrad(self.site, tion).title())
+        for tion in pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats)):
+            tmp.append(BeBot.togglePageTrad(self.site, tion).title().replace('(', '\\x28').replace(')', '\\x29'))
             self.tradQualite.append(tion)
 
         self.ignor_list[self.site.family.name] = {'fr':tmp}
@@ -52,8 +51,8 @@ class TraductionDeQualite:
         """
         Log à publier
         """
-        resultat =  u'{{Sommaire à droite}}\nActivités du ' + datetime.date.today().strftime("%A %e %B %Y") \
-                + u' concernant les articles associés au Projet:Traduction qui sont labellisés sur un autre Wikipédia.\n'
+        resultat = u'{{Sommaire à droite}}\nActivités du ' + unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
+        resultat += u' concernant les articles associés au Projet:Traduction qui sont labellisés sur un autre Wikipédia.\n'
         resultat += u'== Candidats au suivi ==\n'
         resultat += u'Voici une liste des pages de suivi de traduction dont le paramètre « intérêt » pourrait être mis à "adq" ou "ba".\n\n'
         resultat += unicode(len(self.candidats)) + u' pages sont candidates :\n'
@@ -123,20 +122,18 @@ class TraductionDeQualite:
         cats = []
         cats.append(pagegenerators.PageTitleFilterPageGenerator(pagegenerators.ReferringPageGenerator(wikipedia.Page(self.site, u"Modèle:Lien AdQ"), followRedirects=True, withTemplateInclusion=True), self.ignor_list))
         cats.append(pagegenerators.PageTitleFilterPageGenerator(pagegenerators.ReferringPageGenerator(wikipedia.Page(self.site, u"Modèle:Lien BA"), followRedirects=True, withTemplateInclusion=True), self.ignor_list))
-        for m in pagegenerators.CombinedPageGenerator(cats):
+        for m in pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats)):
             if m.namespace() == 0: # ... alors prendre la page de trad
                 tradpage = BeBot.togglePageTrad(self.site, m)
                 for t in self.traductions:
                    if t.title() == tradpage.title():
                         #Vérification de la correspondance des langues cibles
-                        #print str(self.langueCible(m)) +"-----"+ str(self.langueCible(tradpage))
                         cibleTrad = self.langueCible(tradpage)[0]
                         for cible in self.langueCible(m):
                             if cibleTrad == cible:
                                 self.candidats.append([tradpage, cibleTrad])
                                 break;
                         break;
-        # Faux positifs : Timée (Platon), Les Époux Arnolfini (Jan van Eyck), Forest Park (parc), Europe (lune)
 
         ##################################
         #####     Mise à jour du suivi
@@ -179,6 +176,8 @@ class TraductionDeQualite:
         self.publier(u'Labellisées', self.term_et_label, 2, True)
 #        wikipedia.Page(self.site, u"Projet:Suivi des articles de qualité des autres wikipédias/Traduction/En attente d'être labellisées").put(self.genererListing(self.term_et_label[1]), comment=self.resumeListing)
         self.publier(u'Terminées sans label', self.term_et_label, 0, False)
+
+        print self.ignor_list
 
 def main():
     site = wikipedia.getSite()
