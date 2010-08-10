@@ -173,7 +173,7 @@ for item in cats:
                 date = datetime(int(match.group('year')),
                     month2int[match.group('month')], int(match.group('day')))
             except KeyError:
-                pywikibot.warning(u"mois « %s » non définit sur l'article %s" % (match.group('month'), page.title(asLink=True)) )
+                pywikibot.warning(u"month « %s » undefined on %s" % (match.group('month'), page.title(asLink=True)) )
                 continue
             elem = [date, page]
             bystatus[cat].append(elem)
@@ -182,13 +182,13 @@ for item in cats:
                 if bylang.has_key(lang.group('code')):
                     bylang[lang.group('code')][cat].append(elem)
                 else:
-                    pywikibot.warning(u'mauvaise langue cible sur %s' % page.title(asLink=True) )
+                    pywikibot.warning(u'wrong language on %s' % page.title(asLink=True) )
             else:
-                pywikibot.warning(u'pas de langue cible pour %s' % page.title(asLink=True) )
+                pywikibot.warning(u'no langugage on %s' % page.title(asLink=True) )
 
 # Okay, we now have two sorted collections containing the info we needed.
 ###############################
-##### Page-lang
+##### Pages-lang
 for l in bylang.itervalues():
     for m in l.itervalues():
         m.sort(cmp=datecmp)
@@ -243,7 +243,7 @@ for code, nomlong, pre in languages:
             put_page(langpage, new_text)
 
 ###############################
-##### Page-status
+##### Pages-status
 for l in bystatus.itervalues():
     l.sort(cmp=datecmp)
 date_now = datetime.now().date()
@@ -274,5 +274,4 @@ for item in cats:
         text = before % ttype + text
         put_page(page, text)
 
-pywikibot.output(u'Total : %s demandes, %s terminées' % ( str(len(bystatus[cats[0][0]])), str(len(bystatus[cats[5][0]])) ) )
 print 'DONE.'
