@@ -94,7 +94,7 @@ class PreparationWikimag:
                     articles.append( a.group(1) )
 
         # Vérification des dates exactes
-        dateRE = re.compile("(\d{1,2}) (\w{3,9}) (\d{2,4})", re.LOCALE)
+        dateRE = re.compile("(\d{1,2}) ([^0-9\|\} ]{3,9}) (\d{2,4})", re.LOCALE)
         for a in articles:
             try:
                 page = wikipedia.Page(self.site, a).get()
@@ -114,6 +114,8 @@ class PreparationWikimag:
                     date_adq = datetime.date(day=int(jour), month=mois, year=int(annee))
                     if not (self.date > date_adq) and not (self.date_fin <= date_adq):
                         r.append(a)
+                    #else:
+                    #    wikipedia.output("Date %s en dehors de la plage %s - %s" % (d.group(), unicode(self.date.strftime("%e %B %Y"), "utf-8"), unicode(self.date_fin.strftime("%e %B %Y"), "utf-8") ))
                 else:
                     self.inconnu.append(a)
         return r
@@ -139,9 +141,9 @@ class PreparationWikimag:
                     self.annonces.append(ligne)
 
         # AdQ, BA
-        modeleRE = re.compile("\{\{[aA]rticle de qualit[^\}]*\| *date=([^\|\}]+)", re.LOCALE)
+        modeleRE = re.compile("\{\{[aA]rticle de qualit[^\}]*\| *date *=([^\|\}]+)", re.LOCALE)
         self.adq= self.articles_promus(u'Wikipédia:Articles de qualité/Justification de leur promotion/'+str(self.date.year), modeleRE)
-        modeleRE = re.compile("\{\{[bB]on article[^\}]*\| *date=([^\|\}]+)", re.LOCALE)
+        modeleRE = re.compile("\{\{[bB]on article[^\}]*\| *date *=([^\|\}]+)", re.LOCALE)
         self.ba = self.articles_promus(u'Wikipédia:Bons articles/Justification de leur promotion/'+str(self.date.year), modeleRE)
 
 
