@@ -92,7 +92,6 @@ pywikibot.setAction(u'Robot : Màj hebdomadaire des pages de suivi du Projet:Tra
 bylang = {}
 bystatus = {}
 
-#re_date = re.compile(u'\|\s*demandeur\s*=.*(?P<day>(?:(?<=\D)\d|\d{2})) (?P<month>[\wéû]+) (?P<year>\d{4}) à (?P<hour>\d{1,2}):(?P<minutes>\d{1,2}) \(CES?T\)')
 re_date = re.compile(u'\|\s*jour\s*=.*(?P<day>(?:(?<=\D)\d|\d{2}))\s*\|\s*mois\s*=\s*(?P<month>[\wéû]+)\s*\|\s*année\s*=\s*(?P<year>\d{4})')
 re_lang = re.compile(u'\{\{(Translation/Information|Traduction/Suivi)\s*\|(?P<code>\w{2,8})\|')
 
@@ -134,16 +133,6 @@ def put_page(page, new):
         pywikibot.warning(u'Skipping %s (locked page)' % (page,))
     except pywikibot.ServerError, e:
         pywikibot.warning(u'Server Error : %s' % e)
-
-"""
-def genFromList(gen):
-    for item in gen:
-        tmp = item[1].title()
-        tradpage = pywikibot.Page(pywikibot.Link(tmp[tmp.index('/') + 1:], site))
-        tradpage.traddate = item[0]
-        tradpage.tradpage = item[1]
-        yield tradpage
-"""
 
 def get_on_regexp(page, reg):
     """
@@ -191,26 +180,12 @@ for item in cats:
             bystatus[cat].append(elem)
             lang = get_on_regexp(page, re_lang)
             if lang:
-                bylang[lang.group('code')][cat].append(elem)
+                if bylang.has_key(lang.group('code')):
+                    bylang[lang.group('code')][cat].append(elem)
+                else:
+                    pywikibot.output(u'Mauvaise langue cible sur %s' % page.title(asLink=True) )
             else:
                 pywikibot.output(u'Pas de langue cible pour %s' % page.title(asLink=True) )
-    """
-temp = []
-endgen = site.preloadpages(genFromList(bylang[lang][u'Traduction terminée']), groupsize=100)
-for page in endgen:
-    try:
-        # Load the page's text from the wiki
-        if re.search(u'(?i){{(%s|Traduction)' % page.tradpage.title(), page.get()) is not None:
-            temp.append([page.traddate, page.tradpage])
-    except pywikibot.NoPage:
-        pywikibot.output(u'Page %s not found' % page.title(asLink=True))
-        continue
-    except pywikibot.IsRedirectPage:
-        pywikibot.output(u'Page %s is a redirect' % page.title(asLink=True))
-        continue
-temp.sort(cmp=datecmp)
-bylang[lang][u'Traduction terminée'] = temp
-    """
 
 # Okay, we now have two sorted collections containing the info we needed.
 ###############################
