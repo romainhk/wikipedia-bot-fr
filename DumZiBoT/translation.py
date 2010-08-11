@@ -249,6 +249,7 @@ for l in bystatus.itervalues():
 date_now = datetime.now().date()
 before = u"<noinclude>{{Projet:Traduction/Entete/ListeMensuelle|%s}}</noinclude>\n"
 pattern = u'Projet:Traduction/*/%s/%s %s'
+LIMITE_INCLUDE = 7
 
 for item in cats:
     cat = item[0]
@@ -257,6 +258,7 @@ for item in cats:
     year = date_now.year
     ttype = item[2]
     page = pywikibot.Page(site, pattern  % (ttype, int2month[month], year))
+    i = 0
     for elem in bystatus[cat]:
         edate = elem[0].date()
         if edate.month != month:
@@ -266,10 +268,15 @@ for item in cats:
                 text = before % ttype + text
                 put_page(page, text)
             text = ""
+            i = 0
             page = pywikibot.Page(site, pattern % (ttype,
                                                    int2month[month],
                                                    year))
-        text += u'{{%s}}\n' % elem[1].title()
+        text += u'{{%s}}' % elem[1].title()
+        i += 1
+        if i == LIMITE_INCLUDE:
+            text += '<noinclude>'
+        text += '\n'
     if text or page.exists():
         text = before % ttype + text
         put_page(page, text)
