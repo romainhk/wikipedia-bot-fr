@@ -40,6 +40,7 @@ class TraductionDeQualite:
         cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Traduction d'un Bon Article")))
         for tion in pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats)):
             tmp.append(BeBot.togglePageTrad(self.site, tion).title().replace('(', '\\x28').replace(')', '\\x29'))
+                #Remplacement des parenthèses à cause d'un problème de comparaison de chaine utf-8 ; ex : Timée (Platon)
             self.tradQualite.append(tion)
 
         self.ignor_list[self.site.family.name] = {'fr':tmp}
@@ -51,25 +52,23 @@ class TraductionDeQualite:
         """
         Log à publier
         """
-        resultat = u'{{Sommaire à droite}}\nActivités du ' + unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
+        resultat = u'{{Sommaire à droite}}\nActivités du %s' % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
         resultat += u' concernant les articles associés au Projet:Traduction qui sont labellisés sur un autre Wikipédia.\n'
         resultat += u'== Candidats au suivi ==\n'
         resultat += u'Voici une liste des pages de suivi de traduction dont le paramètre « intérêt » pourrait être mis à "adq" ou "ba".\n\n'
-        resultat += unicode(len(self.candidats)) + u' pages sont candidates :\n'
+        resultat += u'%s pages sont candidates :\n' % unicode(len(self.candidats))
         for p in self.candidats:
             resultat += u'* [[' + p[0].title() + u']] ('+ p[1] +')\n'
 
         resultat +=  u'\n== Suivi des traductions ==\n'
-        resultat +=  u'Mise à jour du suivi des ' + str(len(self.trads[1]) + len(self.trads[2]) \
-                + len(self.trads[3]) + len(self.trads[4]) + len(self.trads[5]) ) \
-                + u' traductions ([[Projet:Suivi des articles de qualité des autres wikipédias/Traduction]]).\n\n'
-        resultat +=  u'Traductions par statut : ' + str(len(self.trads[1])) + u' demandes, ' \
+        resultat +=  u'Mise à jour du suivi des %s traductions sur [[Projet:Suivi des articles de qualité des autres wikipédias/Traduction]].\n\n' % str(len(self.trads[1]) + len(self.trads[2]) + len(self.trads[3]) + len(self.trads[4]) + len(self.trads[5]) )
+        resultat +=  u'Par statut : ' + str(len(self.trads[1])) + u' demandes, ' \
                 + str(len(self.trads[2])) + u' traductions en cours, ' + str(len(self.trads[3])) + u' demandes de relecture, ' \
                 + str(len(self.trads[4])) + u' relectures en cours, ' + str(len(self.trads[5])) + u' terminées (' \
                 + str(len(self.term_et_label[0])) + u' sans label, ' + str(len(self.term_et_label[2])) + u' labellisées).\n\n'
         resultat +=  u"=== [[Image:Nuvola apps important yellow.svg|30px|À vérifier]] Traductions sans statut ===\nIl n'a pas été possible de trouver le statut de ces traductions :\n"
         for t in self.trads[0]:
-            resultat += u'* [[' + t.title() + u']]\n'
+            resultat += u'* [[%s]]\n' % t.title()
 
         return resultat
 
@@ -98,7 +97,7 @@ class TraductionDeQualite:
         Racourci pour publier une liste d'article sur une souspage du P:SAdQaW
         La paramètre « simple » permet d'obtenir un affichage simplifié sous forme d'une liste de liens.
         """
-        retour = str(len(liste[soustableau])) + u' pages.\n\n'
+        retour = u'%s pages.\n\n' % str(len(liste[soustableau]))
         if simple:
             m = []
             for t in liste[soustableau]:
@@ -107,7 +106,7 @@ class TraductionDeQualite:
         else:
             noinclude = False
             for i, t in enumerate(liste[soustableau]):
-                retour += u'{{' + t.title() + u'}}'
+                retour += u'{{%s}}' % t.title()
                 if i == 11:
                     retour += u'<noinclude>'
                     noinclude = True
@@ -176,8 +175,6 @@ class TraductionDeQualite:
         self.publier(u'Labellisées', self.term_et_label, 2, True)
 #        wikipedia.Page(self.site, u"Projet:Suivi des articles de qualité des autres wikipédias/Traduction/En attente d'être labellisées").put(self.genererListing(self.term_et_label[1]), comment=self.resumeListing)
         self.publier(u'Terminées sans label', self.term_et_label, 0, False)
-
-        print self.ignor_list
 
 def main():
     site = wikipedia.getSite()
