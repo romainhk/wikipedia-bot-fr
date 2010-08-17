@@ -53,6 +53,7 @@ def togglePageTrad(site, page):
     """
     Retourne la page de traduction associée à un page, ou la page associée à une traduction
     """
+    if not site.language() == 'fr': return u''
     trad = re.compile(u"/Traduction$", re.LOCALE)
 #    if (page.namespace() % 2) == 0:
     if not trad.search(page.title()):
