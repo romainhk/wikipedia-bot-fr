@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re
+import re, datetime, simplejson, urllib2
 from wikipedia import *
 
 # Bibliothèque BeBot
@@ -55,3 +55,18 @@ def togglePageTrad(site, page):
         # Espace de discussion
         return wikipedia.Page(site, page.toggleTalkPage().title().split('/Traduction')[0])
 
+def stat_consultations(page, date=False):
+    """
+    Donne le nombre de consultation d'un article au mois donné (mois précédant par défaut)
+    """
+    if not date:
+        date = datetime.date.today()
+        date = datetime.date(date.year, date.month-1, date.day)
+    url = "http://stats.grok.se/json/fr/%s/%s" % ( date.strftime("%Y%m"), urllib2.quote(page.title().encode('utf-8')) )
+    try:
+        res = simplejson.load(urllib2.urlopen(url))
+#    except urllib2.URLError, urllib2.HTTPError:
+    except:
+        wikipedia.output("Impossible de récupérer les stats à l'adresse %s" % url)
+        return 0
+    return res["total_views"]

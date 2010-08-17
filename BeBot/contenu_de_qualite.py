@@ -59,8 +59,8 @@ class ContenuDeQualite:
         """
         Log des modifications trouvées
         """
-        resultat =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »''' ; exécussion du " \
-                + datetime.date.today().strftime("%A %e %B %Y") + u"</center>\n\n"
+        resultat =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »''' ; exécussion du %s </center>\n\n" \
+                % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
         resultat += str(len(self.nouveau)) + u" nouveaux articles labellisés trouvés : " \
                 + str(self.denombrer(self.cat_qualite[0], [self.nouveau]) ) + u" AdQ et " \
                 + str(self.denombrer(self.cat_qualite[1], [self.nouveau]) ) + u" BA.\n\n"
@@ -114,8 +114,8 @@ class ContenuDeQualite:
         curseur = self.db.cursor()
         for q in self.nouveau:
             donnees = u'"' + unicode2html(q[0], 'ascii') + u'", ' + str(q[1]) + u', "' \
-                    + q[2].strftime("%Y-%m-%d") + u'", "' + q[3] + u'", "' + str(q[4]) + u'"'
-            req = u"INSERT INTO contenu_de_qualite(page, espacedenom, date, label, taille) VALUES ("+ donnees + u")"
+                    + q[2].strftime("%Y-%m-%d") + u'", "' + q[3] + u'", "' + str(q[4]) + u'", "' + str(q[5]) + u'"'
+            req = u"INSERT INTO contenu_de_qualite(page, espacedenom, date, label, taille, consultations) VALUES ("+ donnees + u")"
             try:
                 curseur.execute(req)
             except MySQLdb.Error, e:
@@ -140,9 +140,8 @@ class ContenuDeQualite:
         """
         Mise à jour un champ de la base de données
         """
-        req = u"UPDATE contenu_de_qualite SET espacedenom=" + str(q[1]) \
-            + u', date="' + q[2].strftime("%Y-%m-%d") + u'", label="' + q[3] + u'", taille="' + str(q[4]) \
-            + u'" WHERE page="' + unicode2html(q[0], 'ascii') + u'"'
+        req = u"UPDATE contenu_de_qualite SET espacedenom=%s, date=%s, label=%s, taille=%s, consultations=%s WHERE page=%s" \
+            % (str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]), unicode2html(q[0], 'ascii'))
         try:
             curseur.execute(req)
         except MySQLdb.Error, e:
@@ -192,12 +191,13 @@ class ContenuDeQualite:
                     except PasDeDate as pdd:
                         self.pasdedate.append(pdd.page)
                         continue
+                    infos = [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p), BeBot.stat_consultations(p) ]
                     if article_connu:
-                        self.connaitdeja.append( [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p) ] )
+                        self.connaitdeja.append(infos)
                     else:
-                        self.nouveau.append( [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p) ] )
+                        self.nouveau.append(infos)
                 else:
-                    self.connaitdeja.append( [ p.title(), p.namespace(), '1970-01-01', cat, 0 ] )
+                    self.connaitdeja.append( [ p.title(), p.namespace(), '1970-01-01', cat, 0, 0 ] )
 
         categorie = catlib.Category(self.site, u'Ancien article de qualité')
         cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
