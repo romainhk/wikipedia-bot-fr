@@ -21,18 +21,18 @@ class ContenuDeQualite:
         (Persistance du nom de l'article, de son espace de nom, de la date
         de labellisation, de son label, du nombre de visites...)
 
-    Paramètres:
+    Paramètres :
     * Site wikipedia où travailler
     * Mode de mise à jour : voir "options".
-
-    Options / Arguments :
-    * Option "Mode de mise à jour" : en mode strict, les informations des 
+    Options :
+    * Mode de mise à jour : en mode strict, les informations des 
     articles déjà connus seront systématiquement mises à jour (UPDATE). 
     Pour l'activer, utiliser l'option "-s".
-    * Arguments "Wikis" : une liste de code langue des wiki à analyser (fr par défaut)
+    Arguments :
+    * "Wikis" : une liste de code langue des wiki à analyser (fr par défaut)
 
     Exemple:
-    contenu_de_qualite.py -s fr de nl 
+    python contenu_de_qualite.py -s fr de nl 
     >  mise à jour complète pour les wiki francophone, germanophone et néerlandophone.
 
         TODO : internationalisation : ajouter un champ "article équivalent français"
@@ -63,16 +63,17 @@ class ContenuDeQualite:
             self.maj_stricte = False
 
         RE_dates = {
-                'fr': u"\{\{([aA]rticle[ _]de[ _]qualit|[bB]on[ _]article|[aA]dQ[ _]dat)[^\}]*\| *date *= *\{{0,2}(?P<jour>\d{1,2})[^ 0-9]*\}{0,2} (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" ,
-                'de': u"\{\{([eE]xzellent|[lL]esenswert)[^\}]*\|(?P<jour>\d{1,2})[^ 0-9]*. (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" ,
-                'en': u"", 'es': u"", 'it': u"", 'nl': u""
-                }
+            'fr': u"\{\{([aA]rticle[ _]de[ _]qualit|[bB]on[ _]article|[aA]dQ[ _]dat)[^\}]*\| *date *= *\{{0,2}(?P<jour>\d{1,2})[^ 0-9]*\}{0,2} (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" ,
+            'de': u"\{\{([eE]xzellent|[lL]esenswert)[^\}]*\|(?P<jour>\d{1,2})[^ 0-9]*. (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" ,
+            'en': u"", 'es': u"", 'it': u"", 'nl': u""
+            }
         """
         'en': u"\{\{([fF]eatured[ _]article|[gG]ood article)[^\}]*\| *" ,
         'es': u"\{\{([aA]rtículo[ _]destacado|[aA]rtículo[ _]bueno)[^\}]*\| *" ,
         'it': u"\{\{[vV]etrina[^\}]*\| *" ,           'nl': u"\{\{[eE]talage[^\}]*\| *"
         """
         self.dateRE = re.compile(RE_dates[self.langue], re.LOCALE)
+        self.interwikifr = re.compile(u"\[\[fr:(?P<iw>[^\]]+)\]\]", re.LOCALE)
 
         self.nouveau = []       # Nouveaux articles promus
         self.connaitdeja = []   # Articles déjà listés
@@ -137,10 +138,10 @@ class ContenuDeQualite:
         wikipedia.output(u'# Sauvegarde dans la base pour la langue « %s ».' % self.langue)
         curseur = self.db.cursor()
         for q in self.nouveau:
-            req = u'INSERT INTO contenu_de_qualite(langue, page, espacedenom, date, label, taille, consultations)' \
-                    + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s")' \
+            req = u'INSERT INTO contenu_de_qualite(langue, page, espacedenom, date, label, taille, consultations, traduction)' \
+                    + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", %s)' \
                     % ( self.langue, unicode2html(q[0], 'ascii'),  str(q[1]),\
-                    q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]) )
+                    q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]), self._put_traduction(q[6]) )
             try:
                 curseur.execute(req)
             except MySQLdb.Error, e:
@@ -165,13 +166,19 @@ class ContenuDeQualite:
         """
         Mise à jour un champ de la base de données
         """
-        req = u'UPDATE contenu_de_qualite SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s" WHERE langue="%s" AND page="%s"' \
-            % (str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]),\
-            self.langue, unicode2html(q[0], 'ascii'))
+        req = u'UPDATE contenu_de_qualite SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s WHERE langue="%s" AND page="%s"' \
+            % (str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]), \
+            self._put_traduction(q[6]), self.langue, unicode2html(q[0], 'ascii'))
         try:
             curseur.execute(req)
         except MySQLdb.Error, e:
             print "Update error %d: %s" % (e.args[0], e.args[1])
+
+    def _put_traduction(self, obj):
+        if obj:
+            return u'"%s"' % unicode2html(obj, 'ascii')
+        else:
+            return u'NULL'
 
     def charger(self):
         """
@@ -204,6 +211,23 @@ class ContenuDeQualite:
         else:
             return '1970-01-01'
 
+    def traduction(self, page):
+        """
+        Donne la page de suivi ou l'interwiki vers fr
+        """
+        if self.langue == 'fr':
+            pt = BeBot.togglePageTrad(self.site, page)
+            if pt.exists():
+                return pt.title()
+            else:
+                return None
+        else:
+            for p in p.interwiki():
+                self.interwikifr.search(p.title())
+                if res:
+                    return res.group('iw')
+            return None
+
     def run(self):
         connus = self.charger()
         for cat in self.cat_qualite:
@@ -222,13 +246,14 @@ class ContenuDeQualite:
                     except PasDeDate as pdd:
                         self.pasdedate.append(pdd.page)
                         continue
-                    infos = [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p), BeBot.stat_consultations(p, self.langue) ]
+                    infos = [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p),\
+                            BeBot.stat_consultations(p, self.langue), self.traduction(p) ]
                     if article_connu:
                         self.connaitdeja.append(infos)
                     else:
                         self.nouveau.append(infos)
                 else:
-                    self.connaitdeja.append( [ p.title(), p.namespace(), '1970-01-01', cat, 0, 0 ] )
+                    self.connaitdeja.append( [ p.title(), p.namespace(), '1970-01-01', cat, 0, 0, None ] )
 
         categorie = catlib.Category(self.site, u'Ancien article de qualité')
         cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
