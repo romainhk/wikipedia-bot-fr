@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Serveur: localhost
--- Généré le : Mar 17 Août 2010 à 13:40
+-- Généré le : Mar 17 Août 2010 à 15:23
 -- Version du serveur: 5.1.49
 -- Version de PHP: 5.3.2-2
 
@@ -24,11 +24,12 @@ SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 --
 -- Structure de la table `contenu_de_qualite`
 --
--- Création: Mar 17 Août 2010 à 13:11
--- Dernière modification: Mar 17 Août 2010 à 13:35
+-- Création: Mar 17 Août 2010 à 14:43
+-- Dernière modification: Mar 17 Août 2010 à 14:43
 --
 
 CREATE TABLE IF NOT EXISTS `contenu_de_qualite` (
+  `langue` varchar(10) COLLATE utf8_bin NOT NULL DEFAULT 'fr' COMMENT 'iso639',
   `page` varchar(255) COLLATE utf8_bin NOT NULL COMMENT 'Nom complet de la page',
   `espacedenom` int(3) unsigned NOT NULL COMMENT '0 ou 100',
   `date` date NOT NULL COMMENT 'de labellisation',

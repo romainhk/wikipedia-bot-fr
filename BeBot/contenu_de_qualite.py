@@ -34,8 +34,10 @@ class ContenuDeQualite:
     def __init__(self, site, log, mode_maj):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
         self.site = site
+        self.langue = self.site.language()
         self.log = log
         self.page_resultat = wikipedia.Page(site, log)
+
         self.cat_qualite = [ u'Article de qualité',  u'Bon article'] # Nom des catégories des deux labels
         if mode_maj == "strict":
             self.maj_stricte = True
@@ -59,8 +61,7 @@ class ContenuDeQualite:
         """
         Log des modifications à apporter à la bdd
         """
-        resultat =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »''' ; exécussion du %s </center>\n\n" \
-                % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
+        resultat = u'== Sur WP:%s ==\n' % self.langue
         resultat += str(len(self.nouveau)) + u" nouveaux articles labellisés trouvés : " \
                 + str(self.denombrer(self.cat_qualite[0], [self.nouveau]) ) + u" AdQ et " \
                 + str(self.denombrer(self.cat_qualite[1], [self.nouveau]) ) + u" BA.\n\n"
@@ -69,14 +70,14 @@ class ContenuDeQualite:
         resultat += u"\n\n* Total après sauvegarde : " + str( len(self.nouveau) + len(self.connaitdeja) ) + u" articles labellisés" \
                 + u" (" + str(self.denombrer( self.cat_qualite[0], [self.nouveau, self.connaitdeja]) ) + " AdQ et " \
                 + str(self.denombrer( self.cat_qualite[1], [self.nouveau, self.connaitdeja]) ) + " BA).\n"
-        resultat += u"\n== Nouveau contenu de qualité ==\n"
+        resultat += u"\n=== Nouveau contenu de qualité ===\n"
         resultat += self.lister_article(self.nouveau)
-        resultat += u"\n=== Articles sans date de labellisation ===\n"
+        resultat += u"\n==== Articles sans date de labellisation ====\n"
         resultat += self.lister_article(self.pasdedate)
-        resultat += u"\n== Articles déchus depuis la dernière sauvegarde "
+        resultat += u"\n=== Articles déchus depuis la dernière sauvegarde "
         if self.precedent:
             resultat += u"(du " + self.precedent + u" ?) "
-        resultat += u"==\n"
+        resultat += u"===\n"
         resultat += self.lister_article(self.dechu)
         return resultat
 
@@ -113,9 +114,9 @@ class ContenuDeQualite:
         """
         curseur = self.db.cursor()
         for q in self.nouveau:
-            req = u'INSERT INTO contenu_de_qualite(page, espacedenom, date, label, taille, consultations)' \
-                    + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s")' \
-                    % ( unicode2html(q[0], 'ascii'),  str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]) )
+            req = u'INSERT INTO contenu_de_qualite(langue, page, espacedenom, date, label, taille, consultations)' \
+                    + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s")' \
+                    % ( self.langue, unicode2html(q[0], 'ascii'),  str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]) )
             try:
                 curseur.execute(req)
             except MySQLdb.Error, e:
@@ -140,8 +141,8 @@ class ContenuDeQualite:
         """
         Mise à jour un champ de la base de données
         """
-        req = u'UPDATE contenu_de_qualite SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s" WHERE page="%s"' \
-            % (str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]), unicode2html(q[0], 'ascii'))
+        req = u'UPDATE contenu_de_qualite SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s" WHERE langue="%s" AND page="%s"' \
+            % (str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]), self.langue, unicode2html(q[0], 'ascii'))
         try:
             curseur.execute(req)
         except MySQLdb.Error, e:
@@ -182,7 +183,7 @@ class ContenuDeQualite:
             for p in cpg:
                 article_connu = False
                 for con in connus:
-                    if p.title() == html2unicode(con[0]):
+                    if p.title() == html2unicode(con[1]): #con[1]=page
                         article_connu = True
                         break
                 if not article_connu or self.maj_stricte:
@@ -191,7 +192,7 @@ class ContenuDeQualite:
                     except PasDeDate as pdd:
                         self.pasdedate.append(pdd.page)
                         continue
-                    infos = [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p), BeBot.stat_consultations(p) ]
+                    infos = [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p), BeBot.stat_consultations(p, self.langue) ]
                     if article_connu:
                         self.connaitdeja.append(infos)
                     else:
@@ -224,16 +225,23 @@ def main():
             mode = "strict"
 
     site = wikipedia.getSite()
-    log = u'Utilisateur:BeBot/Contenu de qualité'
+    pagelog = u'Utilisateur:BeBot/Contenu de qualité'
 
-    cdq = ContenuDeQualite(site, log, mode)
-    cdq.run()
-    
-    wikipedia.Page(site, log).put(unicode(cdq), comment=cdq.resume, minorEdit=False)
-
-    choix = wikipedia.inputChoice(u"Sauvegarder dans la base de donnees ?", ['oui', 'non'], ['o', 'n'], 'o')
-    if choix == "o" or choix == "oui":
+    #wikis = [ 'fr', 'pl', 'nl' ]
+    wikis = [ 'fr' ]
+    #TODO: changer pour une liste passée sur la ligne de commande
+    log =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »''' ; exécussion du %s </center>\n\n" \
+            % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
+    for cl in wikis:
+        cdq = ContenuDeQualite(wikipedia.Site(cl), pagelog, mode)
+        cdq.run()
+        log += unicode(cdq)
         cdq.sauvegarder()
+    wikipedia.Page(site, pagelog).put(log, comment=cdq.resume, minorEdit=False)
+
+#    choix = wikipedia.inputChoice(u"Sauvegarder dans la base de donnees ?", ['oui', 'non'], ['o', 'n'], 'o')
+#    if choix == "o" or choix == "oui":
+#        cdq.sauvegarder()
 
 if __name__ == "__main__":
     try:
