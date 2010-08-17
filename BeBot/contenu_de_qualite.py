@@ -18,24 +18,27 @@ class PasDeDate(Exception):
 class ContenuDeQualite:
     """ Contenu de Qualité
         Tri et sauvegarde les AdQ/BA existants par date.
-        (Persistance du nom de l'article, de son espace de nom, de la date de labellisation et de son label.)
+        (Persistance du nom de l'article, de son espace de nom, de la date
+        de labellisation, de son label, du nombre de visites...)
 
     Paramètres:
     * Site wikipedia où travailler
-    * Mode de mise à jour : voir plus bas.
+    * Mode de mise à jour : voir "options".
 
     Options / Arguments :
-    * Option "Mode de mise à jour" : en mode strict, les informations des articles déjà connus seront systématiquement mises à jour (UPDATE). Pour l'activer, utiliser l'option "-s".
+    * Option "Mode de mise à jour" : en mode strict, les informations des 
+    articles déjà connus seront systématiquement mises à jour (UPDATE). 
+    Pour l'activer, utiliser l'option "-s".
     * Arguments "Wikis" : une liste de code langue des wiki à analyser (fr par défaut)
 
     Exemple:
-    contenu_de_qualite.py -s fr de nl  >  mise à jour complète pour les wiki francophone, germanophone et néerlandophone.
+    contenu_de_qualite.py -s fr de nl 
+    >  mise à jour complète pour les wiki francophone, germanophone et néerlandophone.
 
-        TODO : internationalisation : ajouter un champ "langue" et une liste de wiki à analyser
-            * ajouter un champ "article équivalent français"
-        TODO : la sous-page de traduction, si elle existe
+        TODO : internationalisation : ajouter un champ "article équivalent français"
+        TODO : ajouter un champ pour la sous-page de traduction, si elle existe
         TODO : infos sur l'article (nombre inclusions, de contributeurs -> contributingUsers()...)
-        TODO : les intentions de proposition au label.
+        TODO : les intentions de proposition au label
         TODO : les portails/themes de qualité
     """
     def __init__(self, site, mode_maj):
@@ -131,12 +134,13 @@ class ContenuDeQualite:
         """
         Sauvegarder dans une base de données
         """
-        wikipedia.output(u'# Sauvegarde dans la base.')
+        wikipedia.output(u'# Sauvegarde dans la base pour la langue « %s ».' % self.langue)
         curseur = self.db.cursor()
         for q in self.nouveau:
             req = u'INSERT INTO contenu_de_qualite(langue, page, espacedenom, date, label, taille, consultations)' \
                     + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s")' \
-                    % ( self.langue, unicode2html(q[0], 'ascii'),  str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]) )
+                    % ( self.langue, unicode2html(q[0], 'ascii'),  str(q[1]),\
+                    q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]) )
             try:
                 curseur.execute(req)
             except MySQLdb.Error, e:
@@ -162,7 +166,8 @@ class ContenuDeQualite:
         Mise à jour un champ de la base de données
         """
         req = u'UPDATE contenu_de_qualite SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s" WHERE langue="%s" AND page="%s"' \
-            % (str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]), self.langue, unicode2html(q[0], 'ascii'))
+            % (str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]),\
+            self.langue, unicode2html(q[0], 'ascii'))
         try:
             curseur.execute(req)
         except MySQLdb.Error, e:
@@ -213,7 +218,7 @@ class ContenuDeQualite:
                         break
                 if not article_connu or self.maj_stricte:
                     try:
-                        date = self.date_labellisation(p.title())   # Récupération de la date
+                        date = self.date_labellisation(p.title())  # Récupération de la date
                     except PasDeDate as pdd:
                         self.pasdedate.append(pdd.page)
                         continue
@@ -253,7 +258,6 @@ def main():
         wikis = args
     else:
         wikis = ['fr']
-    print wikis
 
     site = wikipedia.getSite()
     pagelog = u'Utilisateur:BeBot/Contenu de qualité'
