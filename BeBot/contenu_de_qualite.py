@@ -28,7 +28,7 @@ class ContenuDeQualite:
         TODO : les intentions de proposition au label.
         TODO : la sous-page de traduction, si elle existe
         TODO : les portails/themes de qualité
-        TODO : internationalisation : ajouter un champ "langue"
+        TODO : internationalisation : ajouter un champ "langue" et une liste de wiki à analyser
         TODO : infos sur l'article (nombre inclusions, de contributeurs...)
     """
     def __init__(self, site, log, mode_maj):
@@ -39,7 +39,7 @@ class ContenuDeQualite:
         self.cat_qualite = [ u'Article de qualité',  u'Bon article'] # Nom des catégories des deux labels
         if mode_maj == "strict":
             self.maj_stricte = True
-            wikipedia.output(u'# Mode de mise à jour "strict" actif (tous les updates seront effectués)')
+            wikipedia.output(u'# Mode de mise à jour "strict" actif (toutes les updates seront effectuées)')
         else:
             self.maj_stricte = False
 
@@ -57,7 +57,7 @@ class ContenuDeQualite:
 
     def __str__(self):
         """
-        Log des modifications trouvées
+        Log des modifications à apporter à la bdd
         """
         resultat =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »''' ; exécussion du %s </center>\n\n" \
                 % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
@@ -113,9 +113,9 @@ class ContenuDeQualite:
         """
         curseur = self.db.cursor()
         for q in self.nouveau:
-            donnees = u'"' + unicode2html(q[0], 'ascii') + u'", ' + str(q[1]) + u', "' \
-                    + q[2].strftime("%Y-%m-%d") + u'", "' + q[3] + u'", "' + str(q[4]) + u'", "' + str(q[5]) + u'"'
-            req = u"INSERT INTO contenu_de_qualite(page, espacedenom, date, label, taille, consultations) VALUES ("+ donnees + u")"
+            req = u'INSERT INTO contenu_de_qualite(page, espacedenom, date, label, taille, consultations)' \
+                    + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s")' \
+                    % ( unicode2html(q[0], 'ascii'),  str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]) )
             try:
                 curseur.execute(req)
             except MySQLdb.Error, e:
@@ -130,7 +130,7 @@ class ContenuDeQualite:
                 self.sauvegarde_update(curseur, q)
 
         for d in self.dechu:
-            req = u"DELETE FROM contenu_de_qualite WHERE page='" + unicode(d) + u"'"
+            req = u'DELETE FROM contenu_de_qualite WHERE page="%s"' % unicode(d)
             try:
                 curseur.execute(req)
             except:
@@ -140,7 +140,7 @@ class ContenuDeQualite:
         """
         Mise à jour un champ de la base de données
         """
-        req = u"UPDATE contenu_de_qualite SET espacedenom=%s, date=%s, label=%s, taille=%s, consultations=%s WHERE page=%s" \
+        req = u'UPDATE contenu_de_qualite SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s" WHERE page="%s"' \
             % (str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]), unicode2html(q[0], 'ascii'))
         try:
             curseur.execute(req)
@@ -208,9 +208,8 @@ class ContenuDeQualite:
                     if pdd == html2unicode(con[0]):
                         self.dechu.append( p.title() )
 
-        wikipedia.output(u"Total: " + str(len(self.nouveau)) + u" ajouts ; " \
-                + str(len(self.connaitdeja)) + u" déjà connus ; " \
-                + str(len(self.dechu)) + u" déchus ; " + str(len(self.pasdedate)) + u" sans date.")
+        wikipedia.output( u"Total: %s ajouts ; %s déjà connus ; %s déchus ; %s sans date." \
+                % (str(len(self.nouveau)), str(len(self.connaitdeja)), str(len(self.dechu)), str(len(self.pasdedate))) )
 
 def main():
     try:

@@ -3,7 +3,12 @@
 import re, datetime, simplejson, urllib2
 from wikipedia import *
 
+"""
 # Bibliothèque BeBot
+
+Rassemble plusieurs fonctions génériques : 
+taille d'une page, page de traduction associée, consultation mensuelle d'une page, conversion mois vers entier...
+"""
 
 def moistoint(mois):
     """
@@ -27,7 +32,8 @@ def moistoint(mois):
     return 0
 
 def page_ligne_par_ligne(site, nompage):
-    """ Lit une wikipage ligne par ligne
+    """
+    Lit une wikipage ligne par ligne
     """
     try:
         page = wikipedia.Page(site, nompage).get()
@@ -55,14 +61,14 @@ def togglePageTrad(site, page):
         # Espace de discussion
         return wikipedia.Page(site, page.toggleTalkPage().title().split('/Traduction')[0])
 
-def stat_consultations(page, date=False):
+def stat_consultations(page, codelangue=u'fr', date=False):
     """
     Donne le nombre de consultation d'un article au mois donné (mois précédant par défaut)
     """
     if not date:
         date = datetime.date.today()
         date = datetime.date(date.year, date.month-1, date.day)
-    url = "http://stats.grok.se/json/fr/%s/%s" % ( date.strftime("%Y%m"), urllib2.quote(page.title().encode('utf-8')) )
+    url = "http://stats.grok.se/json/%s/%s/%s" % ( codelangue, date.strftime("%Y%m"), urllib2.quote(page.title().encode('utf-8')) )
     try:
         res = simplejson.load(urllib2.urlopen(url))
 #    except urllib2.URLError, urllib2.HTTPError:
