@@ -15,6 +15,7 @@ class PasDeDate(Exception):
     def __str__(self):
         return repr(self.page)
 
+
 class ContenuDeQualite:
     """ Contenu de Qualité
         Tri et sauvegarde les AdQ/BA existants par date.
@@ -35,10 +36,9 @@ class ContenuDeQualite:
     python contenu_de_qualite.py -s fr de nl 
     >  mise à jour complète pour les wiki francophone, germanophone et néerlandophone.
 
-        TODO : internationalisation : ajouter un champ "article équivalent français"
-        TODO : ajouter un champ pour la sous-page de traduction, si elle existe
-        TODO : infos sur l'article (nombre inclusions, de contributeurs -> contributingUsers()...)
-        TODO : les intentions de proposition au label
+        TODO : avancement Wikiprojet
+        TODO : importance Wikiprojet
+        TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
     """
     def __init__(self, site, mode_maj):
@@ -62,7 +62,7 @@ class ContenuDeQualite:
         else:
             self.maj_stricte = False
 
-        RE_dates = {
+        RE_date = {
             'fr': u"\{\{([aA]rticle[ _]de[ _]qualit|[bB]on[ _]article|[aA]dQ[ _]dat)[^\}]*\| *date *= *\{{0,2}(?P<jour>\d{1,2})[^ 0-9]*\}{0,2} (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" ,
             'de': u"\{\{([eE]xzellent|[lL]esenswert)[^\}]*\|(?P<jour>\d{1,2})[^ 0-9]*. (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" ,
             'en': u"", 'es': u"", 'it': u"", 'nl': u""
@@ -72,7 +72,7 @@ class ContenuDeQualite:
         'es': u"\{\{([aA]rtículo[ _]destacado|[aA]rtículo[ _]bueno)[^\}]*\| *" ,
         'it': u"\{\{[vV]etrina[^\}]*\| *" ,           'nl': u"\{\{[eE]talage[^\}]*\| *"
         """
-        self.dateRE = re.compile(RE_dates[self.langue], re.LOCALE)
+        self.dateRE = re.compile(RE_date[self.langue], re.LOCALE)
         self.interwikifr = re.compile(u"\[\[fr:(?P<iw>[^\]]+)\]\]", re.LOCALE)
 
         self.nouveau = []       # Nouveaux articles promus
@@ -141,7 +141,7 @@ class ContenuDeQualite:
             req = u'INSERT INTO contenu_de_qualite(langue, page, espacedenom, date, label, taille, consultations, traduction)' \
                     + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", %s)' \
                     % ( self.langue, unicode2html(q[0], 'ascii'),  str(q[1]),\
-                    q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]), self._put_traduction(q[6]) )
+                    q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]), self._put_null(q[6]) )
             try:
                 curseur.execute(req)
             except MySQLdb.Error, e:
@@ -168,13 +168,13 @@ class ContenuDeQualite:
         """
         req = u'UPDATE contenu_de_qualite SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s WHERE langue="%s" AND page="%s"' \
             % (str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]), \
-            self._put_traduction(q[6]), self.langue, unicode2html(q[0], 'ascii'))
+            self._put_null(q[6]), self.langue, unicode2html(q[0], 'ascii'))
         try:
             curseur.execute(req)
         except MySQLdb.Error, e:
             print "Update error %d: %s" % (e.args[0], e.args[1])
 
-    def _put_traduction(self, obj):
+    def _put_null(self, obj):
         if obj:
             return u'"%s"' % unicode2html(obj, 'ascii')
         else:
@@ -201,7 +201,8 @@ class ContenuDeQualite:
         if d:
             mti = BeBot.moistoint(d.group('mois'))
             if mti > 0:
-                return datetime.date(int(d.group('annee')), BeBot.moistoint(d.group('mois')), int(d.group('jour')))
+                return datetime.date(int(d.group('annee')), \
+                        BeBot.moistoint(d.group('mois')), int(d.group('jour')))
         else:
             #TODO: Recherche dans l'historique l'ajout du modèle -> fullVersionHistory() !! lourd
             pass
@@ -223,7 +224,7 @@ class ContenuDeQualite:
                 return None
         else:
             for p in p.interwiki():
-                self.interwikifr.search(p.title())
+                res = self.interwikifr.search(p.title())
                 if res:
                     return res.group('iw')
             return None
@@ -265,7 +266,8 @@ class ContenuDeQualite:
                         self.dechu.append( p.title() )
 
         wikipedia.output( u"Total: %s ajouts ; %s déjà connus ; %s déchus ; %s sans date." \
-                % (str(len(self.nouveau)), str(len(self.connaitdeja)), str(len(self.dechu)), str(len(self.pasdedate))) )
+                % (str(len(self.nouveau)), str(len(self.connaitdeja)), \
+                str(len(self.dechu)), str(len(self.pasdedate))) )
 
 def main():
     mode = u'nouveaux-seulement'
