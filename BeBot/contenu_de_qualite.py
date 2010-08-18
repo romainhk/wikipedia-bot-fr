@@ -48,12 +48,12 @@ class ContenuDeQualite:
         self.log = log
 
         self.categories_de_qualite = {
-                'fr': [ u'Article de qualité',   u'Bon article'],
-                'en': [ u'Featured articles',    u'Wikipedia good articles'],
-                'de': [ u'Wikipedia:Exzellent',  u'Wikipedia:Lesenswert'],
-                'es': [ u'Wikipedia:Artículos destacados',  u'Wikipedia:Artículos buenos'],
-                'it': [ u'Voci in vetrina',      u''],
-                'nl': [ u'Wikipedia:Etalage-artikelen',     u'']
+                'fr': [ u'Article de qualité',   u'Bon article' ],
+                'en': [ u'Featured articles',    u'Wikipedia good articles' ],
+                'de': [ u'Kategorie:Wikipedia:Exzellent',   u'Kategorie:Wikipedia:Lesenswert' ],
+                'es': [ u'Categoría:Wikipedia:Artículos destacados',  u'Categoría:Wikipedia:Artículos buenos' ],
+                'it': [ u'Voci in vetrina' ],
+                'nl': [ u'Categorie:Wikipedia:Etalage-artikelen' ]
                 }
         self.cat_qualite = self.categories_de_qualite[self.langue] # Nom des catégories des deux labels
         if mode_maj == "strict":
@@ -64,15 +64,17 @@ class ContenuDeQualite:
 
         RE_date = {
             'fr': u"\{\{([aA]rticle[ _]de[ _]qualit|[bB]on[ _]article|[aA]dQ[ _]dat)[^\}]*\| *date *= *\{{0,2}(?P<jour>\d{1,2})[^ 0-9]*\}{0,2} (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" ,
-            'de': u"\{\{([eE]xzellent|[lL]esenswert)[^\}]*\|(?P<jour>\d{1,2})[^ 0-9]*. (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" ,
-            'en': u"", 'es': u"", 'it': u"", 'nl': u""
+            'de': u"\{\{([eE]xzellent|[lL]esenswert)[^\}]*\|(?P<jour>\d{1,2})[^ 0-9]*\.? (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" 
             }
         """
         'en': u"\{\{([fF]eatured[ _]article|[gG]ood article)[^\}]*\| *" ,
         'es': u"\{\{([aA]rtículo[ _]destacado|[aA]rtículo[ _]bueno)[^\}]*\| *" ,
         'it': u"\{\{[vV]etrina[^\}]*\| *" ,           'nl': u"\{\{[eE]talage[^\}]*\| *"
         """
-        self.dateRE = re.compile(RE_date[self.langue], re.LOCALE)
+        if RE_date[self.langue]:
+            self.dateRE = re.compile(RE_date[self.langue], re.LOCALE)
+        else:
+            self.dateRE = None
         self.interwikifr = re.compile(u"\[\[fr:(?P<iw>[^\]]+)\]\]", re.LOCALE)
 
         self.nouveau = []       # Nouveaux articles promus
@@ -80,6 +82,8 @@ class ContenuDeQualite:
         self.pasdedate = []     # Articles de qualité dont la date est inconnue
         self.dechu = []         # Articles déchus
         self.db = MySQLdb.connect(db="u_romainhk", read_default_file="/home/romainhk/.my.cnf", use_unicode=True, charset='utf8')
+        #self.nom_base = u'contenu_de_qualite_%s' % self.langue
+        self.nom_base = u'contenu_de_qualite'
 
     def __del__(self):
         self.db.close()
@@ -88,22 +92,23 @@ class ContenuDeQualite:
         """
         Log des modifications à apporter à la bdd
         """
-        resultat = u'== Sur WP:%s ==\n' % self.langue
-        resultat += u"%s nouveaux articles labellisés trouvés : %s AdQ et %s BA." \
+        resu = u'== Sur WP:%s ==\n' % self.langue
+        resu += u"%s nouveaux articles labellisés trouvés : %s AdQ et %s BA." \
             % (str(len(self.nouveau)), str(self.denombrer(self.cat_qualite[0], [self.nouveau])), str(self.denombrer(self.cat_qualite[1], [self.nouveau])))
-        resultat += u" (Total après sauvegarde : %s articles, %s AdQ et %s BA)\n\n" \
+        resu += u" (Total après sauvegarde : %s articles, %s AdQ et %s BA)\n\n" \
                 % ( str( len(self.nouveau) + len(self.connaitdeja) ),\
                 str(self.denombrer( self.cat_qualite[0], [self.nouveau, self.connaitdeja]) ),\
                 str(self.denombrer( self.cat_qualite[1], [self.nouveau, self.connaitdeja]) ) ) 
-        resultat += u"Au reste, il y a %s articles déchus depuis la dernière vérification, %s sans date précisée, et %s déjà connus." \
+        resu += u"Au reste, il y a %s articles déchus depuis la dernière vérification, %s sans date précisée, et %s déjà connus." \
                 % ( str(len(self.dechu)), str(len(self.pasdedate)), str(len(self.connaitdeja)) )
-        resultat += u"\n=== Nouveau contenu de qualité ===\n"
-        resultat += self.lister_article(self.nouveau)
-        resultat += u"\n=== Articles sans date de labellisation ===\n"
-        resultat += self.lister_article(self.pasdedate)
-        resultat += u"\n=== Articles déchus depuis la dernière sauvegarde ===\n"
-        resultat += self.lister_article(self.dechu)
-        return resultat
+        resu += u"\n=== Nouveau contenu de qualité ===\n"
+        resu += self.lister_article(self.nouveau)
+        resu += u"\n=== Articles sans date de labellisation ===\n"
+        resu += u"{{Boîte déroulante début |titre=%s articles}}" % len(self.pasdedate)
+        resu += u"%s\n{{Boîte déroulante fin}}" % self.lister_article(self.pasdedate)
+        resu += u"\n=== Articles déchus depuis la dernière sauvegarde ===\n"
+        resu += self.lister_article(self.dechu)
+        return resu
 
     def denombrer(self, label, tab):
         """
@@ -123,8 +128,10 @@ class ContenuDeQualite:
         if len(table) > 0:
             r = []
             if type(table[0]) == type(u""):
+                plus = u''
+                if self.lang != 'fr': plus = u'%s:' % self.lang
                 for p in table:
-                    r.append(u"[[%s]]" % unicode(p) )
+                    r.append(u"[[%s%s]]" % (plus, unicode(p)) )
             elif type(table[0]) == type([]):
                 for p in table:
                     r.append(u"[[%s]] %s" % ( unicode(p[0]), unicode(p[2]) ) )
@@ -138,9 +145,9 @@ class ContenuDeQualite:
         wikipedia.output(u'# Sauvegarde dans la base pour la langue « %s ».' % self.langue)
         curseur = self.db.cursor()
         for q in self.nouveau:
-            req = u'INSERT INTO contenu_de_qualite(langue, page, espacedenom, date, label, taille, consultations, traduction)' \
+            req = u'INSERT INTO %s(langue, page, espacedenom, date, label, taille, consultations, traduction)' \
                     + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", %s)' \
-                    % ( self.langue, unicode2html(q[0], 'ascii'),  str(q[1]),\
+                    % ( self.nom_base, self.langue, unicode2html(q[0], 'ascii'),  str(q[1]),\
                     q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]), self._put_null(q[6]) )
             try:
                 curseur.execute(req)
@@ -156,7 +163,7 @@ class ContenuDeQualite:
                 self.sauvegarde_update(curseur, q)
 
         for d in self.dechu:
-            req = u'DELETE FROM contenu_de_qualite WHERE page="%s"' % unicode(d)
+            req = u'DELETE FROM %s WHERE page="%s"' % ( self.nom_base, unicode(d) )
             try:
                 curseur.execute(req)
             except:
@@ -166,9 +173,9 @@ class ContenuDeQualite:
         """
         Mise à jour un champ de la base de données
         """
-        req = u'UPDATE contenu_de_qualite SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s WHERE langue="%s" AND page="%s"' \
-            % (str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]), \
-            self._put_null(q[6]), self.langue, unicode2html(q[0], 'ascii'))
+        req = u'UPDATE %s SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s WHERE langue="%s" AND page="%s"' \
+            % (self.nom_base, str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), \
+            str(q[5]), self._put_null(q[6]), self.langue, unicode2html(q[0], 'ascii'))
         try:
             curseur.execute(req)
         except MySQLdb.Error, e:
@@ -185,7 +192,7 @@ class ContenuDeQualite:
         Charger la liste des articles dont le label est connu depuis une base de données
         """
         curseur = self.db.cursor()
-        req = "SELECT * FROM contenu_de_qualite"
+        req = "SELECT * FROM %s" % self.nom_base
         curseur.execute(req)
         return curseur.fetchall()
 
@@ -197,8 +204,8 @@ class ContenuDeQualite:
             page = wikipedia.Page(self.site, titre).get()
         except pywikibot.exceptions.NoPage:
             raise PasDeDate(titre)
-        d = self.dateRE.search(page)
-        if d:
+        if self.dateRE:
+            d = self.dateRE.search(page)
             mti = BeBot.moistoint(d.group('mois'))
             if mti > 0:
                 return datetime.date(int(d.group('annee')), \
@@ -223,7 +230,7 @@ class ContenuDeQualite:
             else:
                 return None
         else:
-            for p in p.interwiki():
+            for p in page.interwiki():
                 res = self.interwikifr.search(p.title())
                 if res:
                     return res.group('iw')
@@ -248,7 +255,7 @@ class ContenuDeQualite:
                         self.pasdedate.append(pdd.page)
                         continue
                     infos = [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p),\
-                            BeBot.stat_consultations(p, self.langue), self.traduction(p) ]
+                            BeBot.stat_consultations(p, code_langue=self.langue), self.traduction(p) ]
                     if article_connu:
                         self.connaitdeja.append(infos)
                     else:
@@ -257,6 +264,7 @@ class ContenuDeQualite:
                     self.connaitdeja.append( [ p.title(), p.namespace(), '1970-01-01', cat, 0, 0, None ] )
 
         categorie = catlib.Category(self.site, u'Ancien article de qualité')
+        # Vérifier parfois avec : Wikipédia:Articles de qualité/Justification de leur rejet
         cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
         for p in cpg:
             if p.namespace == 0:
@@ -271,7 +279,6 @@ class ContenuDeQualite:
 
 def main():
     mode = u'nouveaux-seulement'
-
     try:
         opts, args = getopt.getopt(sys.argv[1:], "s")
     except getopt.GetoptError, err:
@@ -286,17 +293,15 @@ def main():
     else:
         wikis = ['fr']
 
-    site = wikipedia.getSite()
-    pagelog = u'Utilisateur:BeBot/Contenu de qualité'
-
     log =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »''' ; exécussion du %s </center>\n\n" \
             % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
     for cl in wikis:
+        wikipedia.output( u"== WP:%s..." % cl )
         cdq = ContenuDeQualite(wikipedia.Site(cl), mode)
         cdq.run()
         log += unicode(cdq)
         cdq.sauvegarder()
-    wikipedia.Page(site, pagelog).put(log, comment=cdq.resume, minorEdit=False)
+    wikipedia.Page(wikipedia.Site('fr'), u'Utilisateur:BeBot/Contenu de qualité').put(log, comment=cdq.resume, minorEdit=False)
 
 #    choix = wikipedia.inputChoice(u"Sauvegarder dans la base de donnees ?", ['oui', 'non'], ['o', 'n'], 'o')
 #    if choix == "o" or choix == "oui":
