@@ -74,7 +74,7 @@ class ContenuDeQualite:
         if RE_date.has_key(self.langue):
             self.dateRE = re.compile(RE_date[self.langue], re.LOCALE)
         else:
-            self.dateRE = None
+            self.dateRE = False
         self.interwikifr = re.compile(u"\[\[fr:(?P<iw>[^\]]+)\]\]", re.LOCALE)
 
         self.nouveau = []       # Nouveaux articles promus
@@ -94,13 +94,13 @@ class ContenuDeQualite:
         """
         resu = u'== Sur WP:%s ==\n' % self.langue
         resu += u"%s nouveaux articles labellisés trouvés : %s AdQ" \
-            % (str(len(self.nouveau)), str(self.denombrer(self.cat_qualite[0][self.nouveau])))
-        if len(cat_qualite) > 1:
-            resu += u" et % BA" % str(self.denombrer(self.cat_qualite[1], [self.nouveau]))
+            % (str(len(self.nouveau)), str(self.denombrer(self.cat_qualite[0], [self.nouveau])))
+        if len(self.cat_qualite) > 1:
+            resu += u" et %s BA" % str(self.denombrer(self.cat_qualite[1], [self.nouveau]))
         resu += u". (Total après sauvegarde : %s articles, %s AdQ" \
                 % ( str( len(self.nouveau) + len(self.connaitdeja) ),\
                 str(self.denombrer( self.cat_qualite[0], [self.nouveau, self.connaitdeja])) )
-        if len(cat_qualite) > 1:
+        if len(self.cat_qualite) > 1:
             resu += u' et %s BA' % str(self.denombrer( self.cat_qualite[1], [self.nouveau, self.connaitdeja]))
         resu += u")\n\nAu reste, il y a %s articles déchus depuis la dernière vérification, %s sans date précisée, et %s déjà connus." \
                 % ( str(len(self.dechu)), str(len(self.pasdedate)), str(len(self.connaitdeja)) )
@@ -132,9 +132,10 @@ class ContenuDeQualite:
             r = []
             if type(table[0]) == type(u""):
                 plus = u''
-                if self.lang != 'fr': plus = u'%s:' % self.lang
+                if self.langue != 'fr':
+                    plus = u'%s:' % self.langue
                 for p in table:
-                    r.append(u"[[%s%s]]" % (plus, unicode(p)) )
+                    r.append(u"[[%s%s]]" % ( plus, unicode(p)) )
             elif type(table[0]) == type([]):
                 for p in table:
                     r.append(u"[[%s]] %s" % ( unicode(p[0]), unicode(p[2]) ) )
@@ -222,7 +223,7 @@ class ContenuDeQualite:
         if self.langue in "fr": # Trop peu de label avec dates sur DE
             raise PasDeDate(titre)
         else:
-            return '1970-01-01'
+            return datetime.date(1970, 1, 1) #Epoch
 
     def traduction(self, page):
         """
