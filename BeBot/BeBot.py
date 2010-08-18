@@ -7,28 +7,29 @@ from wikipedia import *
 # Bibliothèque BeBot
 
 Rassemble plusieurs fonctions génériques : 
-taille d'une page, page de traduction associée, consultation mensuelle d'une page, conversion mois vers entier...
+taille d'une page, page de traduction associée, consultation mensuelle d'une page,
+conversion mois vers entier, lecture ligne par ligne d'un article...
 """
 
 def moistoint(mois):
     """
-    Convertit une chaîne de caractètre correspondant à un mois, en un entier i (1≤i≤12).
+    Convertit un mois sous forme de chaîne de caractères, en son entier i associé (1≤i≤12).
     """
     mois = mois.lower()
-    if mois in  'janvier    january  januar':  return 1
-    elif mois in u'février febuary  februar':  return 2
-    elif mois in u'mars     march    märz':    return 3
-    elif mois in 'avril    april    ':         return 4
-    elif mois in 'mai      may      ':         return 5
-    elif mois in 'juin     june     juni':     return 6
-    elif mois in 'juillet  july     juli':     return 7
-    elif mois in u'août    august   ':         return 8
-    elif mois in 'septembre  september  ':     return 9
+    if mois in  'janvier    january  januar':   return 1
+    elif mois in u'février  febuary  februar':  return 2
+    elif mois in u'mars    march   märz  maerz':   return 3
+    elif mois in 'avril    april   ':        return 4
+    elif mois in 'mai      may     ':        return 5
+    elif mois in 'juin     june    juni':    return 6
+    elif mois in 'juillet  july    juli':    return 7
+    elif mois in u'août    august  ':        return 8
+    elif mois in 'septembre  september  ':   return 9
     elif mois in 'octobre    october    oktober':   return 10
     elif mois in 'novembre   november   ':          return 11
     elif mois in u'décembre  december   dezember':  return 12
     else:
-        wikipedia.output(u'Mois « %s » non reconnu' % mois)
+        wikipedia.output(u'BeBot : Mois "%s" non reconnu.' % mois)
     return 0
 
 def page_ligne_par_ligne(site, nompage):
@@ -38,7 +39,7 @@ def page_ligne_par_ligne(site, nompage):
     try:
         page = wikipedia.Page(site, nompage).get()
     except pywikibot.exceptions.NoPage:
-        wikipedia.output(u"La page « %s » n'est pas accessible." % nompage)
+        wikipedia.output(u"BeBot : La page « %s » n'est pas accessible." % nompage)
         return
     for ligne in page.split("\n"):
         yield ligne
@@ -55,12 +56,11 @@ def togglePageTrad(site, page):
     """
     if not site.language() == 'fr': return u''
     trad = re.compile(u"/Traduction$", re.LOCALE)
-#    if (page.namespace() % 2) == 0:
-    if not trad.search(page.title()):
-        return wikipedia.Page(site, page.toggleTalkPage().title()+"/Traduction")
-    else:
-        # Espace de discussion
+    if trad.search(page.title()):
+        #Déjà une
         return wikipedia.Page(site, page.toggleTalkPage().title().split('/Traduction')[0])
+    else:
+        return wikipedia.Page(site, page.toggleTalkPage().title()+"/Traduction")
 
 def stat_consultations(page, codelangue=u'fr', date=False):
     """
@@ -69,11 +69,12 @@ def stat_consultations(page, codelangue=u'fr', date=False):
     if not date:
         date = datetime.date.today()
         date = datetime.date(date.year, date.month-1, date.day)
-    url = "http://stats.grok.se/json/%s/%s/%s" % ( codelangue, date.strftime("%Y%m"), urllib2.quote(page.title().encode('utf-8')) )
+    url = "http://stats.grok.se/json/%s/%s/%s" \
+            % ( codelangue, date.strftime("%Y%m"), urllib2.quote(page.title().encode('utf-8')) )
     try:
         res = simplejson.load(urllib2.urlopen(url))
 #    except urllib2.URLError, urllib2.HTTPError:
     except:
-        wikipedia.output("Impossible de récupérer les stats à l'adresse %s" % url)
+        wikipedia.output("BeBot : Impossible de récupérer les stats à l'adresse %s" % url)
         return 0
     return res["total_views"]
