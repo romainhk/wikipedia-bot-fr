@@ -38,7 +38,9 @@ class TraductionDeQualite:
         tmp = []
         cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Traduction d'un Article de Qualité")))
         cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Traduction d'un Bon Article")))
-        for tion in pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats)):
+        gen = pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats))
+        gen = pagegenerators.PreloadingGenerator(gen)
+        for tion in gen:
             tmp.append(BeBot.togglePageTrad(self.site, tion).title().replace('(', '\\x28').replace(')', '\\x29'))
                 #Remplacement des parenthèses à cause d'un problème de comparaison de chaine utf-8 ; ex : Timée (Platon)
             self.tradQualite.append(tion)
@@ -121,7 +123,9 @@ class TraductionDeQualite:
         cats = []
         cats.append(pagegenerators.PageTitleFilterPageGenerator(pagegenerators.ReferringPageGenerator(wikipedia.Page(self.site, u"Modèle:Lien AdQ"), followRedirects=True, withTemplateInclusion=True), self.ignor_list))
         cats.append(pagegenerators.PageTitleFilterPageGenerator(pagegenerators.ReferringPageGenerator(wikipedia.Page(self.site, u"Modèle:Lien BA"), followRedirects=True, withTemplateInclusion=True), self.ignor_list))
-        for m in pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats)):
+        gen = pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats))
+        gen = pagegenerators.PreloadingGenerator(gen)
+        for m in gen:
             if m.namespace() == 0: # ... alors prendre la page de trad
                 tradpage = BeBot.togglePageTrad(self.site, m)
                 for t in self.traductions:
