@@ -71,7 +71,7 @@ class ContenuDeQualite:
         'es': u"\{\{([aA]rtículo[ _]destacado|[aA]rtículo[ _]bueno)[^\}]*\| *" ,
         'it': u"\{\{[vV]etrina[^\}]*\| *" ,           'nl': u"\{\{[eE]talage[^\}]*\| *"
         """
-        if RE_date[self.langue]:
+        if RE_date.has_key(self.langue):
             self.dateRE = re.compile(RE_date[self.langue], re.LOCALE)
         else:
             self.dateRE = None
@@ -93,13 +93,16 @@ class ContenuDeQualite:
         Log des modifications à apporter à la bdd
         """
         resu = u'== Sur WP:%s ==\n' % self.langue
-        resu += u"%s nouveaux articles labellisés trouvés : %s AdQ et %s BA." \
-            % (str(len(self.nouveau)), str(self.denombrer(self.cat_qualite[0], [self.nouveau])), str(self.denombrer(self.cat_qualite[1], [self.nouveau])))
-        resu += u" (Total après sauvegarde : %s articles, %s AdQ et %s BA)\n\n" \
+        resu += u"%s nouveaux articles labellisés trouvés : %s AdQ" \
+            % (str(len(self.nouveau)), str(self.denombrer(self.cat_qualite[0][self.nouveau])))
+        if len(cat_qualite) > 1:
+            resu += u" et % BA" % str(self.denombrer(self.cat_qualite[1], [self.nouveau]))
+        resu += u". (Total après sauvegarde : %s articles, %s AdQ" \
                 % ( str( len(self.nouveau) + len(self.connaitdeja) ),\
-                str(self.denombrer( self.cat_qualite[0], [self.nouveau, self.connaitdeja]) ),\
-                str(self.denombrer( self.cat_qualite[1], [self.nouveau, self.connaitdeja]) ) ) 
-        resu += u"Au reste, il y a %s articles déchus depuis la dernière vérification, %s sans date précisée, et %s déjà connus." \
+                str(self.denombrer( self.cat_qualite[0], [self.nouveau, self.connaitdeja])) )
+        if len(cat_qualite) > 1:
+            resu += u' et %s BA' % str(self.denombrer( self.cat_qualite[1], [self.nouveau, self.connaitdeja]))
+        resu += u")\n\nAu reste, il y a %s articles déchus depuis la dernière vérification, %s sans date précisée, et %s déjà connus." \
                 % ( str(len(self.dechu)), str(len(self.pasdedate)), str(len(self.connaitdeja)) )
         resu += u"\n=== Nouveau contenu de qualité ===\n"
         resu += self.lister_article(self.nouveau)
@@ -206,15 +209,17 @@ class ContenuDeQualite:
             raise PasDeDate(titre)
         if self.dateRE:
             d = self.dateRE.search(page)
-            mti = BeBot.moistoint(d.group('mois'))
-            if mti > 0:
-                return datetime.date(int(d.group('annee')), \
+            if d:
+                mti = BeBot.moistoint(d.group('mois'))
+                if mti > 0:
+                    return datetime.date(int(d.group('annee')), \
                         BeBot.moistoint(d.group('mois')), int(d.group('jour')))
         else:
             #TODO: Recherche dans l'historique l'ajout du modèle -> fullVersionHistory() !! lourd
             pass
 
-        if self.langue in "fr de":
+        #if self.langue in "fr de":
+        if self.langue in "fr": # Trop peu de label avec dates sur DE
             raise PasDeDate(titre)
         else:
             return '1970-01-01'
@@ -255,7 +260,7 @@ class ContenuDeQualite:
                         self.pasdedate.append(pdd.page)
                         continue
                     infos = [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p),\
-                            BeBot.stat_consultations(p, code_langue=self.langue), self.traduction(p) ]
+                            BeBot.stat_consultations(p, codelangue=self.langue), self.traduction(p) ]
                     if article_connu:
                         self.connaitdeja.append(infos)
                     else:
@@ -296,7 +301,7 @@ def main():
     log =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »''' ; exécussion du %s </center>\n\n" \
             % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
     for cl in wikis:
-        wikipedia.output( u"== WP:%s..." % cl )
+        wikipedia.output( u"== WP:%s ..." % cl )
         cdq = ContenuDeQualite(wikipedia.Site(cl), mode)
         cdq.run()
         log += unicode(cdq)
