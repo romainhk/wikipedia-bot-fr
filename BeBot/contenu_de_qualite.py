@@ -36,8 +36,7 @@ class ContenuDeQualite:
     python contenu_de_qualite.py -s fr de nl 
     >  mise à jour complète pour les wiki francophone, germanophone et néerlandophone.
 
-        TODO : avancement Wikiprojet
-        TODO : importance Wikiprojet
+        TODO :  Wikiprojet : en, de
         TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
     """
@@ -87,6 +86,15 @@ class ContenuDeQualite:
     def __del__(self):
         self.db.close()
 
+    def isDatable(self):
+        """ Dit si le wiki analysé contient de dates pour ses label
+        """
+        #if self.langue in "fr de":
+        if self.langue in "fr": # Trop peu de labels avec date sur DE
+            return True
+        else:
+            return False
+
     def __str__(self):
         """
         Log des modifications à apporter à la bdd
@@ -105,7 +113,7 @@ class ContenuDeQualite:
                 % ( str(len(self.dechu)), str(len(self.pasdedate)), str(len(self.connaitdeja)) )
         resu += u"\n=== Nouveau contenu de qualité ===\n"
         resu += self.lister_article(self.nouveau)
-        if self.langue in "fr de":
+        if self.isDatable():
             resu += u"\n=== Articles sans date de labellisation ===\n"
             resu += u"{{Boîte déroulante début |titre=%s articles}}" % len(self.pasdedate)
             resu += u"%s\n{{Boîte déroulante fin}}" % self.lister_article(self.pasdedate)
@@ -122,7 +130,7 @@ class ContenuDeQualite:
         i = 0
         for l in tab:
             for n in l:
-                if n[3] == label:
+                if n['label'] == label:
                     i += 1
         return i
 
@@ -134,8 +142,8 @@ class ContenuDeQualite:
             r = []
             if type(table[0]) == type(u""):
                 plus = u''
-                if self.langue != 'fr':
-                    plus = u'%s:' % self.langue
+                if not self.langue == 'fr':
+                    plus = u':%s:' % self.langue
                 for p in table:
                     r.append(u"[[%s%s]]" % ( plus, unicode(p)) )
             elif type(table[0]) == type([]):
@@ -152,10 +160,12 @@ class ContenuDeQualite:
         curseur = self.db.cursor()
         for q in self.nouveau:
             req = u'INSERT INTO %s' % self.nom_base \
-                + '(page, espacedenom, date, label, taille, consultations, traduction) ' \
-                + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s)' \
-                % ( unicode2html(q[0], 'ascii'),  str(q[1]), q[2].strftime("%Y-%m-%d"),\
-                q[3], str(q[4]), str(q[5]), self._put_null(q[6]) )
+                + '(page, espacedenom, date, label, taille, consultations, traduction, avancement, importance) ' \
+                + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s, %s, %s)' \
+                % ( unicode2html(q['page'], 'ascii'),  str(q['espacedenom']), \
+                q['date'].strftime("%Y-%m-%d"), q['label'], str(q['taille']), \
+                str(q['consultations']), self._put_null(q['traduction']), \
+                self._put_null(q['avancement']), self._put_null(q['importance']) )
             try:
                 curseur.execute(req)
             except MySQLdb.Error, e:
@@ -180,9 +190,11 @@ class ContenuDeQualite:
         """
         Mise à jour un champ de la base de données
         """
-        req = u'UPDATE %s SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s WHERE page="%s"' \
-            % (self.nom_base, str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), \
-            str(q[5]), self._put_null(q[6]), unicode2html(q[0], 'ascii'))
+        req = u'UPDATE %s SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s, avancement=%s, importance=%s WHERE page="%s"' \
+            % (self.nom_base, str(q['espacedenom']), q['date'].strftime("%Y-%m-%d"), \
+            q['label'], str(q['taille']), str(q['consultations']), \
+            self._put_null(q['traduction']), self._put_null(q['avancement']), \
+            self._put_null(q['importance']), unicode2html(q['page'], 'ascii') )
         try:
             curseur.execute(req)
         except MySQLdb.Error, e:
@@ -222,8 +234,7 @@ class ContenuDeQualite:
             #TODO: Recherche dans l'historique l'ajout du modèle -> fullVersionHistory() !! lourd
             pass
 
-        #if self.langue in "fr de":
-        if self.langue in "fr": # Trop peu de labels avec date sur DE
+        if self.isDatable():
             raise PasDeDate(titre)
         else:
             return datetime.date(1970, 1, 1) #Epoch
@@ -250,7 +261,8 @@ class ContenuDeQualite:
         Donne le plus petit avancement et la plus grande importance Wikiprojet
         """
         rep = { 'avancement': None, 'importance': None }
-        if self.langue in "fr":
+        if self.isDatable():
+            #TODO: internationaliser : 2 RE, 2 i, le condition au dessus
             avan = []
             imp = []
             if (page.namespace() % 2) == 0:
@@ -285,6 +297,7 @@ class ContenuDeQualite:
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
             cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='U')
+            cpg = pagegenerators.PreloadingGenerator(cpg)
             #Comparer avec le contenu de la bdd
             for p in cpg:
                 article_connu = False
@@ -298,20 +311,21 @@ class ContenuDeQualite:
                     except PasDeDate as pdd:
                         self.pasdedate.append(pdd.page)
                         continue
-                    """
                     wikiprojet = self.wikiprojet(p)
-                    infos = [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p),\
-                            BeBot.stat_consultations(p, codelangue=self.langue), self.traduction(p),\
-                            wikiprojet['avancement'], wikiprojet['importance'] ]
-                    """
-                    infos = [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p),\
-                            BeBot.stat_consultations(p, codelangue=self.langue), self.traduction(p) ]
+                    infos = {
+    'page': p.title(),    'espacedenom': p.namespace(),     'date': date, \
+    'label': cat,         'taille': BeBot.taille_page(p), \
+    'consultations':BeBot.stat_consultations(p, codelangue=self.langue), \
+    'traduction': self.traduction(p),    'avancement': wikiprojet['avancement'], \
+    'importance': wikiprojet['importance']
+                            }
                     if article_connu:
                         self.connaitdeja.append(infos)
                     else:
                         self.nouveau.append(infos)
                 else:
-                    self.connaitdeja.append( [ p.title(), p.namespace(), '1970-01-01', cat, 0, 0, None ] )
+                    #self.connaitdeja.append( [ p.title(), p.namespace(), '1970-01-01', cat, 0, 0, None ] )
+                    self.connaitdeja.append( { 'page': p.title(), 'espacedenom': p.namespace() } )
 
         categorie = catlib.Category(self.site, u'Ancien article de qualité')
         # Vérifier parfois avec : Wikipédia:Articles de qualité/Justification de leur rejet
