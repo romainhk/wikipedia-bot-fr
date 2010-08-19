@@ -58,7 +58,7 @@ class ContenuDeQualite:
         self.cat_qualite = self.categories_de_qualite[self.langue] # Nom des catégories des deux labels
         if mode_maj == "strict":
             self.maj_stricte = True
-            wikipedia.output(u'# Mode de mise à jour "strict" actif (toutes les updates seront effectuées)')
+            wikipedia.output(u'# Mode "strict" actif (toutes les updates seront effectuées)')
         else:
             self.maj_stricte = False
 
@@ -75,15 +75,14 @@ class ContenuDeQualite:
             self.dateRE = re.compile(RE_date[self.langue], re.LOCALE)
         else:
             self.dateRE = False
-        self.interwikifr = re.compile(u"\[\[fr:(?P<iw>[^\]]+)\]\]", re.LOCALE)
+        self.interwikifrRE = re.compile(u"\[\[fr:(?P<iw>[^\]]+)\]\]", re.LOCALE)
 
         self.nouveau = []       # Nouveaux articles promus
         self.connaitdeja = []   # Articles déjà listés
         self.pasdedate = []     # Articles de qualité dont la date est inconnue
         self.dechu = []         # Articles déchus
         self.db = MySQLdb.connect(db="u_romainhk", read_default_file="/home/romainhk/.my.cnf", use_unicode=True, charset='utf8')
-        #self.nom_base = u'contenu_de_qualite_%s' % self.langue
-        self.nom_base = u'contenu_de_qualite'
+        self.nom_base = u'contenu_de_qualite_%s' % self.langue
 
     def __del__(self):
         self.db.close()
@@ -106,11 +105,14 @@ class ContenuDeQualite:
                 % ( str(len(self.dechu)), str(len(self.pasdedate)), str(len(self.connaitdeja)) )
         resu += u"\n=== Nouveau contenu de qualité ===\n"
         resu += self.lister_article(self.nouveau)
-        resu += u"\n=== Articles sans date de labellisation ===\n"
-        resu += u"{{Boîte déroulante début |titre=%s articles}}" % len(self.pasdedate)
-        resu += u"%s\n{{Boîte déroulante fin}}" % self.lister_article(self.pasdedate)
+        if self.langue in "fr de":
+            resu += u"\n=== Articles sans date de labellisation ===\n"
+            resu += u"{{Boîte déroulante début |titre=%s articles}}" % len(self.pasdedate)
+            resu += u"%s\n{{Boîte déroulante fin}}" % self.lister_article(self.pasdedate)
         resu += u"\n=== Articles déchus depuis la dernière sauvegarde ===\n"
         resu += self.lister_article(self.dechu)
+        resu += u"\n=== Articles déjà connus ===\n"
+        resu += self.lister_article(self.connaitdeja)
         return resu
 
     def denombrer(self, label, tab):
@@ -149,10 +151,11 @@ class ContenuDeQualite:
         wikipedia.output(u'# Sauvegarde dans la base pour la langue « %s ».' % self.langue)
         curseur = self.db.cursor()
         for q in self.nouveau:
-            req = u'INSERT INTO %s(langue, page, espacedenom, date, label, taille, consultations, traduction)' \
-                    + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", %s)' \
-                    % ( self.nom_base, self.langue, unicode2html(q[0], 'ascii'),  str(q[1]),\
-                    q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), str(q[5]), self._put_null(q[6]) )
+            req = u'INSERT INTO %s' % self.nom_base \
+                + '(page, espacedenom, date, label, taille, consultations, traduction) ' \
+                + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s)' \
+                % ( unicode2html(q[0], 'ascii'),  str(q[1]), q[2].strftime("%Y-%m-%d"),\
+                q[3], str(q[4]), str(q[5]), self._put_null(q[6]) )
             try:
                 curseur.execute(req)
             except MySQLdb.Error, e:
@@ -177,9 +180,9 @@ class ContenuDeQualite:
         """
         Mise à jour un champ de la base de données
         """
-        req = u'UPDATE %s SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s WHERE langue="%s" AND page="%s"' \
+        req = u'UPDATE %s SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s WHERE page="%s"' \
             % (self.nom_base, str(q[1]), q[2].strftime("%Y-%m-%d"), q[3], str(q[4]), \
-            str(q[5]), self._put_null(q[6]), self.langue, unicode2html(q[0], 'ascii'))
+            str(q[5]), self._put_null(q[6]), unicode2html(q[0], 'ascii'))
         try:
             curseur.execute(req)
         except MySQLdb.Error, e:
@@ -220,7 +223,7 @@ class ContenuDeQualite:
             pass
 
         #if self.langue in "fr de":
-        if self.langue in "fr": # Trop peu de label avec dates sur DE
+        if self.langue in "fr": # Trop peu de labels avec date sur DE
             raise PasDeDate(titre)
         else:
             return datetime.date(1970, 1, 1) #Epoch
@@ -237,21 +240,56 @@ class ContenuDeQualite:
                 return None
         else:
             for p in page.interwiki():
-                res = self.interwikifr.search(p.title())
+                res = self.interwikifrRE.search(p.title())
                 if res:
                     return res.group('iw')
             return None
+
+    def wikiprojet(self, page):
+        """
+        Donne le plus petit avancement et la plus grande importance Wikiprojet
+        """
+        rep = { 'avancement': None, 'importance': None }
+        if self.langue in "fr":
+            avan = []
+            imp = []
+            if (page.namespace() % 2) == 0:
+                page = page.toggleTalkPage()
+            avancementRE = re.compile(u'Article.*avancement (?P<avancement>[\w]+)$', re.LOCALE)
+            importanceRE = re.compile(u'Article.*importance (?P<importance>[\w]+)$', re.LOCALE)
+            for cat in page.categories():
+                b = avancementRE.search(cat.title())
+                if b:
+                    avan.append(b.group('avancement'))
+                b = importanceRE.search(cat.title())
+                if b:
+                    imp.append(b.group('importance'))
+            if len(avan) > 0:
+                for i in [ u'AdQ', u'BA', u'A', u'B', u'BD', u'ébauche' ]:
+                    if avan.count(i) > 0:
+                        avan.remove(i)
+                        if len(avan) < 1:
+                            avan.append(i)
+                rep['avancement'] = avan[0]
+            if len(imp) > 0:
+                for i in [ u'inconnue', u'faible', u'moyenne', u'élevée' ]:
+                    if imp.count(i) > 0:
+                        imp.remove(i)
+                        if len(imp) < 1:
+                            imp.append(i)
+                rep['importance'] = imp[0]
+        return rep
 
     def run(self):
         connus = self.charger()
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
-            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
+            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='U')
             #Comparer avec le contenu de la bdd
             for p in cpg:
                 article_connu = False
                 for con in connus:
-                    if p.title() == html2unicode(con[1]): #con[1]=page
+                    if p.title() == html2unicode(con[0]): #con[0]=page
                         article_connu = True
                         break
                 if not article_connu or self.maj_stricte:
@@ -260,6 +298,12 @@ class ContenuDeQualite:
                     except PasDeDate as pdd:
                         self.pasdedate.append(pdd.page)
                         continue
+                    """
+                    wikiprojet = self.wikiprojet(p)
+                    infos = [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p),\
+                            BeBot.stat_consultations(p, codelangue=self.langue), self.traduction(p),\
+                            wikiprojet['avancement'], wikiprojet['importance'] ]
+                    """
                     infos = [ p.title(), p.namespace(), date, cat, BeBot.taille_page(p),\
                             BeBot.stat_consultations(p, codelangue=self.langue), self.traduction(p) ]
                     if article_connu:
