@@ -38,28 +38,30 @@ class ContenuDeQualite:
         TODO :  Wikiprojet : en, de
         TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
+        TODO : propositions d'apposition pour Lien AdQ|Lien BA
     """
     def __init__(self, site, mode_maj):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
         self.site = site
         self.langue = self.site.language()
         self.log = log
-
-        self.categories_de_qualite = {
-                'fr': [ u'Article de qualité',   u'Bon article' ],
-                'en': [ u'Featured articles',    u'Wikipedia good articles' ],
-                'de': [ u'Kategorie:Wikipedia:Exzellent',   u'Kategorie:Wikipedia:Lesenswert' ],
-                'es': [ u'Categoría:Wikipedia:Artículos destacados',  u'Categoría:Wikipedia:Artículos buenos' ],
-                'it': [ u'Voci in vetrina' ],
-                'nl': [ u'Categorie:Wikipedia:Etalage-artikelen' ]
-                }
-        self.cat_qualite = self.categories_de_qualite[self.langue] # Nom des catégories des deux labels
         if mode_maj == "strict":
             self.maj_stricte = True
             wikipedia.output(u'# Mode "strict" actif (toutes les updates seront effectuées)')
         else:
             self.maj_stricte = False
 
+        self.categories_de_qualite = {
+                'fr': [ u'Article de qualité',   u'Bon article' ],
+                'en': [ u'Featured articles',    u'Wikipedia good articles' ],
+                'de': [ u'Kategorie:Wikipedia:Exzellent',   u'Kategorie:Wikipedia:Lesenswert' ],
+                'es': [ u'Categoría:Wikipedia:Artículos destacados',  u'Categoría:Wikipedia:Artículos buenos' ],
+   # Sur IT, ce sont les pages de discussion qui ont les labels!    'it': [ u'Voci in vetrina' ],
+                'nl': [ u'Categorie:Wikipedia:Etalage-artikelen' ]
+                }
+        self.cat_qualite = self.categories_de_qualite[self.langue] # Nom des catégories des deux labels
+
+        # REs
         RE_date = {
             'fr': u"\{\{([aA]rticle[ _]de[ _]qualit|[bB]on[ _]article|[aA]dQ[ _]dat)[^\}]*\| *date *= *\{{0,2}(?P<jour>\d{1,2})[^ 0-9]*\}{0,2} (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" ,
             'de': u"\{\{([eE]xzellent|[lL]esenswert)[^\}]*\|(?P<jour>\d{1,2})[^ 0-9]*\.? (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" 
@@ -67,14 +69,27 @@ class ContenuDeQualite:
         if RE_date.has_key(self.langue):
             self.dateRE = re.compile(RE_date[self.langue], re.LOCALE)
         else:
-            self.dateRE = False
+            self.dateRE = None
+        RE_wikiprojet = {
+                'fr': [ u'Article.*avancement (?P<avancement>[\w]+)$', 
+                        u'Article.*importance (?P<importance>[\w]+)$' ] ,
+                }
+        self.wikiprojetRE = { 'avancement': None, 'importance': None }
+        if RE_wikiprojet.has_key(self.langue):
+            self.wikiprojetRE['avancement'] = re.compile(RE_wikiprojet[self.langue][0], re.LOCALE)
+            self.wikiprojetRE['importance'] = re.compile(RE_wikiprojet[self.langue][1], re.LOCALE)
         self.interwikifrRE = re.compile(u"\[\[fr:(?P<iw>[^\]]+)\]\]", re.LOCALE)
 
+        # Principaux conteneurs
         self.nouveau = []       # Nouveaux articles promus
         self.connaitdeja = []   # Articles déjà listés
+        """ Structure complète de "nouveau" et "connaitdeja" :
+        { 'page': ,'espacedenom': ,'date': ,'label': ,'taille': ,
+          'consultations': ,'traduction': ,'avancement': ,'importance': }
+        """
         self.pasdedate = []     # Articles de qualité dont la date est inconnue
         self.dechu = []         # Articles déchus
-
+        # DB
         self.db = MySQLdb.connect(db="u_romainhk", read_default_file="/home/romainhk/.my.cnf", use_unicode=True, charset='utf8')
         self.nom_base = u'contenu_de_qualite_%s' % self.langue
 
@@ -98,7 +113,7 @@ class ContenuDeQualite:
         resu += u")\n\nAu reste, il y a %s articles déchus depuis la dernière vérification, %s sans date précisée, et %s déjà connus." \
                 % ( str(len(self.dechu)), str(len(self.pasdedate)), str(len(self.connaitdeja)) )
         resu += u"\n=== Nouveau contenu de qualité ===\n"
-        resu += self.lister_article(self.nouveau, avecdate=True)
+        resu += self.lister_article(self.nouveau)
   #      if self.maj_stricte:
   #          resu += u'mode stricte :\n%s' % self.lister_article(self.connaitdeja)
         if BeBot.hasDateLabel(self.langue) and len(self.pasdedate) > 0:
@@ -106,7 +121,7 @@ class ContenuDeQualite:
             resu += u"{{Boîte déroulante début |titre=%s articles}}" % len(self.pasdedate)
             resu += u"%s\n{{Boîte déroulante fin}}" % self.lister_article(self.pasdedate)
         resu += u"\n=== Articles déchus depuis la dernière sauvegarde ===\n"
-        resu += self.lister_article(self.dechu, avecdate=True)
+        resu += self.lister_article(self.dechu)
         return resu
 
     def denombrer(self, label, tab):
@@ -120,7 +135,7 @@ class ContenuDeQualite:
                     i += 1
         return i
 
-    def lister_article(self, table, avecdate=False):
+    def lister_article(self, table):
         """ __str__
         Génère une wiki-liste à partir d'un tableau d'articles
         """
@@ -129,7 +144,7 @@ class ContenuDeQualite:
             if not self.langue == 'fr':
                 plus = u':%s:' % self.langue
             r = []
-            if avecdate:
+            if BeBot.hasDateLabel(self.langue):
                 for p in table:
                     r.append(u"[[%s%s]] %s" % ( plus, html2unicode(p['page']), unicode(p['date']) ) )
             else:
@@ -238,19 +253,17 @@ class ContenuDeQualite:
         Donne le plus petit avancement et la plus grande importance Wikiprojet
         """
         rep = { 'avancement': None, 'importance': None }
-        if BeBot.hasWikiprojet(self.langue):
-            #TODO: internationaliser : 2 RE, 2 i
+        if BeBot.hasWikiprojet(self.langue) and self.wikiprojetRE['avancement'] and self.wikiprojetRE['importance']:
+            #TODO: internationaliser : <s>2 RE</s>, 2 i
             avan = []
             imp = []
             if (page.namespace() % 2) == 0:
                 page = page.toggleTalkPage()
-            avancementRE = re.compile(u'Article.*avancement (?P<avancement>[\w]+)$', re.LOCALE)
-            importanceRE = re.compile(u'Article.*importance (?P<importance>[\w]+)$', re.LOCALE)
             for cat in page.categories():
-                b = avancementRE.search(cat.title())
+                b = self.wikiprojetRE['avancement'].search(cat.title())
                 if b:
                     avan.append(b.group('avancement'))
-                b = importanceRE.search(cat.title())
+                b = self.wikiprojetRE['importance'].search(cat.title())
                 if b:
                     imp.append(b.group('importance'))
 
@@ -313,7 +326,7 @@ class ContenuDeQualite:
                 pdd = p.toggleTalkPage.title()
                 for con in connus:
                     if pdd == html2unicode(con[0]):
-                        self.dechu.append( p.title() )
+                        self.dechu.append( { 'page': p.title() } )
 
         wikipedia.output( u"Total: %s ajouts ; %s déjà connus ; %s déchus ; %s sans date." \
                 % (str(len(self.nouveau)), str(len(self.connaitdeja)), \
