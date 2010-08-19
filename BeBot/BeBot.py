@@ -7,8 +7,13 @@ from wikipedia import *
 # Bibliothèque BeBot
 
 Rassemble plusieurs fonctions génériques : 
-taille d'une page, page de traduction associée, consultation mensuelle d'une page,
-conversion mois vers entier, lecture ligne par ligne d'un article...
+* conversion mois vers entier
+* lecture ligne par ligne d'un article
+* taille d'une page
+* page de traduction associée
+* consultation mensuelle d'une page
+* dire si un wiki possède un wikiprojet ou s'il donne la date de labellisation
+* récupérer une table dans un bdd...
 """
 
 def moistoint(mois):
@@ -78,3 +83,31 @@ def stat_consultations(page, codelangue=u'fr', date=False):
         wikipedia.output("BeBot : Impossible de récupérer les stats à l'adresse %s" % url)
         return 0
     return res["total_views"]
+
+def hasDateLabel(langue):
+    """ Dit si un wiki précise la date de labellisation
+    """
+    #if self.langue in "fr de":
+    if langue in "fr": # Trop peu de labels avec une date sur DE
+        return True
+    else:
+        return False
+
+def hasWikiprojet(langue):
+    """ Dit si un wiki possède un wikiprojet
+    """
+    #if self.langue in "fr en de":
+    if self.langue in "fr":
+        return True
+    else:
+        return False
+
+def charger(db, nom_base):
+    """
+    Charger la liste des articles dont le label est connu depuis une base de données
+    """
+    curseur = db.cursor()
+    req = "SELECT * FROM %s" % nom_base
+    curseur.execute(req)
+    return curseur.fetchall()
+

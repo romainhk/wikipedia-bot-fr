@@ -15,7 +15,6 @@ class PasDeDate(Exception):
     def __str__(self):
         return repr(self.page)
 
-
 class ContenuDeQualite:
     """ Contenu de Qualité
         Tri et sauvegarde les AdQ/BA existants par date.
@@ -82,24 +81,6 @@ class ContenuDeQualite:
     def __del__(self):
         self.db.close()
 
-    def hasDate(self):
-        """ Dit si le wiki analysé précise la date de labellisation
-        """
-        #if self.langue in "fr de":
-        if self.langue in "fr": # Trop peu de labels avec une date sur DE
-            return True
-        else:
-            return False
-
-    def hasWikiprojet(self):
-        """ Dit si le wiki analysé possède un wikiprojet
-        """
-        #if self.langue in "fr en de":
-        if self.langue in "fr":
-            return True
-        else:
-            return False
-
     def __str__(self):
         """
         Log des modifications à apporter à la bdd
@@ -120,7 +101,7 @@ class ContenuDeQualite:
         resu += self.lister_article(self.nouveau, avecdate=True)
   #      if self.maj_stricte:
   #          resu += u'mode stricte :\n%s' % self.lister_article(self.connaitdeja)
-        if self.hasDate():
+        if BeBot.hasDateLabel(self.langue) and len(self.pasdedate) > 0:
             resu += u"\n=== Articles sans date de labellisation ===\n"
             resu += u"{{Boîte déroulante début |titre=%s articles}}" % len(self.pasdedate)
             resu += u"%s\n{{Boîte déroulante fin}}" % self.lister_article(self.pasdedate)
@@ -211,15 +192,6 @@ class ContenuDeQualite:
         else:
             return u'NULL'
 
-    def charger(self):
-        """
-        Charger la liste des articles dont le label est connu depuis une base de données
-        """
-        curseur = self.db.cursor()
-        req = "SELECT * FROM %s" % self.nom_base
-        curseur.execute(req)
-        return curseur.fetchall()
-
     def date_labellisation(self, titre):
         """
         Donne la date de labellisation d'un article
@@ -239,7 +211,7 @@ class ContenuDeQualite:
             #TODO: Recherche dans l'historique l'ajout du modèle -> fullVersionHistory() !! lourd
             pass
 
-        if self.hasDate():
+        if BeBot.hasDateLabel(self.langue):
             raise PasDeDate(titre)
         else:
             return datetime.date(1970, 1, 1) #Epoch
@@ -266,7 +238,7 @@ class ContenuDeQualite:
         Donne le plus petit avancement et la plus grande importance Wikiprojet
         """
         rep = { 'avancement': None, 'importance': None }
-        if self.hasWikiprojet():
+        if BeBot.hasWikiprojet(self.langue):
             #TODO: internationaliser : 2 RE, 2 i
             avan = []
             imp = []
@@ -299,7 +271,7 @@ class ContenuDeQualite:
         return rep
 
     def run(self):
-        connus = self.charger()
+        connus = BeBot.charger(self.db, self.nom_base)
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
             cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='U')
