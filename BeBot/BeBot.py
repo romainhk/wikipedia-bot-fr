@@ -87,7 +87,7 @@ def stat_consultations(page, codelangue=u'fr', date=False):
 def hasDateLabel(langue):
     """ Dit si un wiki précise la date de labellisation
     """
-    #if self.langue in "fr de":
+    #if langue in "fr de":
     if langue in "fr": # Trop peu de labels avec une date sur DE
         return True
     else:
@@ -96,15 +96,15 @@ def hasDateLabel(langue):
 def hasWikiprojet(langue):
     """ Dit si un wiki possède un wikiprojet
     """
-    #if self.langue in "fr en de":
-    if self.langue in "fr":
+    #if langue in "fr en de":
+    if langue in "fr":
         return True
     else:
         return False
 
 def charger(db, nom_base):
     """
-    Charger la liste des articles dont le label est connu depuis une base de données
+    Charger une table depuis une base de données
     """
     curseur = db.cursor()
     req = "SELECT * FROM %s" % nom_base
