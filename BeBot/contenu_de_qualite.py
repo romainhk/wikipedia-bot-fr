@@ -65,11 +65,6 @@ class ContenuDeQualite:
             'fr': u"\{\{([aA]rticle[ _]de[ _]qualit|[bB]on[ _]article|[aA]dQ[ _]dat)[^\}]*\| *date *= *\{{0,2}(?P<jour>\d{1,2})[^ 0-9]*\}{0,2} (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" ,
             'de': u"\{\{([eE]xzellent|[lL]esenswert)[^\}]*\|(?P<jour>\d{1,2})[^ 0-9]*\.? (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" 
             }
-        """
-        'en': u"\{\{([fF]eatured[ _]article|[gG]ood article)[^\}]*\| *" ,
-        'es': u"\{\{([aA]rtículo[ _]destacado|[aA]rtículo[ _]bueno)[^\}]*\| *" ,
-        'it': u"\{\{[vV]etrina[^\}]*\| *" ,           'nl': u"\{\{[eE]talage[^\}]*\| *"
-        """
         if RE_date.has_key(self.langue):
             self.dateRE = re.compile(RE_date[self.langue], re.LOCALE)
         else:
@@ -80,17 +75,27 @@ class ContenuDeQualite:
         self.connaitdeja = []   # Articles déjà listés
         self.pasdedate = []     # Articles de qualité dont la date est inconnue
         self.dechu = []         # Articles déchus
+
         self.db = MySQLdb.connect(db="u_romainhk", read_default_file="/home/romainhk/.my.cnf", use_unicode=True, charset='utf8')
         self.nom_base = u'contenu_de_qualite_%s' % self.langue
 
     def __del__(self):
         self.db.close()
 
-    def isDatable(self):
-        """ Dit si le wiki analysé contient de dates pour ses label
+    def hasDate(self):
+        """ Dit si le wiki analysé précise la date de labellisation
         """
         #if self.langue in "fr de":
-        if self.langue in "fr": # Trop peu de labels avec date sur DE
+        if self.langue in "fr": # Trop peu de labels avec une date sur DE
+            return True
+        else:
+            return False
+
+    def hasWikiprojet(self):
+        """ Dit si le wiki analysé possède un wikiprojet
+        """
+        #if self.langue in "fr en de":
+        if self.langue in "fr":
             return True
         else:
             return False
@@ -112,15 +117,15 @@ class ContenuDeQualite:
         resu += u")\n\nAu reste, il y a %s articles déchus depuis la dernière vérification, %s sans date précisée, et %s déjà connus." \
                 % ( str(len(self.dechu)), str(len(self.pasdedate)), str(len(self.connaitdeja)) )
         resu += u"\n=== Nouveau contenu de qualité ===\n"
-        resu += self.lister_article(self.nouveau)
-        if self.isDatable():
+        resu += self.lister_article(self.nouveau, avecdate=True)
+  #      if self.maj_stricte:
+  #          resu += u'mode stricte :\n%s' % self.lister_article(self.connaitdeja)
+        if self.hasDate():
             resu += u"\n=== Articles sans date de labellisation ===\n"
             resu += u"{{Boîte déroulante début |titre=%s articles}}" % len(self.pasdedate)
             resu += u"%s\n{{Boîte déroulante fin}}" % self.lister_article(self.pasdedate)
         resu += u"\n=== Articles déchus depuis la dernière sauvegarde ===\n"
-        resu += self.lister_article(self.dechu)
-        resu += u"\n=== Articles déjà connus ===\n"
-        resu += self.lister_article(self.connaitdeja)
+        resu += self.lister_article(self.dechu, avecdate=True)
         return resu
 
     def denombrer(self, label, tab):
@@ -134,21 +139,21 @@ class ContenuDeQualite:
                     i += 1
         return i
 
-    def lister_article(self, table):
+    def lister_article(self, table, avecdate=False):
         """ __str__
         Génère une wiki-liste à partir d'un tableau d'articles
         """
         if len(table) > 0:
+            plus = u''
+            if not self.langue == 'fr':
+                plus = u':%s:' % self.langue
             r = []
-            if type(table[0]) == type(u""):
-                plus = u''
-                if not self.langue == 'fr':
-                    plus = u':%s:' % self.langue
+            if avecdate:
                 for p in table:
-                    r.append(u"[[%s%s]]" % ( plus, unicode(p)) )
-            elif type(table[0]) == type([]):
+                    r.append(u"[[%s%s]] %s" % ( plus, html2unicode(p['page']), unicode(p['date']) ) )
+            else:
                 for p in table:
-                    r.append(u"[[%s]] %s" % ( unicode(p[0]), unicode(p[2]) ) )
+                    r.append(u"[[%s%s]]" % ( plus, html2unicode(p['page'])) )
             return u'* ' + '\n* '.join(r) + u'\n'
         return u''
 
@@ -234,7 +239,7 @@ class ContenuDeQualite:
             #TODO: Recherche dans l'historique l'ajout du modèle -> fullVersionHistory() !! lourd
             pass
 
-        if self.isDatable():
+        if self.hasDate():
             raise PasDeDate(titre)
         else:
             return datetime.date(1970, 1, 1) #Epoch
@@ -261,8 +266,8 @@ class ContenuDeQualite:
         Donne le plus petit avancement et la plus grande importance Wikiprojet
         """
         rep = { 'avancement': None, 'importance': None }
-        if self.isDatable():
-            #TODO: internationaliser : 2 RE, 2 i, le condition au dessus
+        if self.hasWikiprojet():
+            #TODO: internationaliser : 2 RE, 2 i
             avan = []
             imp = []
             if (page.namespace() % 2) == 0:
@@ -276,6 +281,7 @@ class ContenuDeQualite:
                 b = importanceRE.search(cat.title())
                 if b:
                     imp.append(b.group('importance'))
+
             if len(avan) > 0:
                 for i in [ u'AdQ', u'BA', u'A', u'B', u'BD', u'ébauche' ]:
                     if avan.count(i) > 0:
@@ -297,7 +303,7 @@ class ContenuDeQualite:
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
             cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='U')
-            cpg = pagegenerators.PreloadingGenerator(cpg)
+            cpg = pagegenerators.PreloadingGenerator(cpg, pageNumber=100)
             #Comparer avec le contenu de la bdd
             for p in cpg:
                 article_connu = False
