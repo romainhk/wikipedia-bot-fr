@@ -97,7 +97,7 @@ def hasWikiprojet(langue):
     """ Dit si un wiki possède un wikiprojet
     """
     #if langue in "fr en de":
-    if langue in "fr":
+    if langue in "fr en":
         return True
     else:
         return False
