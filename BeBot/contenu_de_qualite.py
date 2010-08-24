@@ -74,7 +74,7 @@ class ContenuDeQualite:
         importance_wikiprojet = {
                 'fr': [ u'Article.*importance (?P<importance>[\w]+)$',
                         [ u'inconnue', u'faible', u'moyenne', u'élevée' ] ], # maximum
-                'en': [ u'(?P<importance>[\w]+)-importance [\w]* articles',
+                'en': [ u'^(?P<importance>[\w]+)-importance .* articles',
                         [ 'NA', 'No', 'Bottom', 'Unknown', 'Low', 'Mid', 'High' ] ] # Top
                 }
         self.importanceRE = None
@@ -200,8 +200,8 @@ class ContenuDeQualite:
         req = u'UPDATE %s SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s, importance=%s WHERE page="%s"' \
             % (self.nom_base, str(q['espacedenom']), q['date'].strftime("%Y-%m-%d"), \
             q['label'], str(q['taille']), str(q['consultations']), \
-            self._put_null(q['traduction']), \
-            self._put_null(q['importance']), unicode2html(q['page'], 'ascii') )
+            self._put_null(q['traduction']), self._put_null(q['importance']), \
+            unicode2html(q['page'], 'ascii') )
         try:
             curseur.execute(req)
         except MySQLdb.Error, e:
@@ -259,7 +259,7 @@ class ContenuDeQualite:
         Donne la plus grande importance Wikiprojet
         """
         rep = None
-        if BeBot.hasWikiprojet(self.langue) and self.importancetRE:
+        if BeBot.hasWikiprojet(self.langue) and self.importanceRE:
             avan = []
             imp = []
             if (page.namespace() % 2) == 0:
@@ -288,6 +288,7 @@ class ContenuDeQualite:
             for p in cpg:
                 if p.namespace() == 1: # Pour EN:GA et IT:FA
                     p = p.toggleTalkPage()
+                    wikipedia.output(u'!!!!'+p.title()) ##test
                 article_connu = False
                 #Comparer avec le contenu de la bdd
                 for con in connus:
@@ -304,7 +305,7 @@ class ContenuDeQualite:
     'page': p.title(),    'espacedenom': p.namespace(),     'date': date, \
     'label': cat,         'taille': BeBot.taille_page(p), \
     'consultations':BeBot.stat_consultations(p, codelangue=self.langue), \
-    'traduction': self.traduction(p),   'importance': wikiprojetself.wikiprojet(p) \
+    'traduction': self.traduction(p),   'importance': self.wikiprojet(p) \
                             }
                     if article_connu:
                         self.connaitdeja.append(infos)
@@ -319,11 +320,11 @@ class ContenuDeQualite:
         # Vérifier parfois avec : Wikipédia:Articles de qualité/Justification de leur rejet
         cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
         for p in cpg:
-            if p.namespace == 0:
-                pdd = p.toggleTalkPage.title()
+            ptp = p.toggleTalkPage()
+            if ptp.namespace() == 0:
                 for con in connus:
-                    if pdd == html2unicode(con[0]):
-                        self.dechu.append( { 'page': p.title() } )
+                    if ptp.title() == html2unicode(con[0]):
+                        self.dechu.append( { 'page': ptp.title() } )
 
         wikipedia.output( u"Total: %s ajouts ; %s déjà connus ; %s déchus ; %s sans date." \
                 % (str(len(self.nouveau)), str(len(self.connaitdeja)), \
