@@ -59,6 +59,14 @@ class ContenuDeQualite:
                 'nl': [ u'Categorie:Wikipedia:Etalage-artikelen' ]
                 }
         self.cat_qualite = self.categories_de_qualite[self.langue] # Nom des catégories des deux labels
+        cat_dechu = {
+                'fr': u'Ancien article de qualité',
+                'en': u'Wikipedia former featured articles',
+                'es': u'Categoría:Wikipedia:Artículos anteriormente destacados'
+                }
+        self.categorie_dechu = None
+        if cat_dechu.has_key(self.langue):
+            self.categorie_dechu = cat_dechu[self.langue]
 
         # REs
         RE_date = {
@@ -74,7 +82,7 @@ class ContenuDeQualite:
         importance_wikiprojet = {
                 'fr': [ u'Article.*importance (?P<importance>[\w]+)$',
                         [ u'inconnue', u'faible', u'moyenne', u'élevée' ] ], # maximum
-                'en': [ u'^(?P<importance>[\w]+)-importance .* articles',
+                'en': [ u'(?P<importance>[\w]+)-importance .* articles$',
                         [ 'NA', 'No', 'Bottom', 'Unknown', 'Low', 'Mid', 'High' ] ] # Top
                 }
         self.importanceRE = None
@@ -126,8 +134,9 @@ class ContenuDeQualite:
             resu += u"\n=== Articles sans date de labellisation ===\n"
             resu += u"{{Boîte déroulante début |titre=%s articles}}" % len(self.pasdedate)
             resu += u"%s\n{{Boîte déroulante fin}}" % self.lister_article(self.pasdedate)
-        resu += u"\n=== Articles déchus depuis la dernière sauvegarde ===\n"
-        resu += self.lister_article(self.dechu)
+        if self.categorie_dechu:
+            resu += u"\n=== Articles déchus depuis la dernière sauvegarde ===\n"
+            resu += self.lister_article(self.dechu)
         return resu
 
     def nb_label(self, label, tab):
@@ -168,7 +177,7 @@ class ContenuDeQualite:
         for q in self.nouveau:
             req = u'INSERT INTO %s' % self.nom_base \
                 + '(page, espacedenom, date, label, taille, consultations, traduction, importance) ' \
-                + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s, %s, %s)' \
+                + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s, %s)' \
                 % ( unicode2html(q['page'], 'ascii'),  str(q['espacedenom']), \
                 q['date'].strftime("%Y-%m-%d"), q['label'], str(q['taille']), \
                 str(q['consultations']), self._put_null(q['traduction']), \
@@ -260,7 +269,6 @@ class ContenuDeQualite:
         """
         rep = None
         if BeBot.hasWikiprojet(self.langue) and self.importanceRE:
-            avan = []
             imp = []
             if (page.namespace() % 2) == 0:
                 page = page.toggleTalkPage()
@@ -286,26 +294,27 @@ class ContenuDeQualite:
             cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='U')
             cpg = pagegenerators.PreloadingGenerator(cpg, pageNumber=125)
             for p in cpg:
+                page = p
                 if p.namespace() == 1: # Pour EN:GA et IT:FA
-                    p = p.toggleTalkPage()
-                    wikipedia.output(u'!!!!'+p.title()) ##test
+                    page = p.toggleTalkPage()
+                    #wikipedia.output(u'%s!!!!%s' % (page.namespace(), page.title()) ) ##test
                 article_connu = False
                 #Comparer avec le contenu de la bdd
                 for con in connus:
-                    if p.title() == html2unicode(con[0]): #con[0]=page
+                    if page.title() == html2unicode(con[0]): #con[0]=page
                         article_connu = True
                         break
                 if not article_connu or self.maj_stricte:
                     try:
-                        date = self.date_labellisation(p.title())  # Récupération de la date
+                        date = self.date_labellisation(page.title())  # Récupération de la date
                     except PasDeDate as pdd:
-                        self.pasdedate.append(pdd.page)
+                        self.pasdedate.append( {'page': pdd.page, 'date': u''} )
                         continue
                     infos = {
-    'page': p.title(),    'espacedenom': p.namespace(),     'date': date, \
-    'label': cat,         'taille': BeBot.taille_page(p), \
-    'consultations':BeBot.stat_consultations(p, codelangue=self.langue), \
-    'traduction': self.traduction(p),   'importance': self.wikiprojet(p) \
+    'page': page.title(),    'espacedenom': page.namespace(),     'date': date, \
+    'label': cat,         'taille': BeBot.taille_page(page), \
+    'consultations':BeBot.stat_consultations(page, codelangue=self.langue), \
+    'traduction': self.traduction(page),   'importance': self.wikiprojet(page) \
                             }
                     if article_connu:
                         self.connaitdeja.append(infos)
@@ -313,18 +322,20 @@ class ContenuDeQualite:
                         self.nouveau.append(infos)
                 else:
                     #self.connaitdeja.append( [ p.title(), p.namespace(), '1970-01-01', cat, 0, 0, None ] )
-                    self.connaitdeja.append( { 'page': p.title(), \
-                            'espacedenom': p.namespace(), 'label': cat } )
+                    self.connaitdeja.append( { 'page': page.title(), \
+                          'espacedenom': page.namespace(),    'label': cat, \
+                          'importance': None } )
 
-        categorie = catlib.Category(self.site, u'Ancien article de qualité')
-        # Vérifier parfois avec : Wikipédia:Articles de qualité/Justification de leur rejet
-        cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
-        for p in cpg:
-            ptp = p.toggleTalkPage()
-            if ptp.namespace() == 0:
-                for con in connus:
-                    if ptp.title() == html2unicode(con[0]):
-                        self.dechu.append( { 'page': ptp.title() } )
+        if self.categorie_dechu:
+            categorie = catlib.Category(self.site, self.categorie_dechu)
+            # Vérifier parfois avec : Wikipédia:Articles de qualité/Justification de leur rejet
+            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
+            for p in cpg:
+                ptp = p.toggleTalkPage()
+                if ptp.namespace() == 0:
+                    for con in connus:
+                        if ptp.title() == html2unicode(con[0]):
+                            self.dechu.append( {'page': ptp.title(), 'date': u''} )
 
         wikipedia.output( u"Total: %s ajouts ; %s déjà connus ; %s déchus ; %s sans date." \
                 % (str(len(self.nouveau)), str(len(self.connaitdeja)), \
@@ -355,7 +366,8 @@ def main():
         cdq.run()
         log += unicode(cdq)
         cdq.sauvegarder()
-    wikipedia.Page(wikipedia.Site('fr'), u'Utilisateur:BeBot/Contenu de qualité').put(log, comment=cdq.resume, minorEdit=False)
+    wikipedia.Page(wikipedia.Site('fr'), u'Utilisateur:BeBot/Contenu de qualité').put(log, \
+            comment=cdq.resume, minorEdit=False)
 
 #    choix = wikipedia.inputChoice(u"Sauvegarder dans la base de donnees ?", ['oui', 'non'], ['o', 'n'], 'o')
 #    if choix == "o" or choix == "oui":
