@@ -96,7 +96,7 @@ def hasDateLabel(langue):
 def hasWikiprojet(langue):
     """ Dit si un wiki possède un wikiprojet
     """
-    #if langue in "fr en de":
+    # Le projet sur DE à l'air en sommeil
     if langue in "fr en":
         return True
     else:

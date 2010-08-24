@@ -22,7 +22,7 @@ class ContenuDeQualite:
         de labellisation, de son label, du nombre de visites...)
 
     Paramètres :
-    * Site wikipedia où travailler
+    * Site (wikipedia) où travailler
     * Mode de mise à jour : voir "options".
     Options :
     * Mode de mise à jour : en mode strict, les informations des 
@@ -35,7 +35,6 @@ class ContenuDeQualite:
     python contenu_de_qualite.py -s fr de nl 
     >  mise à jour complète pour les wiki francophone, germanophone et néerlandophone.
 
-        TODO :  Wikiprojet : de?
         TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
         TODO : propositions d'apposition pour Lien AdQ|Lien BA
@@ -71,7 +70,7 @@ class ContenuDeQualite:
         else:
             self.dateRE = None
         self.interwikifrRE = re.compile(u"\[\[fr:(?P<iw>[^\]]+)\]\]", re.LOCALE)
-        #Wikiprojet __ par langue : regexp des cat wikiprojet, ordre de suppression si plusieurs
+        #Wikiprojet _-_ par langue : regexp des cat wikiprojet, ordre de suppression si plusieurs
         avancement_wikiprojet = {
                 'fr': [ u'Article.*avancement (?P<avancement>[\w]+)$', 
                         [ u'AdQ', u'BA', u'A', u'B', u'BD', u'ébauche' ] ], # inconnue
@@ -100,7 +99,7 @@ class ContenuDeQualite:
         # Principaux conteneurs
         self.nouveau = []       # Nouveaux articles promus
         self.connaitdeja = []   # Articles déjà listés
-        """ Structure complète de "nouveau" et "connaitdeja" :
+        """ Structure des éléments de "nouveau" et "connaitdeja" :
         { 'page': html'',   'espacedenom': int,     'date': date,
           'label': u'',     'taille': int,          'consultations': int,
           'traduction': html'',   'avancement': u''   ,'importance': u'' }
@@ -278,7 +277,7 @@ class ContenuDeQualite:
             imp = []
             if (page.namespace() % 2) == 0:
                 page = page.toggleTalkPage()
-            for cat in page.categories():
+            for cat in page.categories(api=True):
                 b = self.wikiprojetRE['avancement'].search(cat.title())
                 if b:
                     avan.append(b.group('avancement'))
@@ -308,12 +307,12 @@ class ContenuDeQualite:
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
             cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='U')
-            cpg = pagegenerators.PreloadingGenerator(cpg, pageNumber=133)
-            #Comparer avec le contenu de la bdd
+            cpg = pagegenerators.PreloadingGenerator(cpg, pageNumber=125)
             for p in cpg:
                 if p.namespace() == 1: # Pour EN:GA et IT:FA
                     p = p.toggleTalkPage()
                 article_connu = False
+                #Comparer avec le contenu de la bdd
                 for con in connus:
                     if p.title() == html2unicode(con[0]): #con[0]=page
                         article_connu = True
@@ -371,7 +370,8 @@ def main():
     else:
         wikis = ['fr']
 
-    log =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »''' ; exécution du %s</center>\n\n" \
+    log =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »'''" \
+            + u"; exécution du %s</center>\n{{Sommaire à droite}}\n\n" \
             % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
     for cl in wikis:
         wikipedia.output( u"== WP:%s ..." % cl )
