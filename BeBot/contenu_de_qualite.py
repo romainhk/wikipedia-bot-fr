@@ -71,29 +71,16 @@ class ContenuDeQualite:
             self.dateRE = None
         self.interwikifrRE = re.compile(u"\[\[fr:(?P<iw>[^\]]+)\]\]", re.LOCALE)
         #Wikiprojet _-_ par langue : regexp des cat wikiprojet, ordre de suppression si plusieurs
-        avancement_wikiprojet = {
-                'fr': [ u'Article.*avancement (?P<avancement>[\w]+)$', 
-                        [ u'AdQ', u'BA', u'A', u'B', u'BD', u'ébauche' ] ], # inconnue
-                'en': [ u'(?P<avancement>[\w]+)-Class [\w]* articles', 
-                        [ 'Automatically', 'Bplus', 'NA', 'Current', 'Future',\
-                         'Book', 'Category', 'Disambig', 'File', 'Image', 'Merge',\
-                         'Needed', 'Portal', 'Project', 'Redirect', 'Template',\
-                         'User', 'FA', 'FL', 'A', 'GA', 'B', 'C', 'Start', 'Stub', 'List' ] ] # Unassessed
-                }
         importance_wikiprojet = {
                 'fr': [ u'Article.*importance (?P<importance>[\w]+)$',
                         [ u'inconnue', u'faible', u'moyenne', u'élevée' ] ], # maximum
                 'en': [ u'(?P<importance>[\w]+)-importance [\w]* articles',
                         [ 'NA', 'No', 'Bottom', 'Unknown', 'Low', 'Mid', 'High' ] ] # Top
                 }
-        self.wikiprojetRE = { 'avancement': None, 'importance': None }
-        self.retrait_avancement = []
+        self.importanceRE = None
         self.retrait_importance = []
-        if avancement_wikiprojet.has_key(self.langue):
-            self.wikiprojetRE['avancement'] = re.compile(avancement_wikiprojet[self.langue][0], re.LOCALE)
-            self.retrait_avancement = avancement_wikiprojet[self.langue][1]
         if importance_wikiprojet.has_key(self.langue):
-            self.wikiprojetRE['importance'] = re.compile(importance_wikiprojet[self.langue][0], re.LOCALE)
+            self.importanceRE = re.compile(importance_wikiprojet[self.langue][0], re.LOCALE)
             self.retrait_importance = importance_wikiprojet[self.langue][1]
 
         # Principaux conteneurs
@@ -102,7 +89,7 @@ class ContenuDeQualite:
         """ Structure des éléments de "nouveau" et "connaitdeja" :
         { 'page': html'',   'espacedenom': int,     'date': date,
           'label': u'',     'taille': int,          'consultations': int,
-          'traduction': html'',   'avancement': u''   ,'importance': u'' }
+          'traduction': html'',     'importance': u'' }
         """
         self.pasdedate = []     # Articles de qualité dont la date est inconnue
         self.dechu = []         # Articles déchus
@@ -180,12 +167,12 @@ class ContenuDeQualite:
         curseur = self.db.cursor()
         for q in self.nouveau:
             req = u'INSERT INTO %s' % self.nom_base \
-                + '(page, espacedenom, date, label, taille, consultations, traduction, avancement, importance) ' \
+                + '(page, espacedenom, date, label, taille, consultations, traduction, importance) ' \
                 + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s, %s, %s)' \
                 % ( unicode2html(q['page'], 'ascii'),  str(q['espacedenom']), \
                 q['date'].strftime("%Y-%m-%d"), q['label'], str(q['taille']), \
                 str(q['consultations']), self._put_null(q['traduction']), \
-                self._put_null(q['avancement']), self._put_null(q['importance']) )
+                self._put_null(q['importance']) )
             try:
                 curseur.execute(req)
             except MySQLdb.Error, e:
@@ -210,10 +197,10 @@ class ContenuDeQualite:
         """
         Mise à jour un champ de la base de données
         """
-        req = u'UPDATE %s SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s, avancement=%s, importance=%s WHERE page="%s"' \
+        req = u'UPDATE %s SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s, importance=%s WHERE page="%s"' \
             % (self.nom_base, str(q['espacedenom']), q['date'].strftime("%Y-%m-%d"), \
             q['label'], str(q['taille']), str(q['consultations']), \
-            self._put_null(q['traduction']), self._put_null(q['avancement']), \
+            self._put_null(q['traduction']), \
             self._put_null(q['importance']), unicode2html(q['page'], 'ascii') )
         try:
             curseur.execute(req)
@@ -269,37 +256,27 @@ class ContenuDeQualite:
 
     def wikiprojet(self, page):
         """
-        Donne le plus petit avancement et la plus grande importance Wikiprojet
+        Donne la plus grande importance Wikiprojet
         """
-        rep = { 'avancement': None, 'importance': None }
-        if BeBot.hasWikiprojet(self.langue) and self.wikiprojetRE['avancement'] and self.wikiprojetRE['importance']:
+        rep = None
+        if BeBot.hasWikiprojet(self.langue) and self.importancetRE:
             avan = []
             imp = []
             if (page.namespace() % 2) == 0:
                 page = page.toggleTalkPage()
             for cat in page.categories(api=True):
-                b = self.wikiprojetRE['avancement'].search(cat.title())
-                if b:
-                    avan.append(b.group('avancement'))
-                b = self.wikiprojetRE['importance'].search(cat.title())
+                b = self.importanceRE.search(cat.title())
                 if b:
                     imp.append(b.group('importance'))
 
-            if len(avan) > 0:
-                for i in self.retrait_avancement[:]:
-                    if avan.count(i) > 0:
-                        avan.remove(i)
-                        if len(avan) < 1:
-                            avan.append(i)
-                rep['avancement'] = avan[0]
             if len(imp) > 0:
                 for i in self.retrait_importance[:]:
                     if imp.count(i) > 0:
                         imp.remove(i)
-                        if len(imp) < 1:
+                        if len(imp) == 0:
                             imp.append(i)
                             break
-                rep['importance'] = imp[0]
+                rep = imp[0]
         return rep
 
     def run(self):
@@ -323,13 +300,11 @@ class ContenuDeQualite:
                     except PasDeDate as pdd:
                         self.pasdedate.append(pdd.page)
                         continue
-                    wikiprojet = self.wikiprojet(p)
                     infos = {
     'page': p.title(),    'espacedenom': p.namespace(),     'date': date, \
     'label': cat,         'taille': BeBot.taille_page(p), \
     'consultations':BeBot.stat_consultations(p, codelangue=self.langue), \
-    'traduction': self.traduction(p),    'avancement': wikiprojet['avancement'], \
-    'importance': wikiprojet['importance']
+    'traduction': self.traduction(p),   'importance': wikiprojetself.wikiprojet(p) \
                             }
                     if article_connu:
                         self.connaitdeja.append(infos)

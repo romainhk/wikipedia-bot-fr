@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 3.3.5deb1
+-- version 3.3.5.1deb1
 -- http://www.phpmyadmin.net
 --
 -- Serveur: localhost
--- Généré le : Jeu 19 Août 2010 à 11:18
+-- Généré le : Mar 24 Août 2010 à 13:14
 -- Version du serveur: 5.1.49
 -- Version de PHP: 5.3.2-2
 
@@ -33,7 +33,6 @@ CREATE TABLE IF NOT EXISTS `contenu_de_qualite` (
   `taille` int(7) unsigned NOT NULL DEFAULT '0' COMMENT 'en millier de caractères',
   `consultations` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'du mois précédant',
   `traduction` varchar(255) COLLATE utf8_bin DEFAULT NULL COMMENT 'Interwiki ou page de suivi',
-  `avancement` varchar(15) COLLATE utf8_bin DEFAULT NULL COMMENT 'Cat:Article par avancement',
-  `importance` varchar(15) COLLATE utf8_bin DEFAULT NULL COMMENT 'Cat:Article par importance',
+  `importance` varchar(20) COLLATE utf8_bin DEFAULT NULL COMMENT 'Cat:Article par importance',
   PRIMARY KEY (`page`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='Liste des articles labelisés';
