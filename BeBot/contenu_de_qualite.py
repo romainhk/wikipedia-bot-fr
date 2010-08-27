@@ -38,6 +38,9 @@ class ContenuDeQualite:
         TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
         TODO : propositions d'apposition pour Lien AdQ|Lien BA
+        TODO : pour retirer les déchus sur les wiki n'ayant pas cete catégorie :
+        créer une fonction de remplacement complet de la base
+        todo: voir quand plusieurs fois la même importance wikiprojet
     """
     def __init__(self, site, mode_maj):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
@@ -61,7 +64,7 @@ class ContenuDeQualite:
         self.cat_qualite = self.categories_de_qualite[self.langue] # Nom des catégories des deux labels
         cat_dechu = {
                 'fr': u'Ancien article de qualité',
-                'en': u'Wikipedia former featured articles',
+                'en': u'Wikipedia former featured articles', # prendre ceux après « # »
                 'es': u'Categoría:Wikipedia:Artículos anteriormente destacados'
                 }
         self.categorie_dechu = None
@@ -278,7 +281,7 @@ class ContenuDeQualite:
                     imp.append(b.group('importance'))
 
             if len(imp) > 0:
-                for i in self.retrait_importance[:]:
+                for i in self.retrait_importance:
                     if imp.count(i) > 0:
                         imp.remove(i)
                         if len(imp) == 0:
@@ -297,7 +300,6 @@ class ContenuDeQualite:
                 page = p
                 if p.namespace() == 1: # Pour EN:GA et IT:FA
                     page = p.toggleTalkPage()
-                    #wikipedia.output(u'%s!!!!%s' % (page.namespace(), page.title()) ) ##test
                 article_connu = False
                 #Comparer avec le contenu de la bdd
                 for con in connus:
@@ -329,7 +331,8 @@ class ContenuDeQualite:
         if self.categorie_dechu:
             categorie = catlib.Category(self.site, self.categorie_dechu)
             # Vérifier parfois avec : Wikipédia:Articles de qualité/Justification de leur rejet
-            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
+            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='(')
+            # start sur « ( » à cause de EN
             for p in cpg:
                 ptp = p.toggleTalkPage()
                 if ptp.namespace() == 0:
