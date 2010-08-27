@@ -3,10 +3,9 @@
 Script to gather statistics for project importance and quality assessment.
 Updates the relevant project subpages with up-to-date stats.
 
-Copyright (c) 2008 - 2010 Nicolas Dumazet <nicdumz@gmail.com>
-
 This library is free software; you can redistribute it and/or
 modify it under the terms of the MIT License.
+See the LICENCE file
 """
 
 import urllib, re, cPickle
@@ -26,7 +25,7 @@ def putNb(page,nb):
 site = pywikibot.Site('fr', 'wikipedia')
 
 importance = ['maximum', u'élevée', 'moyenne', 'faible', 'inconnue']
-avancement = ['AdQ', 'A', 'BA', 'B', 'BD', u'ébauche', 'inconnu']
+avancement = ['AdQ', 'BA', 'A', 'B', 'BD', u'ébauche', 'inconnu']
 patI = u"Catégorie:%s d'importance %s"
 patA = u"Catégorie:%s d'avancement %s"
 URLbase = u'http://toolserver.org/~bayo/intercat.php?'

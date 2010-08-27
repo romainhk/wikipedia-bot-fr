@@ -2,10 +2,9 @@
 """
 Maintenance of translation project.
 
-Copyright (c) 2008 - 2010 Nicolas Dumazet <nicdumz@gmail.com>
-
 This library is free software; you can redistribute it and/or
 modify it under the terms of the MIT License.
+See the LICENCE file
 """
 
 import pywikibot

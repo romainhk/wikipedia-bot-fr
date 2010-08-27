@@ -4,10 +4,9 @@ Script moving special subpages when a page has been moved.
 It is supposed to run at regular intervals, as it only checks the
 last moves in ]now-delta, now]
 
-Copyright (c) 2008 - 2010 Nicolas Dumazet <nicdumz@gmail.com>
-
 This library is free software; you can redistribute it and/or
 modify it under the terms of the MIT License.
+See the LICENCE file
 """
 
 import pywikibot
