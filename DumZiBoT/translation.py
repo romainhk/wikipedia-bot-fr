@@ -279,5 +279,3 @@ for item in cats:
     if text or page.exists():
         text = before % ttype + text
         put_page(page, text)
-
-print 'DONE.'

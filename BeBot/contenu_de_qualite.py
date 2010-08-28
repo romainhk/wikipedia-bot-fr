@@ -38,8 +38,6 @@ class ContenuDeQualite:
         TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
         TODO : propositions d'apposition pour Lien AdQ|Lien BA
-        TODO : pour retirer les déchus sur les wiki n'ayant pas cete catégorie :
-        créer une fonction de remplacement complet de la base
         todo: voir quand plusieurs fois la même importance wikiprojet
     """
     def __init__(self, site, mode_maj):
@@ -113,6 +111,8 @@ class ContenuDeQualite:
     def __del__(self):
         self.db.close()
 
+    #######################################
+    ### __str__
     def __str__(self):
         """
         Log des modifications à apporter à la bdd
@@ -171,13 +171,35 @@ class ContenuDeQualite:
             return u'* ' + '\n* '.join(r) + u'\n'
         return u''
 
+    #######################################
+    ### db
     def sauvegarder(self):
         """
         Sauvegarder dans une base de données
         """
         wikipedia.output(u'# Sauvegarde dans la base pour la langue « %s ».' % self.langue)
         curseur = self.db.cursor()
+        mode_connaitdeja = u'update'
+        if self.maj_stricte and not self.categorie_dechu:
+            self.vider_base(curseur)
+            mode_connaitdeja = u'insert'
+
         for q in self.nouveau:
+            self.sauvegarde_req(curseur, q, u'insert')
+
+        if self.maj_stricte:
+            for q in self.connaitdeja:
+                self.sauvegarde_req(curseur, q, mode_connaitdeja)
+
+        for d in self.dechu:
+            self.sauvegarde_req(curseur, d['page'], u'delete')
+
+    def sauvegarde_req(self, curseur, q, mode):
+        """
+        Ajout ou Mise à jour d'un champ de la base de données
+        * mode est dans ( 'insert', 'update' )
+        """
+        if mode == u'insert':
             req = u'INSERT INTO %s' % self.nom_base \
                 + '(page, espacedenom, date, label, taille, consultations, traduction, importance) ' \
                 + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s, %s)' \
@@ -185,39 +207,24 @@ class ContenuDeQualite:
                 q['date'].strftime("%Y-%m-%d"), q['label'], str(q['taille']), \
                 str(q['consultations']), self._put_null(q['traduction']), \
                 self._put_null(q['importance']) )
-            try:
-                curseur.execute(req)
-            except MySQLdb.Error, e:
-                if e.args[0] == ER.DUP_ENTRY:
-                    self.sauvegarde_update(curseur, q)
-                else:
-                    print "Erreur %d: %s" % (e.args[0], e.args[1])
-                continue
-
-        if self.maj_stricte:
-            for q in self.connaitdeja:
-                self.sauvegarde_update(curseur, q)
-
-        for d in self.dechu:
-            req = u'DELETE FROM %s WHERE page="%s"' % ( self.nom_base, unicode(d) )
-            try:
-                curseur.execute(req)
-            except:
-                wikipedia.output(u"# DELETE échoué sur " + unicode(d))
-
-    def sauvegarde_update(self, curseur, q):
-        """
-        Mise à jour un champ de la base de données
-        """
-        req = u'UPDATE %s SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s, importance=%s WHERE page="%s"' \
-            % (self.nom_base, str(q['espacedenom']), q['date'].strftime("%Y-%m-%d"), \
-            q['label'], str(q['taille']), str(q['consultations']), \
-            self._put_null(q['traduction']), self._put_null(q['importance']), \
-            unicode2html(q['page'], 'ascii') )
+        elif mode == u'update':
+            req = u'UPDATE %s SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s, importance=%s WHERE page="%s"' \
+                % (self.nom_base, str(q['espacedenom']), q['date'].strftime("%Y-%m-%d"), \
+                q['label'], str(q['taille']), str(q['consultations']), \
+                self._put_null(q['traduction']), self._put_null(q['importance']), \
+                unicode2html(q['page'], 'ascii') )
+        elif mode == u'delete':
+            req = u'DELETE FROM %s WHERE page="%s"' % ( self.nom_base, unicode(q) )
+        else:
+            wikipedia.warning(u'mode de sauvegarde non reconnu.')
+            return
         try:
             curseur.execute(req)
         except MySQLdb.Error, e:
-            print "Update error %d: %s" % (e.args[0], e.args[1])
+            if e.args[0] == ER.DUP_ENTRY:
+                self.sauvegarde_req(curseur, q, u'update')
+            else:
+                wikipedia.warning("%s error %d: %s." % (mode.capitalize(), e.args[0], e.args[1]))
 
     def _put_null(self, obj):
         if obj:
@@ -225,6 +232,20 @@ class ContenuDeQualite:
         else:
             return u'NULL'
 
+    def vider_base(self, curseur):
+        """
+        Vide la base de donnée associée
+        (utile pour retirer les déchus sur les wiki n'ayant pas cette catégorie)
+        """
+        wikipedia.output(u"# Vidage de la base de donnée")
+        req = u'TRUNCATE TABLE %s' % self.nom_base
+        try:
+            curseur.execute(req)
+        except MySQLdb.Error, e:
+            print "Truncate error %d: %s" % (e.args[0], e.args[1])
+    
+    #######################################
+    ### recherche d'infos
     def date_labellisation(self, titre):
         """
         Donne la date de labellisation d'un article
