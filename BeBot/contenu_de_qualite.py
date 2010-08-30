@@ -50,6 +50,7 @@ class ContenuDeQualite:
             wikipedia.output(u'# Mode "strict" actif (toutes les updates seront effectuées et la base vidée)')
         else:
             self.maj_stricte = False
+        self.total_avant = 0
 
         self.categories_de_qualite = {
                 'fr': [ u'Article de qualité',   u'Bon article' ],
@@ -114,17 +115,18 @@ class ContenuDeQualite:
             % (str(len(self.nouveau)), str(self.nb_label(self.cat_qualite[0], [self.nouveau])))
         if len(self.cat_qualite) > 1:
             resu += u" et %s BA" % str(self.nb_label(self.cat_qualite[1], [self.nouveau]))
-        resu += u". (Total après sauvegarde : %s articles ; %s AdQ" \
-                % ( str( len(self.nouveau) + len(self.connaitdeja) ),\
+        resu += u". (Total avant sauvegarde : %s articles. Après : %s articles ; %s AdQ" \
+                % ( str(self.total_avant), str(len(self.nouveau) + len(self.connaitdeja)),\
                 str(self.nb_label( self.cat_qualite[0], [self.nouveau, self.connaitdeja])) )
         if len(self.cat_qualite) > 1:
             resu += u' et %s BA' % str(self.nb_label( self.cat_qualite[1], [self.nouveau, self.connaitdeja]))
         resu += u")\n\nAu reste, il y a %s articles sans date précisée, et %s déjà connus." \
                 % ( str(len(self.pasdedate)), str(len(self.connaitdeja)) )
-        resu += u"\n=== Nouveau contenu de qualité ===\n"
-        resu += self.lister_article(self.nouveau)
-  #      if self.maj_stricte:
-  #          resu += u'mode stricte :\n%s' % self.lister_article(self.connaitdeja)
+        if len(self.nouveau) > 0:
+            resu += u"\n=== Nouveau contenu de qualité ===\n"
+            resu += self.lister_article(self.nouveau)
+#            if self.maj_stricte:
+#                resu += u'mode stricte :\n%s' % self.lister_article(self.connaitdeja)
         if BeBot.hasDateLabel(self.langue) and len(self.pasdedate) > 0:
             resu += u"\n=== Articles sans date de labellisation ===\n"
             resu += u"{{Boîte déroulante début |titre=%s articles}}" % len(self.pasdedate)
@@ -171,17 +173,17 @@ class ContenuDeQualite:
         if self.maj_stricte:
             self.vider_base(curseur)
             for q in self.connaitdeja:
-                self.sauvegarde_req(curseur, q, u'insert')
+                self.sauvegarde_req(curseur, q, 'insert')
 
         for q in self.nouveau:
-            self.sauvegarde_req(curseur, q, u'insert')
+            self.sauvegarde_req(curseur, q, 'insert')
 
     def sauvegarde_req(self, curseur, q, mode):
         """
         Ajout ou Mise à jour d'un champ de la base de données
         * "mode" est dans ( 'insert', 'update', 'delete' )
         """
-        if mode == u'insert':
+        if mode == 'insert':
             req = u'INSERT INTO %s' % self.nom_base \
                 + '(page, espacedenom, date, label, taille, consultations, traduction, importance) ' \
                 + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s, %s)' \
@@ -189,13 +191,13 @@ class ContenuDeQualite:
                 q['date'].strftime("%Y-%m-%d"), q['label'], str(q['taille']), \
                 str(q['consultations']), self._put_null(q['traduction']), \
                 self._put_null(q['importance']) )
-        elif mode == u'update':
+        elif mode == 'update':
             req = u'UPDATE %s SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s, importance=%s WHERE page="%s"' \
                 % (self.nom_base, str(q['espacedenom']), q['date'].strftime("%Y-%m-%d"), \
                 q['label'], str(q['taille']), str(q['consultations']), \
                 self._put_null(q['traduction']), self._put_null(q['importance']), \
                 unicode2html(q['page'], 'ascii') )
-        elif mode == u'delete':
+        elif mode == 'delete':
             req = u'DELETE FROM %s WHERE page="%s"' % ( self.nom_base, unicode(q) )
         else:
             wikipedia.warning(u'mode de sauvegarde "%s" non reconnu.' % mode)
@@ -204,7 +206,7 @@ class ContenuDeQualite:
             curseur.execute(req)
         except MySQLdb.Error, e:
             if e.args[0] == ER.DUP_ENTRY:
-                self.sauvegarde_req(curseur, q, u'update')
+                self.sauvegarde_req(curseur, q, 'update')
             else:
                 wikipedia.warning(u"%s error %d: %s." % (mode.capitalize(), e.args[0], e.args[1]))
 
@@ -311,9 +313,11 @@ class ContenuDeQualite:
 
     def run(self):
         connus = BeBot.charger(self.db, self.nom_base)
+        self.total_avant = len(connus)
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
-            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='U')
+            #cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='U')
+            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
             cpg = pagegenerators.PreloadingGenerator(cpg, pageNumber=125)
             for p in cpg:
                 if p.namespace() == 0:
