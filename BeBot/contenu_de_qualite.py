@@ -26,7 +26,8 @@ class ContenuDeQualite:
     * Mode de mise à jour : voir "options".
     Options :
     * Mode de mise à jour : en mode strict, les informations des 
-    articles déjà connus seront systématiquement mises à jour (UPDATE). 
+    articles déjà connus seront systématiquement mises à jour (UPDATE) et
+    les articles déchus retirés. 
     Pour l'activer, utiliser l'option "-s".
     Arguments :
     * "Wikis" : une liste de code langue des wiki à analyser (fr par défaut)
@@ -38,6 +39,7 @@ class ContenuDeQualite:
         TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
         TODO : propositions d'apposition pour Lien AdQ|Lien BA
+        todo : soucis avec les déchus : Vitré (Ille-et-Vilaine)
     """
     def __init__(self, site, mode_maj):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
@@ -46,7 +48,7 @@ class ContenuDeQualite:
         self.log = log
         if mode_maj == "strict":
             self.maj_stricte = True
-            wikipedia.output(u'# Mode "strict" actif (toutes les updates seront effectuées)')
+            wikipedia.output(u'# Mode "strict" actif (toutes les updates seront effectuées et la base vidée)')
         else:
             self.maj_stricte = False
 
@@ -58,15 +60,8 @@ class ContenuDeQualite:
                 'it': [ u'Voci in vetrina' ],
                 'nl': [ u'Categorie:Wikipedia:Etalage-artikelen' ]
                 }
-        self.cat_qualite = self.categories_de_qualite[self.langue] # Nom des catégories des deux labels
-        cat_dechu = {
-                'fr': u'Ancien article de qualité',
-                'en': u'Wikipedia former featured articles', # prendre ceux après « # »
-                'es': u'Categoría:Wikipedia:Artículos anteriormente destacados'
-                }
-        self.categorie_dechu = None
-        if cat_dechu.has_key(self.langue):
-            self.categorie_dechu = cat_dechu[self.langue]
+        self.cat_qualite = self.categories_de_qualite[self.langue]
+            # Nom des catégories correspondant aux deux labels
 
         # REs
         RE_date = {
@@ -100,7 +95,6 @@ class ContenuDeQualite:
           'traduction': html'',     'importance': u'' }
         """
         self.pasdedate = []     # Articles de qualité dont la date est inconnue
-        self.dechu = []         # Articles déchus
         # DB
         self.db = MySQLdb.connect(db="u_romainhk", \
                                 read_default_file="/home/romainhk/.my.cnf", \
@@ -121,13 +115,13 @@ class ContenuDeQualite:
             % (str(len(self.nouveau)), str(self.nb_label(self.cat_qualite[0], [self.nouveau])))
         if len(self.cat_qualite) > 1:
             resu += u" et %s BA" % str(self.nb_label(self.cat_qualite[1], [self.nouveau]))
-        resu += u". (Total après sauvegarde : %s articles, %s AdQ" \
+        resu += u". (Total après sauvegarde : %s articles ; %s AdQ" \
                 % ( str( len(self.nouveau) + len(self.connaitdeja) ),\
                 str(self.nb_label( self.cat_qualite[0], [self.nouveau, self.connaitdeja])) )
         if len(self.cat_qualite) > 1:
             resu += u' et %s BA' % str(self.nb_label( self.cat_qualite[1], [self.nouveau, self.connaitdeja]))
-        resu += u")\n\nAu reste, il y a %s articles déchus depuis la dernière vérification, %s sans date précisée, et %s déjà connus." \
-                % ( str(len(self.dechu)), str(len(self.pasdedate)), str(len(self.connaitdeja)) )
+        resu += u")\n\nAu reste, il y a %s articles sans date précisée, et %s déjà connus." \
+                % ( str(len(self.pasdedate)), str(len(self.connaitdeja)) )
         resu += u"\n=== Nouveau contenu de qualité ===\n"
         resu += self.lister_article(self.nouveau)
   #      if self.maj_stricte:
@@ -136,9 +130,6 @@ class ContenuDeQualite:
             resu += u"\n=== Articles sans date de labellisation ===\n"
             resu += u"{{Boîte déroulante début |titre=%s articles}}" % len(self.pasdedate)
             resu += u"%s\n{{Boîte déroulante fin}}" % self.lister_article(self.pasdedate)
-        if self.categorie_dechu:
-            resu += u"\n=== Articles déchus depuis la dernière sauvegarde ===\n"
-            resu += self.lister_article(self.dechu)
         return resu
 
     def nb_label(self, label, tab):
@@ -178,20 +169,13 @@ class ContenuDeQualite:
         """
         wikipedia.output(u'# Sauvegarde dans la base pour la langue "%s".' % self.langue)
         curseur = self.db.cursor()
-        mode_connaitdeja = u'update'
-        if self.maj_stricte and not self.categorie_dechu:
+        if self.maj_stricte:
             self.vider_base(curseur)
-            mode_connaitdeja = u'insert'
+            for q in self.connaitdeja:
+                self.sauvegarde_req(curseur, q, u'insert')
 
         for q in self.nouveau:
             self.sauvegarde_req(curseur, q, u'insert')
-
-        if self.maj_stricte:
-            for q in self.connaitdeja:
-                self.sauvegarde_req(curseur, q, mode_connaitdeja)
-
-        for d in self.dechu:
-            self.sauvegarde_req(curseur, d['page'], u'delete')
 
     def sauvegarde_req(self, curseur, q, mode):
         """
@@ -310,6 +294,23 @@ class ContenuDeQualite:
                 rep = imp[0]
         return rep
 
+    def get_infos(self, page, cat):
+        """
+        Recherche toutes les informations nécessaires associées à une page
+        """
+        try:
+            date = self.date_labellisation(page.title())
+        except PasDeDate as pdd:
+            self.pasdedate.append( {'page': pdd.page, 'date': u''} )
+            return None
+        infos = {
+    'page': page.title(),    'espacedenom': page.namespace(),     'date': date, \
+    'label': cat,         'taille': BeBot.taille_page(page), \
+    'consultations':BeBot.stat_consultations(page, codelangue=self.langue), \
+    'traduction': self.traduction(page),   'importance': self.wikiprojet(page) \
+            }
+        return infos
+
     def run(self):
         connus = BeBot.charger(self.db, self.nom_base)
         for cat in self.cat_qualite:
@@ -320,7 +321,6 @@ class ContenuDeQualite:
                 page = p
                 #if (page.namespace() % 2) == 1: # Pour EN:GA et IT:FA
                 if page.namespace() == 1: # Pour EN:GA et IT:FA
-
                     page = p.toggleTalkPage()
                 article_connu = False
                 #Comparer avec le contenu de la bdd
@@ -328,42 +328,22 @@ class ContenuDeQualite:
                     if page.title() == html2unicode(con[0]): #con[0]=page
                         article_connu = True
                         break
-                if not article_connu or self.maj_stricte:
-                    try:
-                        date = self.date_labellisation(page.title())  # Récupération de la date
-                    except PasDeDate as pdd:
-                        self.pasdedate.append( {'page': pdd.page, 'date': u''} )
-                        continue
-                    infos = {
-    'page': page.title(),    'espacedenom': page.namespace(),     'date': date, \
-    'label': cat,         'taille': BeBot.taille_page(page), \
-    'consultations':BeBot.stat_consultations(page, codelangue=self.langue), \
-    'traduction': self.traduction(page),   'importance': self.wikiprojet(page) \
-                            }
-                    if article_connu:
-                        self.connaitdeja.append(infos)
-                    else:
+                if not article_connu:
+                    infos = self.get_infos(page, cat)
+                    if infos:
                         self.nouveau.append(infos)
+                elif self.maj_stricte:
+                    infos = self.get_infos(page, cat)
+                    if infos:
+                        self.connaitdeja.append(infos)
                 else:
                     self.connaitdeja.append( { 'page': page.title(), \
                           'espacedenom': page.namespace(),    'label': cat, \
                           'importance': None } )
 
-        if self.categorie_dechu:
-            categorie = catlib.Category(self.site, self.categorie_dechu)
-            # Vérifier parfois avec : Wikipédia:Articles de qualité/Justification de leur rejet
-            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='(')
-            # start sur « ( » à cause de EN
-            for p in cpg:
-                ptp = p.toggleTalkPage()
-                if ptp.namespace() == 0:
-                    for con in connus:
-                        if ptp.title() == html2unicode(con[0]):
-                            self.dechu.append( {'page': ptp.title(), 'date': u''} )
-
-        wikipedia.output( u"Total: %s ajouts ; %s déjà connus ; %s déchus ; %s sans date." \
+        wikipedia.output( u"Total: %s ajouts ; %s déjà connus ; %s sans date." \
                 % (str(len(self.nouveau)), str(len(self.connaitdeja)), \
-                str(len(self.dechu)), str(len(self.pasdedate))) )
+                str(len(self.pasdedate))) )
 
 def main():
     mode = u'nouveaux-seulement'
