@@ -38,8 +38,7 @@ class ContenuDeQualite:
 
         TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
-        TODO : propositions d'apposition pour Lien AdQ|Lien BA
-        todo : soucis avec les déchus : Vitré (Ille-et-Vilaine)
+        TODO : propositions d'apposition pour Lien AdQ|Lien BA -> autre script qui confrontera les bdd
     """
     def __init__(self, site, mode_maj):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
@@ -217,8 +216,7 @@ class ContenuDeQualite:
 
     def vider_base(self, curseur):
         """
-        Vide la base de donnée associée
-        (utile pour retirer les déchus sur les wiki n'ayant pas cette catégorie)
+        Vide la base de donnée associée (pour retirer les déchus)
         """
         wikipedia.output(u"# Vidage de la base de donnée")
         req = u'TRUNCATE TABLE %s' % self.nom_base
@@ -318,13 +316,14 @@ class ContenuDeQualite:
             cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='U')
             cpg = pagegenerators.PreloadingGenerator(cpg, pageNumber=125)
             for p in cpg:
-                page = p
-                #if (page.namespace() % 2) == 1: # Pour EN:GA et IT:FA
-                if page.namespace() == 1: # Pour EN:GA et IT:FA
+                if p.namespace() == 0:
+                    page = p
+                elif p.namespace() == 1: # Pour EN:GA et IT:FA
                     page = p.toggleTalkPage()
+                else:
+                    continue
                 article_connu = False
-                #Comparer avec le contenu de la bdd
-                for con in connus:
+                for con in connus: #Comparaison avec le contenu de la bdd
                     if page.title() == html2unicode(con[0]): #con[0]=page
                         article_connu = True
                         break
@@ -339,7 +338,7 @@ class ContenuDeQualite:
                 else:
                     self.connaitdeja.append( { 'page': page.title(), \
                           'espacedenom': page.namespace(),    'label': cat, \
-                          'importance': None } )
+                          'importance': None } ) # Ils ne seront pas ajoutés
 
         wikipedia.output( u"Total: %s ajouts ; %s déjà connus ; %s sans date." \
                 % (str(len(self.nouveau)), str(len(self.connaitdeja)), \
