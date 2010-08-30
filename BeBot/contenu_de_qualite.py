@@ -38,7 +38,6 @@ class ContenuDeQualite:
         TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
         TODO : propositions d'apposition pour Lien AdQ|Lien BA
-        todo: voir quand plusieurs fois la même importance wikiprojet
     """
     def __init__(self, site, mode_maj):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
@@ -81,9 +80,9 @@ class ContenuDeQualite:
         self.interwikifrRE = re.compile(u"\[\[fr:(?P<iw>[^\]]+)\]\]", re.LOCALE)
         #Wikiprojet _-_ par langue : regexp des cat wikiprojet, ordre de suppression si plusieurs
         importance_wikiprojet = {
-                'fr': [ u'Article.*importance (?P<importance>[\w]+)$',
+                'fr': [ u'Article.*importance (?P<importance>[\wé]+)$',
                         [ u'inconnue', u'faible', u'moyenne', u'élevée' ] ], # maximum
-                'en': [ u'(?P<importance>[\w]+)-importance .* articles$',
+                'en': [ u'(?P<importance>[\w]+)-importance',
                         [ 'NA', 'No', 'Bottom', 'Unknown', 'Low', 'Mid', 'High' ] ] # Top
                 }
         self.importanceRE = None
@@ -177,7 +176,7 @@ class ContenuDeQualite:
         """
         Sauvegarder dans une base de données
         """
-        wikipedia.output(u'# Sauvegarde dans la base pour la langue « %s ».' % self.langue)
+        wikipedia.output(u'# Sauvegarde dans la base pour la langue "%s".' % self.langue)
         curseur = self.db.cursor()
         mode_connaitdeja = u'update'
         if self.maj_stricte and not self.categorie_dechu:
@@ -197,7 +196,7 @@ class ContenuDeQualite:
     def sauvegarde_req(self, curseur, q, mode):
         """
         Ajout ou Mise à jour d'un champ de la base de données
-        * mode est dans ( 'insert', 'update' )
+        * "mode" est dans ( 'insert', 'update', 'delete' )
         """
         if mode == u'insert':
             req = u'INSERT INTO %s' % self.nom_base \
@@ -216,7 +215,7 @@ class ContenuDeQualite:
         elif mode == u'delete':
             req = u'DELETE FROM %s WHERE page="%s"' % ( self.nom_base, unicode(q) )
         else:
-            wikipedia.warning(u'mode de sauvegarde non reconnu.')
+            wikipedia.warning(u'mode de sauvegarde "%s" non reconnu.' % mode)
             return
         try:
             curseur.execute(req)
@@ -224,7 +223,7 @@ class ContenuDeQualite:
             if e.args[0] == ER.DUP_ENTRY:
                 self.sauvegarde_req(curseur, q, u'update')
             else:
-                wikipedia.warning("%s error %d: %s." % (mode.capitalize(), e.args[0], e.args[1]))
+                wikipedia.warning(u"%s error %d: %s." % (mode.capitalize(), e.args[0], e.args[1]))
 
     def _put_null(self, obj):
         if obj:
@@ -319,7 +318,9 @@ class ContenuDeQualite:
             cpg = pagegenerators.PreloadingGenerator(cpg, pageNumber=125)
             for p in cpg:
                 page = p
-                if p.namespace() == 1: # Pour EN:GA et IT:FA
+                #if (page.namespace() % 2) == 1: # Pour EN:GA et IT:FA
+                if page.namespace() == 1: # Pour EN:GA et IT:FA
+
                     page = p.toggleTalkPage()
                 article_connu = False
                 #Comparer avec le contenu de la bdd
@@ -344,7 +345,6 @@ class ContenuDeQualite:
                     else:
                         self.nouveau.append(infos)
                 else:
-                    #self.connaitdeja.append( [ p.title(), p.namespace(), '1970-01-01', cat, 0, 0, None ] )
                     self.connaitdeja.append( { 'page': page.title(), \
                           'espacedenom': page.namespace(),    'label': cat, \
                           'importance': None } )
@@ -392,10 +392,6 @@ def main():
         cdq.sauvegarder()
     wikipedia.Page(wikipedia.Site('fr'), u'Utilisateur:BeBot/Contenu de qualité').put(log, \
             comment=cdq.resume, minorEdit=False)
-
-#    choix = wikipedia.inputChoice(u"Sauvegarder dans la base de donnees ?", ['oui', 'non'], ['o', 'n'], 'o')
-#    if choix == "o" or choix == "oui":
-#        cdq.sauvegarder()
 
 if __name__ == "__main__":
     try:
