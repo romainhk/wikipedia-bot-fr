@@ -198,7 +198,7 @@ class ContenuDeQualite:
         elif mode == 'delete':
             req = u'DELETE FROM %s WHERE page="%s"' % ( self.nom_base, unicode(q) )
         else:
-            wikipedia.warning(u'mode de sauvegarde "%s" non reconnu.' % mode)
+            wikipedia.output(u'~ Mode de sauvegarde "%s" non reconnu.' % mode)
             return
         try:
             curseur.execute(req)
@@ -206,7 +206,7 @@ class ContenuDeQualite:
             if e.args[0] == ER.DUP_ENTRY:
                 self.req_bdd(curseur, q, 'update')
             else:
-                wikipedia.warning(u"%s error %d: %s." % (mode.capitalize(), e.args[0], e.args[1]))
+                wikipedia.output(u"~ %s error %d: %s." % (mode.capitalize(), e.args[0], e.args[1]))
 
     def _put_null(self, obj):
         if obj:
