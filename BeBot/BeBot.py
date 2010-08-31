@@ -55,10 +55,11 @@ def taille_page(page):
     """
     return len(page.get())/1000
 
-def togglePageTrad(site, page):
+def togglePageTrad(page):
     """
     Retourne la page de traduction associée à un page, ou la page associée à une traduction
     """
+    site = page.site()
     if not site.language() == 'fr': return u''
     trad = re.compile(u"/Traduction$", re.LOCALE)
     if trad.search(page.title()):
@@ -102,12 +103,42 @@ def hasWikiprojet(langue):
     else:
         return False
 
-def charger(db, nom_base):
+def charger_bdd(db, nom_base, champ="*", cond=None):
     """
     Charger une table depuis une base de données
     """
     curseur = db.cursor()
-    req = "SELECT * FROM %s" % nom_base
-    curseur.execute(req)
+    req = "SELECT %s FROM %s" % (champ, nom_base)
+    if cond:
+        req += "WHERE %s" % cond
+    try:
+        curseur.execute(req)
+    except MySQLdb.Error, e:
+        wikipedia.warning(u"SELECT error %d: %s." % (e.args[0], e.args[1]))
+
     return curseur.fetchall()
 
+########## Test ###########
+def info_wikiprojet(page, ER, nom_groupe, elimination):
+    """
+    Donne l'info Wikiprojet (avancement ou importance) selon un ordre de suppression
+    """
+    rep = None
+    if ER:
+        info = []
+        if (page.namespace() % 2) == 0:
+            page = page.toggleTalkPage()
+        for cat in page.categories(api=True):
+            b = ER.search(cat.title())
+            if b:
+                info.append(b.group(nom_groupe))
+
+        if len(info) > 0 and elimination:
+            for i in elimination:
+                if info.count(i) > 0:
+                    info.remove(i)
+                    if len(info) == 0:
+                        info.append(i)
+                        break
+            rep = info[0]
+    return rep

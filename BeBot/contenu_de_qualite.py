@@ -38,13 +38,11 @@ class ContenuDeQualite:
 
         TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
-        TODO : propositions d'apposition pour Lien AdQ|Lien BA -> autre script qui confrontera les bdd
     """
     def __init__(self, site, mode_maj):
         self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
         self.site = site
         self.langue = self.site.language()
-        self.log = log
         if mode_maj == "strict":
             self.maj_stricte = True
             wikipedia.output(u'# Mode "strict" actif (toutes les updates seront effectuées et la base vidée)')
@@ -80,10 +78,10 @@ class ContenuDeQualite:
                 'en': [ u'(?P<importance>[\w]+)-importance',
                         [ 'NA', 'No', 'Bottom', 'Unknown', 'Low', 'Mid', 'High' ] ] # Top
                 }
-        self.importanceRE = None
+        self.importanceER = None
         self.retrait_importance = []
         if importance_wikiprojet.has_key(self.langue):
-            self.importanceRE = re.compile(importance_wikiprojet[self.langue][0], re.LOCALE)
+            self.importanceER = re.compile(importance_wikiprojet[self.langue][0], re.LOCALE)
             self.retrait_importance = importance_wikiprojet[self.langue][1]
 
         # Principaux conteneurs
@@ -173,12 +171,12 @@ class ContenuDeQualite:
         if self.maj_stricte:
             self.vider_base(curseur)
             for q in self.connaitdeja:
-                self.sauvegarde_req(curseur, q, 'insert')
+                self.req_bdd(curseur, q, 'insert')
 
         for q in self.nouveau:
-            self.sauvegarde_req(curseur, q, 'insert')
+            self.req_bdd(curseur, q, 'insert')
 
-    def sauvegarde_req(self, curseur, q, mode):
+    def req_bdd(self, curseur, q, mode):
         """
         Ajout ou Mise à jour d'un champ de la base de données
         * "mode" est dans ( 'insert', 'update', 'delete' )
@@ -206,7 +204,7 @@ class ContenuDeQualite:
             curseur.execute(req)
         except MySQLdb.Error, e:
             if e.args[0] == ER.DUP_ENTRY:
-                self.sauvegarde_req(curseur, q, 'update')
+                self.req_bdd(curseur, q, 'update')
             else:
                 wikipedia.warning(u"%s error %d: %s." % (mode.capitalize(), e.args[0], e.args[1]))
 
@@ -258,7 +256,7 @@ class ContenuDeQualite:
         Donne la page de suivi ou l'interwiki vers fr
         """
         if self.langue == 'fr':
-            pt = BeBot.togglePageTrad(self.site, page)
+            pt = BeBot.togglePageTrad(page)
             if pt.exists():
                 return pt.title()
             else:
@@ -269,30 +267,6 @@ class ContenuDeQualite:
                 if res:
                     return res.group('iw')
             return None
-
-    def wikiprojet(self, page):
-        """
-        Donne la plus grande importance Wikiprojet
-        """
-        rep = None
-        if BeBot.hasWikiprojet(self.langue) and self.importanceRE:
-            imp = []
-            if (page.namespace() % 2) == 0:
-                page = page.toggleTalkPage()
-            for cat in page.categories(api=True):
-                b = self.importanceRE.search(cat.title())
-                if b:
-                    imp.append(b.group('importance'))
-
-            if len(imp) > 0:
-                for i in self.retrait_importance:
-                    if imp.count(i) > 0:
-                        imp.remove(i)
-                        if len(imp) == 0:
-                            imp.append(i)
-                            break
-                rep = imp[0]
-        return rep
 
     def get_infos(self, page, cat):
         """
@@ -307,16 +281,16 @@ class ContenuDeQualite:
     'page': page.title(),    'espacedenom': page.namespace(),     'date': date, \
     'label': cat,         'taille': BeBot.taille_page(page), \
     'consultations':BeBot.stat_consultations(page, codelangue=self.langue), \
-    'traduction': self.traduction(page),   'importance': self.wikiprojet(page) \
+    'traduction': self.traduction(page), \
+    'importance': BeBot.info_wikiprojet(page, self.importanceER, 'importance', self.retrait_importance)
             }
         return infos
 
     def run(self):
-        connus = BeBot.charger(self.db, self.nom_base)
+        connus = BeBot.charger_bdd(self.db, self.nom_base)
         self.total_avant = len(connus)
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
-            #cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='U')
             cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
             cpg = pagegenerators.PreloadingGenerator(cpg, pageNumber=125)
             for p in cpg:
@@ -365,7 +339,7 @@ def main():
         wikis = ['fr']
 
     log =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »'''" \
-            + u"; exécution du %s</center>\n{{Sommaire à droite}}\n\n" \
+            + u" ; exécution du %s</center>\n{{Sommaire à droite}}\n\n" \
             % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
     for cl in wikis:
         wikipedia.output( u"== WP:%s ..." % cl )
