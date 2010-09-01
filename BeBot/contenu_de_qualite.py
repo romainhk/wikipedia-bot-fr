@@ -55,7 +55,7 @@ class ContenuDeQualite:
                 'en': [ u'Featured articles',    u'Wikipedia good articles' ],
                 'de': [ u'Kategorie:Wikipedia:Exzellent',   u'Kategorie:Wikipedia:Lesenswert' ],
                 'es': [ u'Categoría:Wikipedia:Artículos destacados',  u'Categoría:Wikipedia:Artículos buenos' ],
-                'it': [ u'Voci in vetrina' ],
+       # pas celle-ci        'it': [ u'Voci in vetrina' ],
                 'nl': [ u'Categorie:Wikipedia:Etalage-artikelen' ]
                 }
         self.cat_qualite = self.categories_de_qualite[self.langue]

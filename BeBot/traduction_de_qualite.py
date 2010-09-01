@@ -41,7 +41,7 @@ class TraductionDeQualite:
         gen = pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats))
         gen = pagegenerators.PreloadingGenerator(gen, pageNumber=125)
         for tion in gen:
-            tmp.append(BeBot.togglePageTrad(self.site, tion).title().replace('(', '\\x28').replace(')', '\\x29'))
+            tmp.append(BeBot.togglePageTrad(tion).title().replace('(', '\\x28').replace(')', '\\x29'))
                 #Remplacement des parenthèses à cause d'un problème de comparaison de chaine utf-8 ; ex : Timée (Platon)
             self.tradQualite.append(tion)
 
@@ -127,7 +127,7 @@ class TraductionDeQualite:
         gen = pagegenerators.PreloadingGenerator(gen, pageNumber=125)
         for m in gen:
             if m.namespace() == 0: # ... alors prendre la page de trad
-                tradpage = BeBot.togglePageTrad(self.site, m)
+                tradpage = BeBot.togglePageTrad(m)
                 for t in self.traductions:
                    if t.title() == tradpage.title():
                         #Vérification de la correspondance des langues cibles
@@ -170,7 +170,7 @@ class TraductionDeQualite:
         # Cas de statut 5 (terminé)
         for pt in self.trads[5]:
             etat_label = 0
-            for cat in BeBot.togglePageTrad(self.site, pt).categories(api=True):
+            for cat in BeBot.togglePageTrad(pt).categories(api=True):
                 if cat.title() == u"Catégorie:Article de qualité" or cat.title() == u'Catégorie:Bon article' :
                     etat_label = 2
                     break
