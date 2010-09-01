@@ -54,7 +54,8 @@ class TraductionDeQualite:
         """
         Log à publier
         """
-        resultat = u'{{Sommaire à droite}}\nActivités du %s' % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
+        resultat = u'{{Sommaire à droite}}\nActivités du %s' \
+                % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
         resultat += u' concernant les articles associés au Projet:Traduction qui sont labellisés sur un autre Wikipédia.\n'
         resultat += u'== Candidats au suivi ==\n'
         resultat += u'Voici une liste des pages de suivi de traduction dont le paramètre « intérêt » pourrait être mis à "adq" ou "ba".\n\n'
@@ -63,14 +64,16 @@ class TraductionDeQualite:
             resultat += u'* [[' + p[0].title() + u']] ('+ p[1] +')\n'
 
         resultat +=  u'\n== Suivi des traductions ==\n'
-        resultat +=  u'Mise à jour du suivi des %s traductions sur [[Projet:Suivi des articles de qualité des autres wikipédias/Traduction]].\n\n' % str(len(self.trads[1]) + len(self.trads[2]) + len(self.trads[3]) + len(self.trads[4]) + len(self.trads[5]) )
+        resultat +=  u'Mise à jour du suivi des %s traductions sur [[Projet:Suivi des articles de qualité des autres wikipédias/Traduction]].\n\n' \
+            % str(len(self.trads[1]) + len(self.trads[2]) + len(self.trads[3]) + len(self.trads[4]) + len(self.trads[5]) )
         resultat +=  u'Par statut : ' + str(len(self.trads[1])) + u' demandes, ' \
                 + str(len(self.trads[2])) + u' traductions en cours, ' + str(len(self.trads[3])) + u' demandes de relecture, ' \
                 + str(len(self.trads[4])) + u' relectures en cours, ' + str(len(self.trads[5])) + u' terminées (' \
                 + str(len(self.term_et_label[0])) + u' sans label, ' + str(len(self.term_et_label[2])) + u' labellisées).\n\n'
-        resultat +=  u"=== [[Image:Nuvola apps important yellow.svg|30px|À vérifier]] Traductions sans statut ===\nIl n'a pas été possible de trouver le statut de ces traductions :\n"
-        for t in self.trads[0]:
-            resultat += u'* [[%s]]\n' % t.title()
+        if len(self.trads[0]) > 0:
+            resultat +=  u"=== [[Image:Nuvola apps important yellow.svg|30px|À vérifier]] Traductions sans statut ===\nIl n'a pas été possible de trouver le statut de ces traductions :\n"
+            for t in self.trads[0]:
+                resultat += u'* [[%s]]\n' % t.title()
 
         return resultat
 

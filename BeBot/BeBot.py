@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, simplejson, urllib2
+import re, datetime, simplejson, urllib2, MySQLdb
+from MySQLdb.constants import ER
 from wikipedia import *
 
 """
@@ -103,23 +104,22 @@ def hasWikiprojet(langue):
     else:
         return False
 
-def charger_bdd(db, nom_base, champ="*", cond=None):
+def charger_bdd(db, nom_base, champs="*", cond=None):
     """
     Charger une table depuis une base de données
     """
     curseur = db.cursor()
-    req = "SELECT %s FROM %s" % (champ, nom_base)
+    req = "SELECT %s FROM %s" % (champs, nom_base)
     if cond:
-        req += "WHERE %s" % cond
+        req += " WHERE %s" % cond
     try:
         curseur.execute(req)
     except MySQLdb.Error, e:
-        wikipedia.output(u"~ SELECT error %d: %s." % (e.args[0], e.args[1]))
+        wikipedia.output(u"~ SELECT error %d: %s.\nReq :%s" % (e.args[0], e.args[1], req))
 
     return curseur.fetchall()
 
-########## Test ###########
-def info_wikiprojet(page, ER, nom_groupe, elimination):
+def info_wikiprojet(page, ER, nom_groupe, tab_elimination):
     """
     Donne l'info Wikiprojet (avancement ou importance) selon un ordre de suppression
     """
@@ -133,8 +133,8 @@ def info_wikiprojet(page, ER, nom_groupe, elimination):
             if b:
                 info.append(b.group(nom_groupe))
 
-        if len(info) > 0 and elimination:
-            for i in elimination:
+        if len(info) > 0 and tab_elimination:
+            for i in tab_elimination:
                 if info.count(i) > 0:
                     info.remove(i)
                     if len(info) == 0:
