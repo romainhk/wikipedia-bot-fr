@@ -120,7 +120,7 @@ class ContenuDeQualite:
             resu += u' et %s BA' % str(self.nb_label( self.cat_qualite[1], [self.nouveau, self.connaitdeja]))
         resu += u")\n\nAu reste, il y a %s articles sans date précisée, et %s déjà connus." \
                 % ( str(len(self.pasdedate)), str(len(self.connaitdeja)) )
-        if len(self.nouveau) > 0:
+        if len(self.nouveau) > 0 and not self.mode_stricte:
             resu += u"\n=== Nouveau contenu de qualité ===\n"
             resu += self.lister_article(self.nouveau)
 #            if self.maj_stricte:
@@ -206,7 +206,8 @@ class ContenuDeQualite:
             if e.args[0] == ER.DUP_ENTRY:
                 self.req_bdd(curseur, q, 'update')
             else:
-                wikipedia.output(u"~ %s error %d: %s." % (mode.capitalize(), e.args[0], e.args[1]))
+                wikipedia.output(u"~ %s error %d: %s.\nReq : %s" \
+                        % (mode.capitalize(), e.args[0], e.args[1], req) )
 
     def _put_null(self, obj):
         if obj:

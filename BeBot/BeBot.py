@@ -115,7 +115,7 @@ def charger_bdd(db, nom_base, champs="*", cond=None):
     try:
         curseur.execute(req)
     except MySQLdb.Error, e:
-        wikipedia.output(u"~ SELECT error %d: %s.\nReq :%s" % (e.args[0], e.args[1], req))
+        wikipedia.output(u"~ SELECT error %d: %s.\nRequête : %s" % (e.args[0], e.args[1], req))
 
     return curseur.fetchall()
 
