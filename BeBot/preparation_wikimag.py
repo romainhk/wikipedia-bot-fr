@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime
+import re, datetime, locale
 import BeBot
-from wikipedia import *
+import pywikibot
+locale.setlocale(locale.LC_ALL, '')
 
 class PreparationWikimag:
     """ Préparation d'un wikimag : 
@@ -32,9 +33,9 @@ class PreparationWikimag:
             jour = jour + unjour
 
         self.resume = u'BeBot : Préparation du wikimag débutant le ' + self.lasemaine
-        wikipedia.setAction(self.resume)
+        pywikibot.setAction(self.resume)
         if self.date_fin.month == u'janvier':
-            wikipedia.output(self.date.strftime("%Y/%m/%d")+u" : Attention, certaines données de l'année %i ne seront pas prises en compte" % int(self.date_fin.year)-1)
+            pywikibot.output(self.date.strftime("%Y/%m/%d")+u" : Attention, certaines données de l'année %i ne seront pas prises en compte" % int(self.date_fin.year)-1)
         self.articleRE = re.compile("\* [^\{]*\{\{a-label\|([^\|\}]+)\}\}")
 
     def __str__(self):
@@ -97,9 +98,9 @@ class PreparationWikimag:
         dateRE = re.compile("(\d{1,2}) ([^0-9\|\} ]{3,9}) (\d{2,4})", re.LOCALE)
         for a in articles:
             try:
-                page = wikipedia.Page(self.site, a).get()
+                page = pywikibot.Page(self.site, a).get()
             except pywikibot.exceptions.IsRedirectPage:
-                page = wikipedia.Page(self.site, a).getRedirectTarget().get()
+                page = pywikibot.Page(self.site, a).getRedirectTarget().get()
             except pywikibot.exceptions.NoPage:
                 self.inconnu.append(a)
                 continue
@@ -115,13 +116,13 @@ class PreparationWikimag:
                     if not (self.date > date_adq) and not (self.date_fin <= date_adq):
                         r.append(a)
                     #else:
-                    #    wikipedia.output("Date %s en dehors de la plage %s - %s" % (d.group(), unicode(self.date.strftime("%e %B %Y"), "utf-8"), unicode(self.date_fin.strftime("%e %B %Y"), "utf-8") ))
+                    #    pywikibot.output("Date %s en dehors de la plage %s - %s" % (d.group(), unicode(self.date.strftime("%e %B %Y"), "utf-8"), unicode(self.date_fin.strftime("%e %B %Y"), "utf-8") ))
                 else:
                     self.inconnu.append(a)
         return r
 
     def run(self):
-        wikipedia.output(u"Préparation du wikimag débutant le " + self.lasemaine)
+        pywikibot.output(u"Préparation du wikimag débutant le " + self.lasemaine)
            
         # Annonces
         moisRE = re.compile("==== *(\w+) *====", re.LOCALE)
@@ -148,15 +149,15 @@ class PreparationWikimag:
 
 
 def main():
-    site = wikipedia.getSite()
+    site = pywikibot.getSite()
     pw = PreparationWikimag(site)
     pw.run()
 
-    page_resultat = wikipedia.Page(site, u'Utilisateur:BeBot/Préparation Wikimag')
+    page_resultat = pywikibot.Page(site, u'Utilisateur:BeBot/Préparation Wikimag')
     page_resultat.put(unicode(pw))
 
 if __name__ == "__main__":
     try:
         main()
     finally:
-        wikipedia.stopme()
+        pywikibot.stopme()

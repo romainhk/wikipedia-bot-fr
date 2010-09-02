@@ -1,10 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, MySQLdb, getopt, sys
+import re, datetime, MySQLdb, getopt, sys, locale
 from MySQLdb.constants import ER
+import pywikibot
+from pywikibot import pagegenerators, catlib
 import BeBot
-from wikipedia import *
-import pagegenerators, catlib
+locale.setlocale(locale.LC_ALL, '')
 
 class PasDeDate(Exception):
     """
@@ -22,7 +23,7 @@ class ContenuDeQualite:
         de labellisation, de son label, du nombre de visites...)
 
     Paramètres :
-    * Site (wikipedia) où travailler
+    * Site (pywikibot. où travailler
     * Mode de mise à jour : voir "options".
     Options :
     * Mode de mise à jour : en mode strict, les informations des 
@@ -45,7 +46,7 @@ class ContenuDeQualite:
         self.langue = self.site.language()
         if mode_maj == "strict":
             self.maj_stricte = True
-            wikipedia.output(u'# Mode "strict" actif (toutes les updates seront effectuées et la base vidée)')
+            pywikibot.output(u'# Mode "strict" actif (toutes les updates seront effectuées et la base vidée)')
         else:
             self.maj_stricte = False
         self.total_avant = 0
@@ -153,10 +154,10 @@ class ContenuDeQualite:
             r = []
             if BeBot.hasDateLabel(self.langue):
                 for p in table:
-                    r.append(u"[[%s%s]] %s" % ( plus, html2unicode(p['page']), unicode(p['date']) ) )
+                    r.append(u"[[%s%s]] %s" % ( plus, pywikibot.page.html2unicode(p['page']), unicode(p['date']) ) )
             else:
                 for p in table:
-                    r.append(u"[[%s%s]]" % ( plus, html2unicode(p['page'])) )
+                    r.append(u"[[%s%s]]" % ( plus, pywikibot.page.html2unicode(p['page'])) )
             return u'* ' + '\n* '.join(r) + u'\n'
         return u''
 
@@ -166,7 +167,7 @@ class ContenuDeQualite:
         """
         Sauvegarder dans une base de données
         """
-        wikipedia.output(u'# Sauvegarde dans la base pour la langue "%s".' % self.langue)
+        pywikibot.output(u'# Sauvegarde dans la base pour la langue "%s".' % self.langue)
         curseur = self.db.cursor()
         if self.maj_stricte:
             self.vider_base(curseur)
@@ -185,7 +186,7 @@ class ContenuDeQualite:
             req = u'INSERT INTO %s' % self.nom_base \
                 + '(page, espacedenom, date, label, taille, consultations, traduction, importance) ' \
                 + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s, %s)' \
-                % ( unicode2html(q['page'], 'ascii'),  str(q['espacedenom']), \
+                % ( q['page'],  str(q['espacedenom']), \
                 q['date'].strftime("%Y-%m-%d"), q['label'], str(q['taille']), \
                 str(q['consultations']), self._put_null(q['traduction']), \
                 self._put_null(q['importance']) )
@@ -194,11 +195,11 @@ class ContenuDeQualite:
                 % (self.nom_base, str(q['espacedenom']), q['date'].strftime("%Y-%m-%d"), \
                 q['label'], str(q['taille']), str(q['consultations']), \
                 self._put_null(q['traduction']), self._put_null(q['importance']), \
-                unicode2html(q['page'], 'ascii') )
+                q['page'] )
         elif mode == 'delete':
             req = u'DELETE FROM %s WHERE page="%s"' % ( self.nom_base, unicode(q) )
         else:
-            wikipedia.output(u'~ Mode de sauvegarde "%s" non reconnu.' % mode)
+            pywikibot.output(u'~ Mode de sauvegarde "%s" non reconnu.' % mode)
             return
         try:
             curseur.execute(req)
@@ -206,12 +207,12 @@ class ContenuDeQualite:
             if e.args[0] == ER.DUP_ENTRY:
                 self.req_bdd(curseur, q, 'update')
             else:
-                wikipedia.output(u"~ %s error %d: %s.\nReq : %s" \
+                pywikibot.output(u"~ %s error %d: %s.\nReq : %s" \
                         % (mode.capitalize(), e.args[0], e.args[1], req) )
 
     def _put_null(self, obj):
         if obj:
-            return u'"%s"' % unicode2html(obj, 'ascii')
+            return u'"%s"' % obj
         else:
             return u'NULL'
 
@@ -219,12 +220,12 @@ class ContenuDeQualite:
         """
         Vide la base de donnée associée (pour retirer les déchus)
         """
-        wikipedia.output(u"# Vidage de la base de donnée")
+        pywikibot.output(u"## Vidage de l'ancienne base")
         req = u'TRUNCATE TABLE %s' % self.nom_base
         try:
             curseur.execute(req)
         except MySQLdb.Error, e:
-            wikipedia.output(u"Truncate error %d: %s" % (e.args[0], e.args[1]))
+            pywikibot.output(u"Truncate error %d: %s" % (e.args[0], e.args[1]))
     
     #######################################
     ### recherche d'infos
@@ -233,7 +234,7 @@ class ContenuDeQualite:
         Donne la date de labellisation d'un article
         """
         try:
-            page = wikipedia.Page(self.site, titre).get()
+            page = pywikibot.Page(self.site, titre).get()
         except pywikibot.exceptions.NoPage:
             raise PasDeDate(titre)
         if self.dateRE:
@@ -263,8 +264,8 @@ class ContenuDeQualite:
             else:
                 return None
         else:
-            for p in page.interwiki():
-                res = self.interwikifrRE.search(p.title())
+            for p in page.langlinks():
+                res = self.interwikifrRE.search(p.astext())
                 if res:
                     return res.group('iw')
             return None
@@ -280,7 +281,7 @@ class ContenuDeQualite:
             return None
         infos = {
     'page': page.title(),    'espacedenom': page.namespace(),     'date': date, \
-    'label': cat,         'taille': BeBot.taille_page(page), \
+    'label': cat,            'taille': BeBot.taille_page(page), \
     'consultations':BeBot.stat_consultations(page, codelangue=self.langue), \
     'traduction': self.traduction(page), \
     'importance': BeBot.info_wikiprojet(page, self.importanceER, 'importance', self.retrait_importance)
@@ -293,7 +294,7 @@ class ContenuDeQualite:
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
             cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
-            cpg = pagegenerators.PreloadingGenerator(cpg, pageNumber=125)
+            cpg = pagegenerators.PreloadingGenerator(cpg, step=125)
             for p in cpg:
                 if p.namespace() == 0:
                     page = p
@@ -303,7 +304,8 @@ class ContenuDeQualite:
                     continue
                 article_connu = False
                 for con in connus: #Comparaison avec le contenu de la bdd
-                    if page.title() == html2unicode(con[0]): #con[0]=page
+#                    pywikibot.output(u"%s ; %s" % (page.title(), unicode(con[0], 'UTF-8')))
+                    if page.title() == unicode(con[0], 'UTF-8'): #con[0]=page
                         article_connu = True
                         break
                 if not article_connu:
@@ -319,7 +321,7 @@ class ContenuDeQualite:
                           'espacedenom': page.namespace(),    'label': cat, \
                           'importance': None } ) # Ils ne seront pas ajoutés
 
-        wikipedia.output( u"Total: %s ajouts ; %s déjà connus ; %s sans date." \
+        pywikibot.output( u"Total: %s ajouts ; %s déjà connus ; %s sans date." \
                 % (str(len(self.nouveau)), str(len(self.connaitdeja)), \
                 str(len(self.pasdedate))) )
 
@@ -343,16 +345,16 @@ def main():
             + u" ; exécution du %s</center>\n{{Sommaire à droite}}\n\n" \
             % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
     for cl in wikis:
-        wikipedia.output( u"== WP:%s ..." % cl )
-        cdq = ContenuDeQualite(wikipedia.Site(cl), mode)
+        pywikibot.output( u"== WP:%s ..." % cl )
+        cdq = ContenuDeQualite(pywikibot.Site(cl), mode)
         cdq.run()
         log += unicode(cdq)
         cdq.sauvegarder()
-    wikipedia.Page(wikipedia.Site('fr'), u'Utilisateur:BeBot/Contenu de qualité').put(log, \
+    pywikibot.Page(pywikibot.Site('fr'), u'Utilisateur:BeBot/Contenu de qualité').put(log, \
             comment=cdq.resume, minorEdit=False)
 
 if __name__ == "__main__":
     try:
         main()
     finally:
-        wikipedia.stopme()
+        pywikibot.stopme()

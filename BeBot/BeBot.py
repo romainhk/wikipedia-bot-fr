@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, simplejson, urllib2, MySQLdb
+import re, datetime, urllib2, MySQLdb
 from MySQLdb.constants import ER
-from wikipedia import *
+import pywikibot
 
 """
 # Bibliothèque BeBot
@@ -35,7 +35,7 @@ def moistoint(mois):
     elif mois in 'novembre   november   ':          return 11
     elif mois in u'décembre  december   dezember':  return 12
     else:
-        wikipedia.output(u'BeBot : Mois "%s" non reconnu.' % mois)
+        pywikibot.output(u'BeBot : Mois "%s" non reconnu.' % mois)
     return 0
 
 def page_ligne_par_ligne(site, nompage):
@@ -43,9 +43,9 @@ def page_ligne_par_ligne(site, nompage):
     Lit une wikipage ligne par ligne
     """
     try:
-        page = wikipedia.Page(site, nompage).get()
+        page = pywikibot.Page(site, nompage).get()
     except pywikibot.exceptions.NoPage:
-        wikipedia.output(u"BeBot : La page « %s » n'est pas accessible." % nompage)
+        pywikibot.output(u"BeBot : La page « %s » n'est pas accessible." % nompage)
         return
     for ligne in page.split("\n"):
         yield ligne
@@ -60,14 +60,14 @@ def togglePageTrad(page):
     """
     Retourne la page de traduction associée à un page, ou la page associée à une traduction
     """
-    site = page.site()
+    site = page.site
     if not site.language() == 'fr': return u''
     trad = re.compile(u"/Traduction$", re.LOCALE)
     if trad.search(page.title()):
         #Déjà une
-        return wikipedia.Page(site, page.toggleTalkPage().title().split('/Traduction')[0])
+        return pywikibot.Page(site, page.toggleTalkPage().title().split('/Traduction')[0])
     else:
-        return wikipedia.Page(site, page.toggleTalkPage().title()+"/Traduction")
+        return pywikibot.Page(site, page.toggleTalkPage().title()+"/Traduction")
 
 def stat_consultations(page, codelangue=u'fr', date=False):
     """
@@ -79,10 +79,9 @@ def stat_consultations(page, codelangue=u'fr', date=False):
     url = "http://stats.grok.se/json/%s/%s/%s" \
             % ( codelangue, date.strftime("%Y%m"), urllib2.quote(page.title().encode('utf-8')) )
     try:
-        res = simplejson.load(urllib2.urlopen(url))
-#    except urllib2.URLError, urllib2.HTTPError:
-    except:
-        wikipedia.output("BeBot : Impossible de récupérer les stats à l'adresse %s" % url)
+        res = pywikibot.load(urllib2.urlopen(url))
+    except urllib2.URLError, urllib2.HTTPError:
+        pywikibot.output(u"BeBot : Impossible de récupérer les stats à l'adresse %s" % url)
         return 0
     return res["total_views"]
 
@@ -115,7 +114,7 @@ def charger_bdd(db, nom_base, champs="*", cond=None):
     try:
         curseur.execute(req)
     except MySQLdb.Error, e:
-        wikipedia.output(u"~ SELECT error %d: %s.\nRequête : %s" % (e.args[0], e.args[1], req))
+        pywikibot.output(u"~ SELECT error %d: %s.\nRequête : %s" % (e.args[0], e.args[1], req))
 
     return curseur.fetchall()
 
@@ -128,7 +127,7 @@ def info_wikiprojet(page, ER, nom_groupe, tab_elimination):
         info = []
         if (page.namespace() % 2) == 0:
             page = page.toggleTalkPage()
-        for cat in page.categories(api=True):
+        for cat in page.categories():
             b = ER.search(cat.title())
             if b:
                 info.append(b.group(nom_groupe))

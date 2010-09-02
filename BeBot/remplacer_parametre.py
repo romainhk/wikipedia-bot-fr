@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-__version__ = 'RemplacerParametre 20100617'
 import sys, re
 from wikipedia import *
+# Branche stable
 import pagegenerators, replace
 
 class RemplacerParametre:

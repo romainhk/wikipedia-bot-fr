@@ -1,9 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime
+import re, datetime, locale
 import BeBot
-from wikipedia import *
-import pagegenerators, catlib
+import pywikibot
+from pywikibot import pagegenerators, catlib
+locale.setlocale(locale.LC_ALL, '')
 
 class TraductionDeQualite:
     """ Traduction de Qualité
@@ -34,18 +35,18 @@ class TraductionDeQualite:
             self.traductions.append(t)
         
         cats = []
-        self.ignor_list = {}  # On ignore les pages qui ont déjà le paramètre adq/ba
+        self.ignor_list = u'' # On ignore les pages qui ont déjà le paramètre adq/ba
         tmp = []
         cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Traduction d'un Article de Qualité")))
         cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Traduction d'un Bon Article")))
         gen = pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats))
-        gen = pagegenerators.PreloadingGenerator(gen, pageNumber=125)
+        gen = pagegenerators.PreloadingGenerator(gen, step=125)
         for tion in gen:
-            tmp.append(BeBot.togglePageTrad(tion).title().replace('(', '\\x28').replace(')', '\\x29'))
+            a = BeBot.togglePageTrad(tion).title()
+            tmp.append(a.replace('(', '\\x28').replace(')', '\\x29'))
                 #Remplacement des parenthèses à cause d'un problème de comparaison de chaine utf-8 ; ex : Timée (Platon)
             self.tradQualite.append(tion)
-
-        self.ignor_list[self.site.family.name] = {'fr':tmp}
+            self.ignor_list += u' %s ;;' % a
 
         self.trads = [ [], [], [], [], [], [] ] # Pages de traductions d'articles de qualité classées par statut
         self.term_et_label = [ [], [], [] ]   # Traductions terminées sans label, en attente de label, ou labellisées
@@ -118,18 +119,18 @@ class TraductionDeQualite:
                 retour += u'\n'
             if noinclude:
                 retour += u'</noinclude>'
-        wikipedia.Page(self.site, u'Projet:Suivi des articles de qualité des autres wikipédias/Traduction/' + souspage).put(retour, comment=self.resumeListing)
+        pywikibot.Page(self.site, u'Projet:Suivi des articles de qualité des autres wikipédias/Traduction/' + souspage).put(retour, comment=self.resumeListing)
         
     def run(self):
         ##################################
         #####     Candidatures
         cats = []
-        cats.append(pagegenerators.PageTitleFilterPageGenerator(pagegenerators.ReferringPageGenerator(wikipedia.Page(self.site, u"Modèle:Lien AdQ"), followRedirects=True, withTemplateInclusion=True), self.ignor_list))
-        cats.append(pagegenerators.PageTitleFilterPageGenerator(pagegenerators.ReferringPageGenerator(wikipedia.Page(self.site, u"Modèle:Lien BA"), followRedirects=True, withTemplateInclusion=True), self.ignor_list))
+        cats.append(pagegenerators.ReferringPageGenerator(pywikibot.Page(self.site, u"Modèle:Lien AdQ"), followRedirects=True, withTemplateInclusion=True))
+        cats.append(pagegenerators.ReferringPageGenerator(pywikibot.Page(self.site, u"Modèle:Lien BA"), followRedirects=True, withTemplateInclusion=True))
         gen = pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats))
-        gen = pagegenerators.PreloadingGenerator(gen, pageNumber=125)
+        gen = pagegenerators.PreloadingGenerator(gen, step=125)
         for m in gen:
-            if m.namespace() == 0: # ... alors prendre la page de trad
+            if m.namespace() == 0 and m.title() not in self.ignor_list: # ... alors prendre la page de trad
                 tradpage = BeBot.togglePageTrad(m)
                 for t in self.traductions:
                    if t.title() == tradpage.title():
@@ -145,7 +146,7 @@ class TraductionDeQualite:
         #####     Mise à jour du suivi
         for tq in self.tradQualite: #Tri par statut
             statut = 0
-            for cat in tq.categories(api=True):
+            for cat in tq.categories():
 #                print cat.title()
                 if   cat.title() == u"Catégorie:Article à traduire":  #1
                     statut = 1
@@ -173,27 +174,27 @@ class TraductionDeQualite:
         # Cas de statut 5 (terminé)
         for pt in self.trads[5]:
             etat_label = 0
-            for cat in BeBot.togglePageTrad(pt).categories(api=True):
+            for cat in BeBot.togglePageTrad(pt).categories():
                 if cat.title() == u"Catégorie:Article de qualité" or cat.title() == u'Catégorie:Bon article' :
                     etat_label = 2
                     break
             self.term_et_label[etat_label].append(pt)
 
         self.publier(u'Labellisées', self.term_et_label, 2, True)
-#        wikipedia.Page(self.site, u"Projet:Suivi des articles de qualité des autres wikipédias/Traduction/En attente d'être labellisées").put(self.genererListing(self.term_et_label[1]), comment=self.resumeListing)
+#        pywikibot.Page(self.site, u"Projet:Suivi des articles de qualité des autres wikipédias/Traduction/En attente d'être labellisées").put(self.genererListing(self.term_et_label[1]), comment=self.resumeListing)
         self.publier(u'Terminées sans label', self.term_et_label, 0, False)
 
 def main():
-    site = wikipedia.getSite()
+    site = pywikibot.getSite()
     log = u'Utilisateur:BeBot/Traduction de qualité'
 
     tdq = TraductionDeQualite(site, log)
     tdq.run()
     
-    wikipedia.Page(site, log).put(unicode(tdq), comment=tdq.resume, minorEdit=False)
+    pywikibot.Page(site, log).put(unicode(tdq), comment=tdq.resume, minorEdit=False)
 
 if __name__ == "__main__":
     try:
         main()
     finally:
-        wikipedia.stopme()
+        pywikibot.stopme()
