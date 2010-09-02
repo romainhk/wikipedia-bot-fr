@@ -120,7 +120,7 @@ class ContenuDeQualite:
             resu += u' et %s BA' % str(self.nb_label( self.cat_qualite[1], [self.nouveau, self.connaitdeja]))
         resu += u")\n\nAu reste, il y a %s articles sans date précisée, et %s déjà connus." \
                 % ( str(len(self.pasdedate)), str(len(self.connaitdeja)) )
-        if len(self.nouveau) > 0 and not self.mode_stricte:
+        if len(self.nouveau) > 0 and not self.maj_stricte:
             resu += u"\n=== Nouveau contenu de qualité ===\n"
             resu += self.lister_article(self.nouveau)
 #            if self.maj_stricte:
@@ -224,7 +224,7 @@ class ContenuDeQualite:
         try:
             curseur.execute(req)
         except MySQLdb.Error, e:
-            print "Truncate error %d: %s" % (e.args[0], e.args[1])
+            wikipedia.output(u"Truncate error %d: %s" % (e.args[0], e.args[1]))
     
     #######################################
     ### recherche d'infos
