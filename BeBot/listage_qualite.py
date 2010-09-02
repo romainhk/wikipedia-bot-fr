@@ -58,6 +58,20 @@ class ListageQualite:
 
         return resu
 
+    def afficher_labels(self, labels):
+        """
+        Affiche les éléments du dictionnaire de dictionnaire "labels"
+        """
+        for k, l in labels.items():
+            taille = unicode(l['taille'])
+            trad = l['traduction']
+            imp  = l['importance']
+            if not trad:
+                trad = u'-'
+            if not imp:
+                imp  = u'-'
+            wikipedia.output(u"%s : %s ; %s ; %s" % (k, taille, trad, imp) )
+
     def publier(self):
         """
         Génère la page à publier
@@ -96,19 +110,26 @@ class ListageQualite:
 
         art_etrangers = self.lycos(self.nom_base, conditions="traduction IS NOT NULL")
         art_fr = self.lycos('contenu_de_qualite_fr')
-        for page_et, info_et in art_etrangers:
-            eq_fr = info_et['traduction']
+        for page_et, infos_et in art_etrangers.items():
+            eq_fr = infos_et['traduction']
             if art_fr.has_key(eq_fr):
-                self.label_deux[page_et] = info_et
+                self.label_deux[page_et] = infos_et
             else:
-                page_trad = togglePageTrad(wikipedia.Page(eq_fr))
+                page_trad = BeBot.togglePageTrad(wikipedia.Page(self.site, eq_fr))
                 if page_trad.exists():
-                    self.label_trad[page_et] = info_et
+                    self.label_trad[page_et] = infos_et
                     self.label_trad[page_et]['traduction'] = page_trad
                 else:
-                    self.label_nofr[page_et] = info_et
+                    self.label_nofr[page_et] = infos_et
 
-        wikipedia.output( u"Résultat: %s.\n%s\n%s\n%s" % (self.label_se, self.label_deux, self.label_nofr, self.label_trad) )
+        wikipedia.output(u"* Elements de label_se :")
+        self.afficher_labels(self.label_se)
+        wikipedia.output(u"* Elements de label_deux :")
+        self.afficher_labels(self.label_deux)
+        wikipedia.output(u"* Elements de label_nofr :")
+        self.afficher_labels(self.label_nofr)
+        wikipedia.output(u"* Elements de label_trad :")
+        self.afficher_labels(self.label_trad)
 
 def main():
     try:
