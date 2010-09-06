@@ -125,7 +125,7 @@ class PreparationWikimag:
         pywikibot.output(u"Préparation du wikimag débutant le " + self.lasemaine)
            
         # Annonces
-        moisRE = re.compile("==== *(\w+) *====", re.LOCALE)
+        moisRE = re.compile("==== *(.+) *====", re.LOCALE)
         annonceRE = re.compile("\{\{[aA]nnonce[^\|]*\|(\d+)\|")
         mois_courant = int(self.date.strftime("%m"))
         for ligne in BeBot.page_ligne_par_ligne(self.site, u'Wikipédia:Annonces'):

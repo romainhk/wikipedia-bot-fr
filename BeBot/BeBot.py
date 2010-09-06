@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, urllib2, MySQLdb
+import re, datetime, urllib2, MySQLdb, simplejson
 from MySQLdb.constants import ER
 import pywikibot
 
@@ -35,7 +35,7 @@ def moistoint(mois):
     elif mois in 'novembre   november   ':          return 11
     elif mois in u'décembre  december   dezember':  return 12
     else:
-        pywikibot.output(u'BeBot : Mois "%s" non reconnu.' % mois)
+        pywikibot.warning(u'mois "%s" non reconnu.' % mois)
     return 0
 
 def page_ligne_par_ligne(site, nompage):
@@ -45,7 +45,7 @@ def page_ligne_par_ligne(site, nompage):
     try:
         page = pywikibot.Page(site, nompage).get()
     except pywikibot.exceptions.NoPage:
-        pywikibot.output(u"BeBot : La page « %s » n'est pas accessible." % nompage)
+        pywikibot.warning(u"la page « %s » n'est pas accessible." % nompage)
         return
     for ligne in page.split("\n"):
         yield ligne
@@ -79,9 +79,9 @@ def stat_consultations(page, codelangue=u'fr', date=False):
     url = "http://stats.grok.se/json/%s/%s/%s" \
             % ( codelangue, date.strftime("%Y%m"), urllib2.quote(page.title().encode('utf-8')) )
     try:
-        res = pywikibot.load(urllib2.urlopen(url))
+        res = simplejson.load(urllib2.urlopen(url))
     except urllib2.URLError, urllib2.HTTPError:
-        pywikibot.output(u"BeBot : Impossible de récupérer les stats à l'adresse %s" % url)
+        pywikibot.warning(u"impossible de récupérer les stats à l'adresse %s" % url)
         return 0
     return res["total_views"]
 
@@ -114,7 +114,7 @@ def charger_bdd(db, nom_base, champs="*", cond=None):
     try:
         curseur.execute(req)
     except MySQLdb.Error, e:
-        pywikibot.output(u"~ SELECT error %d: %s.\nRequête : %s" % (e.args[0], e.args[1], req))
+        pywikibot.error(u"SELECT error %d: %s.\nRequête : %s" % (e.args[0], e.args[1], req))
 
     return curseur.fetchall()
 

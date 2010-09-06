@@ -46,7 +46,7 @@ class ContenuDeQualite:
         self.langue = self.site.language()
         if mode_maj == "strict":
             self.maj_stricte = True
-            pywikibot.output(u'# Mode "strict" actif (toutes les updates seront effectuées et la base vidée)')
+            pywikibot.stdout(u'# Mode "strict" actif (toutes les updates seront effectuées et la base vidée)')
         else:
             self.maj_stricte = False
         self.total_avant = 0
@@ -121,7 +121,7 @@ class ContenuDeQualite:
             resu += u' et %s BA' % str(self.nb_label( self.cat_qualite[1], [self.nouveau, self.connaitdeja]))
         resu += u")\n\nAu reste, il y a %s articles sans date précisée, et %s déjà connus." \
                 % ( str(len(self.pasdedate)), str(len(self.connaitdeja)) )
-        if len(self.nouveau) > 0 and not self.maj_stricte:
+        if len(self.nouveau) > 0 and not self.maj_stricte and len(self.nouveau) < 100:
             resu += u"\n=== Nouveau contenu de qualité ===\n"
             resu += self.lister_article(self.nouveau)
 #            if self.maj_stricte:
@@ -167,7 +167,7 @@ class ContenuDeQualite:
         """
         Sauvegarder dans une base de données
         """
-        pywikibot.output(u'# Sauvegarde dans la base pour la langue "%s".' % self.langue)
+        pywikibot.stdout(u'# Sauvegarde dans la base pour la langue "%s".' % self.langue)
         curseur = self.db.cursor()
         if self.maj_stricte:
             self.vider_base(curseur)
@@ -199,7 +199,7 @@ class ContenuDeQualite:
         elif mode == 'delete':
             req = u'DELETE FROM %s WHERE page="%s"' % ( self.nom_base, unicode(q) )
         else:
-            pywikibot.output(u'~ Mode de sauvegarde "%s" non reconnu.' % mode)
+            pywikibot.warning(u'mode de sauvegarde "%s" non reconnu.' % mode)
             return
         try:
             curseur.execute(req)
@@ -207,7 +207,7 @@ class ContenuDeQualite:
             if e.args[0] == ER.DUP_ENTRY:
                 self.req_bdd(curseur, q, 'update')
             else:
-                pywikibot.output(u"~ %s error %d: %s.\nReq : %s" \
+                pywikibot.warning(u"%s error %d: %s.\nReq : %s" \
                         % (mode.capitalize(), e.args[0], e.args[1], req) )
 
     def _put_null(self, obj):
@@ -220,12 +220,12 @@ class ContenuDeQualite:
         """
         Vide la base de donnée associée (pour retirer les déchus)
         """
-        pywikibot.output(u"## Vidage de l'ancienne base")
+        pywikibot.stdout(u"## Vidage de l'ancienne base")
         req = u'TRUNCATE TABLE %s' % self.nom_base
         try:
             curseur.execute(req)
         except MySQLdb.Error, e:
-            pywikibot.output(u"Truncate error %d: %s" % (e.args[0], e.args[1]))
+            pywikibot.warning(u"Truncate error %d: %s" % (e.args[0], e.args[1]))
     
     #######################################
     ### recherche d'infos
@@ -264,6 +264,13 @@ class ContenuDeQualite:
             else:
                 return None
         else:
+            try:
+                interlangues = page.langlinks()
+            except pywikibot.exceptions.NoUsername as nun :
+                interlangues = []
+                pywikibot.warning('interlangue en NoUsername pour "%s:%s"\n%s.' \
+                        % (self.langue, page.title(), nun) )
+
             for p in page.langlinks():
                 res = self.interwikifrRE.search(p.astext())
                 if res:
@@ -294,7 +301,7 @@ class ContenuDeQualite:
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
             cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
-            cpg = pagegenerators.PreloadingGenerator(cpg, step=125)
+            #cpg = pagegenerators.PreloadingGenerator(cpg, step=125)
             for p in cpg:
                 if p.namespace() == 0:
                     page = p
@@ -321,7 +328,7 @@ class ContenuDeQualite:
                           'espacedenom': page.namespace(),    'label': cat, \
                           'importance': None } ) # Ils ne seront pas ajoutés
 
-        pywikibot.output( u"Total: %s ajouts ; %s déjà connus ; %s sans date." \
+        pywikibot.stdout( u"Total: %s ajouts ; %s déjà connus ; %s sans date." \
                 % (str(len(self.nouveau)), str(len(self.connaitdeja)), \
                 str(len(self.pasdedate))) )
 
@@ -345,7 +352,7 @@ def main():
             + u" ; exécution du %s</center>\n{{Sommaire à droite}}\n\n" \
             % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
     for cl in wikis:
-        pywikibot.output( u"== WP:%s ..." % cl )
+        pywikibot.stdout( u"== WP:%s ..." % cl )
         cdq = ContenuDeQualite(pywikibot.Site(cl), mode)
         cdq.run()
         log += unicode(cdq)
