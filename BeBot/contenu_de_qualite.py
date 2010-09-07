@@ -46,7 +46,7 @@ class ContenuDeQualite:
         self.langue = self.site.language()
         if mode_maj == "strict":
             self.maj_stricte = True
-            pywikibot.stdout(u'# Mode "strict" actif (toutes les updates seront effectuées et la base vidée)')
+            pywikibot.log(u'# Mode "strict" actif (toutes les updates seront effectuées et la base vidée)')
         else:
             self.maj_stricte = False
         self.total_avant = 0
@@ -167,7 +167,7 @@ class ContenuDeQualite:
         """
         Sauvegarder dans une base de données
         """
-        pywikibot.stdout(u'# Sauvegarde dans la base pour la langue "%s".' % self.langue)
+        pywikibot.log(u'# Sauvegarde dans la base pour la langue "%s".' % self.langue)
         curseur = self.db.cursor()
         if self.maj_stricte:
             self.vider_base(curseur)
@@ -220,7 +220,7 @@ class ContenuDeQualite:
         """
         Vide la base de donnée associée (pour retirer les déchus)
         """
-        pywikibot.stdout(u"## Vidage de l'ancienne base")
+        pywikibot.log(u"## Vidage de l'ancienne base")
         req = u'TRUNCATE TABLE %s' % self.nom_base
         try:
             curseur.execute(req)
@@ -271,7 +271,7 @@ class ContenuDeQualite:
                 pywikibot.warning('interlangue en NoUsername pour "%s:%s"\n%s.' \
                         % (self.langue, page.title(), nun) )
 
-            for p in page.langlinks():
+            for p in interlangues:
                 res = self.interwikifrRE.search(p.astext())
                 if res:
                     return res.group('iw')
@@ -300,7 +300,7 @@ class ContenuDeQualite:
         self.total_avant = len(connus)
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
-            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
+            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='U')
             #cpg = pagegenerators.PreloadingGenerator(cpg, step=125)
             for p in cpg:
                 if p.namespace() == 0:
@@ -328,7 +328,7 @@ class ContenuDeQualite:
                           'espacedenom': page.namespace(),    'label': cat, \
                           'importance': None } ) # Ils ne seront pas ajoutés
 
-        pywikibot.stdout( u"Total: %s ajouts ; %s déjà connus ; %s sans date." \
+        pywikibot.log( u"Total: %s ajouts ; %s déjà connus ; %s sans date." \
                 % (str(len(self.nouveau)), str(len(self.connaitdeja)), \
                 str(len(self.pasdedate))) )
 
@@ -352,7 +352,7 @@ def main():
             + u" ; exécution du %s</center>\n{{Sommaire à droite}}\n\n" \
             % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
     for cl in wikis:
-        pywikibot.stdout( u"== WP:%s ..." % cl )
+        pywikibot.log( u"== WP:%s ..." % cl )
         cdq = ContenuDeQualite(pywikibot.Site(cl), mode)
         cdq.run()
         log += unicode(cdq)
