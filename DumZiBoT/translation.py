@@ -86,7 +86,7 @@ month2int = dict((month, i) for i, month in enumerate(int2month))
 
 site = pywikibot.Site('fr', 'wikipedia')
 
-pywikibot.setAction(u'Robot : Màj hebdomadaire des pages de suivi du Projet:Traduction')
+pywikibot.setAction(u'Màj quotidienne des pages de suivi du [[Projet:Traduction]]')
 
 #Résultats
 bylang = {}
