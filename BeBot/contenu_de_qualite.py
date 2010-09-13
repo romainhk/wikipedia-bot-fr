@@ -267,12 +267,23 @@ class ContenuDeQualite:
             try:
                 interlangues = page.langlinks()
             except pywikibot.exceptions.NoUsername as nun :
-                interlangues = []
-                pywikibot.warning('interlangue en NoUsername pour "%s:%s"\n%s.' \
-                        % (self.langue, page.title(), nun) )
+                #pywikibot.warning('interlangue en NoUsername pour "%s:%s"\n%s.' \
+                #        % (self.langue, page.title(), nun) )
+                return None
 
             for p in interlangues:
-                res = self.interwikifrRE.search(p.astext())
+                try:
+                    text = p.astext()
+                except KeyError as ke:
+                    pywikibot.warning('interlangue en KeyError %s pour "%s:%s".' \
+                        % (ke.args[0], self.langue, page.title()) )
+                    return None
+                except NoSuchSite as nss:
+                    pywikibot.warning('site "%s" inexistant pour "%s:%s".' \
+                        % (ke.args[0], self.langue, page.title()) )
+                    return None
+                res = self.interwikifrRE.search(text)
+                #res = self.interwikifrRE.search(p.astext())
                 if res:
                     return res.group('iw')
             return None
