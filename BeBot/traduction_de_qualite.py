@@ -93,7 +93,7 @@ class TraductionDeQualite:
         else:
             # Suivi de traduction (une seule possible)
             m = self.modeleTradRE.search(page.get())
-            if m:
+            if m is not None:
                 return [m.group(2)]
             else:
                 return [u'IMPOSSIBLE']

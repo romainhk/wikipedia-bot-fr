@@ -41,7 +41,6 @@ class ContenuDeQualite:
         TODO : les portails/themes de qualité
     """
     def __init__(self, site, mode_maj):
-        self.resume = u'Repérage du contenu de qualité au ' + datetime.date.today().strftime("%Y-%m-%d")
         self.site = site
         self.langue = self.site.language()
         if mode_maj == "strict":
@@ -186,18 +185,28 @@ class ContenuDeQualite:
             req = u'INSERT INTO %s' % self.nom_base \
                 + '(page, espacedenom, date, label, taille, consultations, traduction, importance) ' \
                 + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s, %s)' \
-                % ( q['page'],  str(q['espacedenom']), \
-                q['date'].strftime("%Y-%m-%d"), q['label'], str(q['taille']), \
-                str(q['consultations']), self._put_null(q['traduction']), \
-                self._put_null(q['importance']) )
+                % ( q['page'].replace('"', '\\"'), \
+                    str(q['espacedenom']), \
+                    q['date'].strftime("%Y-%m-%d"), \
+                    q['label'], \
+                    str(q['taille']), \
+                    str(q['consultations']), \
+                    self._put_null(q['traduction']), \
+                    self._put_null(q['importance']) )
         elif mode == 'update':
-            req = u'UPDATE %s SET espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s, importance=%s WHERE page="%s"' \
-                % (self.nom_base, str(q['espacedenom']), q['date'].strftime("%Y-%m-%d"), \
-                q['label'], str(q['taille']), str(q['consultations']), \
-                self._put_null(q['traduction']), self._put_null(q['importance']), \
-                q['page'] )
+            req = u'UPDATE %s SET' % self.nom_base \
+                + u' espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s, importance=%s' \
+                % ( str(q['espacedenom']), \
+                    q['date'].strftime("%Y-%m-%d"), \
+                    q['label'], \
+                    str(q['taille']), \
+                    str(q['consultations']), \
+                    self._put_null(q['traduction']), \
+                    self._put_null(q['importance']) ) \
+                + u' WHERE page="%s"' % q['page'].replace('"', '\\"')
         elif mode == 'delete':
-            req = u'DELETE FROM %s WHERE page="%s"' % ( self.nom_base, unicode(q) )
+            req = u'DELETE FROM %s WHERE page="%s"' \
+                    % ( self.nom_base, unicode(q).replace('"', '\\"') )
         else:
             pywikibot.warning(u'mode de sauvegarde "%s" non reconnu.' % mode)
             return
@@ -211,7 +220,7 @@ class ContenuDeQualite:
                         % (mode.capitalize(), e.args[0], e.args[1], req) )
 
     def _put_null(self, obj):
-        if obj:
+        if obj is not None:
             return u'"%s"' % obj
         else:
             return u'NULL'
@@ -237,15 +246,16 @@ class ContenuDeQualite:
             page = pywikibot.Page(self.site, titre).get()
         except pywikibot.exceptions.NoPage:
             raise PasDeDate(titre)
-        if self.dateRE:
+        if self.dateRE is not None:
             d = self.dateRE.search(page)
-            if d:
+            if d is not None:
                 mti = BeBot.moistoint(d.group('mois'))
                 if mti > 0:
                     return datetime.date(int(d.group('annee')), \
                         BeBot.moistoint(d.group('mois')), int(d.group('jour')))
         else:
-            #TODO: Recherche dans l'historique l'ajout du modèle -> fullVersionHistory() !! lourd
+            #TODO: Recherche dans l'historique l'ajout du modèle
+            # -> fullVersionHistory() !! lourd
             pass
 
         if BeBot.hasDateLabel(self.langue):
@@ -270,6 +280,10 @@ class ContenuDeQualite:
                 #pywikibot.warning('interlangue en NoUsername pour "%s:%s"\n%s.' \
                 #        % (self.langue, page.title(), nun) )
                 return None
+            except pywikibot.exceptions.NoSuchSite as nss:
+                pywikibot.warning('site inexistant pour "http://%s.wikipedia.org/wiki/%s".\n%s' \
+                    % (self.langue, page.title(), nss) )
+                return None
 
             for p in interlangues:
                 try:
@@ -277,14 +291,10 @@ class ContenuDeQualite:
                 except KeyError as ke:
                     pywikibot.warning('interlangue en KeyError %s pour "%s:%s".' \
                         % (ke.args[0], self.langue, page.title()) )
-                    return None
-                except NoSuchSite as nss:
-                    pywikibot.warning('site "%s" inexistant pour "%s:%s".' \
-                        % (ke.args[0], self.langue, page.title()) )
-                    return None
+                    continue
+                    #return None
                 res = self.interwikifrRE.search(text)
-                #res = self.interwikifrRE.search(p.astext())
-                if res:
+                if res is not None:
                     return res.group('iw')
             return None
 
@@ -298,11 +308,16 @@ class ContenuDeQualite:
             self.pasdedate.append( {'page': pdd.page, 'date': u''} )
             return None
         infos = {
-    'page': page.title(),    'espacedenom': page.namespace(),     'date': date, \
-    'label': cat,            'taille': BeBot.taille_page(page), \
-    'consultations':BeBot.stat_consultations(page, codelangue=self.langue), \
-    'traduction': self.traduction(page), \
-    'importance': BeBot.info_wikiprojet(page, self.importanceER, 'importance', self.retrait_importance)
+            'page': page.title(), \
+            'espacedenom': page.namespace(), \
+            'date': date, \
+            'label': cat, \
+            'taille': BeBot.taille_page(page), \
+            'consultations':BeBot.stat_consultations(page, \
+                codelangue=self.langue), \
+            'traduction': self.traduction(page), \
+            'importance': BeBot.info_wikiprojet(page, self.importanceER, \
+                'importance', self.retrait_importance)
             }
         return infos
 
@@ -311,7 +326,7 @@ class ContenuDeQualite:
         self.total_avant = len(connus)
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
-            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False, start='U')
+            cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
             #cpg = pagegenerators.PreloadingGenerator(cpg, step=125)
             for p in cpg:
                 if p.namespace() == 0:
@@ -328,11 +343,11 @@ class ContenuDeQualite:
                         break
                 if not article_connu:
                     infos = self.get_infos(page, cat)
-                    if infos:
+                    if infos is not None:
                         self.nouveau.append(infos)
                 elif self.maj_stricte:
                     infos = self.get_infos(page, cat)
-                    if infos:
+                    if infos is not None:
                         self.connaitdeja.append(infos)
                 else:
                     self.connaitdeja.append( { 'page': page.title(), \
@@ -354,7 +369,7 @@ def main():
     for o, a in opts:
         if o == '-s':
             mode = "strict"
-    if args:
+    if len(args) > 0:
         wikis = args
     else:
         wikis = ['fr']
@@ -362,14 +377,18 @@ def main():
     log =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »'''" \
             + u" ; exécution du %s</center>\n{{Sommaire à droite}}\n\n" \
             % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
+
     for cl in wikis:
         pywikibot.log( u"== WP:%s ..." % cl )
         cdq = ContenuDeQualite(pywikibot.Site(cl), mode)
         cdq.run()
         log += unicode(cdq)
         cdq.sauvegarder()
-    pywikibot.Page(pywikibot.Site('fr'), u'Utilisateur:BeBot/Contenu de qualité').put(log, \
-            comment=cdq.resume, minorEdit=False)
+    pywikibot.Page(pywikibot.Site('fr'), \
+        u'Utilisateur:BeBot/Contenu de qualité').put(log, \
+        comment=u'Repérage du contenu de qualité au ' \
+        + datetime.date.today().strftime("%Y-%m-%d"), \
+        minorEdit=False)
 
 if __name__ == "__main__":
     try:

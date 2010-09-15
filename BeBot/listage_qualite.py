@@ -92,11 +92,11 @@ class ListageQualite:
             page = {}
             nom_page = unicode(a[0], 'UTF-8')
             page[champs[1]] = int(a[1])
-            if a[2]:
+            if a[2] is not None:
                 page[champs[2]] = unicode(a[2], 'UTF-8')
             else:
                 page[champs[2]] = None
-            if a[3]:
+            if a[3] is not None:
                 page[champs[3]] = unicode(a[3], 'UTF-8')
             else:
                 page[champs[3]] = None
@@ -137,7 +137,7 @@ def main():
         print str(err)
         usage()
         sys.exit(2)
-    if args:
+    if len(args) > 0:
         wikis = args
     else:
         wikis = ['fr']

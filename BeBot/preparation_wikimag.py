@@ -85,12 +85,12 @@ class PreparationWikimag:
         # Listage des articles des mois courants
         for ligne in BeBot.page_ligne_par_ligne(self.site, nompage):
             m = moisRE.search(ligne)
-            if m:                                   # Changement de mois
+            if m is not None:                     # Changement de mois
                 mc = BeBot.moistoint(m.group(1))
                 if mc not in mois: mc = ""
                 continue
             a = self.articleRE.match(ligne)
-            if a:
+            if a is not None:
                 if mc != "":                    # Si on a un mois valide
                     articles.append( a.group(1) )
 
@@ -105,10 +105,10 @@ class PreparationWikimag:
                 self.inconnu.append(a)
                 continue
             m = RE.search(page)
-            if m:
+            if m is not None:
                 date = m.group(1)
                 d = dateRE.search(date)
-                if d:
+                if d is not None:
                     jour = d.group(1)
                     mois = BeBot.moistoint(d.group(2))
                     annee = d.group(3)
@@ -131,11 +131,11 @@ class PreparationWikimag:
         for ligne in BeBot.page_ligne_par_ligne(self.site, u'Wikipédia:Annonces'):
             if re.match(r'== *Voir ', ligne): break     # Fin des annonces
             m = moisRE.search(ligne)
-            if m:                                   # Changement de mois
+            if m is not None:                           # Changement de mois
                 mois_courant = BeBot.moistoint(m.group(1))
                 continue
             a = annonceRE.match(ligne)
-            if a:                                   # Une annonce
+            if a is not None:                           # Une annonce
                 val = int( re.sub(r'{{.*}}', '', a.group(1)) )
                 date_annonce = datetime.date(day=val, month=mois_courant, year=self.date.year)
                 if self.date <= date_annonce < self.date_fin:
