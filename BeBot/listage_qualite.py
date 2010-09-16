@@ -31,15 +31,15 @@ class ListageQualite:
                     |-> NON => label_nofr
         """
 
-        sous_page = {
+        self.sous_page = {
                 'de': u'Allemand',      'en': u'Anglais',
                 'es': u'Espagnol',      'it': u'Italien',
                 'nl': u'Néerlandais'
                 }
-        if sous_page.has_key(self.langue):
+        if self.sous_page.has_key(self.langue):
             self.page_projet = pywikibot.Page(self.site, \
                 u"Projet:Suivi des articles de qualité des autres wikipédias/%s" \
-                % sous_page[self.langue] )
+                % self.sous_page[self.langue] )
         else:
             raise pywikibot.exceptions.Error( \
                     u'Impossible de trouver la page adaptée à %s dans le projet' % self.langue)
@@ -92,7 +92,7 @@ class ListageQualite:
                 % datetime.date.today().strftime("%e %B %Y")
         # Inexistants sur fr
         rep += u'\n== Articles équivalents inexistants en français ==\n{{Colonnes|nombre=2|\n'
-        for titre, infos in self.label_se:
+        for titre, infos in self.label_se.items():
             rep += u"* [[%s:%s]]\n" % (self.langue, titre)
         rep += u'}}\n'
 
@@ -104,7 +104,7 @@ class ListageQualite:
             + u'! scope=col | Article original !! scope=col | Article français\n' \
             + u'!! scope=col class="unsortable"\n' \
             + u'!! scope=col | Ratio !! scope=col | Notes\n'
-        for titre, infos in self.label_nofr:
+        for titre, infos in self.label_nofr.items():
             sp = u''
             rep += u'|-\n|[[%s:%s|%s]] (%s ko)\n' \
                     % (self.langue, titre, titre, infos['taille'])
@@ -119,7 +119,7 @@ class ListageQualite:
         rep += u'\n== AdQ et traduction ==\n'
         rep += u'</noinclude>{| class="wikitable sortable" style="margin:auto;"\n' \
             + u'! scope=col | Article !! scope=col | Statut !! scope=col | Avancement\n'
-        for titre, infos in self.label_trad:
+        for titre, infos in self.label_trad.items():
             rep += u'|-\n|[[%s]] || %s || [[%s|%s %]]\n' \
                     % (titre, u'statut', infos['souspage_trad'].title(), u'x')
             #TODO: séparer les terminées à labeliser
@@ -215,9 +215,9 @@ def main():
             continue
         lq.run()
         log += unicode(lq)
-        print lq.publier()
-    #pywikibot.Page(pywikibot.Site('fr'), u'Utilisateur:BeBot/Listage qualité').put(log, \
-    #        comment=lq.resume, minorEdit=False)
+        log += lq.publier()
+    pywikibot.Page(pywikibot.Site('fr'), u'Utilisateur:BeBot/Listage qualité').put(log, \
+            comment=lq.resume, minorEdit=False)
 
 if __name__ == "__main__":
     try:
