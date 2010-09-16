@@ -111,7 +111,7 @@ def charger_bdd(db, nom_base, champs="*", cond=None):
     """
     curseur = db.cursor()
     req = "SELECT %s FROM %s" % (champs, nom_base)
-    if cond:
+    if cond is not None:
         req += " WHERE %s" % cond
     try:
         curseur.execute(req)

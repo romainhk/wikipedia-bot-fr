@@ -23,6 +23,12 @@ class ListageQualite:
         self.label_nofr = {} # Liste des adq/ba sans label sur fr
         self.label_deux = {} # Liste des adq/ba doublement labellisés
         self.label_trad = {} # Liste des adq/ba avec traduction
+        """ Schématiquement :
+        article étranger : existe sur fr ?  -> NON => label_se
+            |-> OUI : labellisé sur fr ?    -> OUI => label_deux
+                |-> NON : traduction ouverte ?  -> OUI => label_trad
+                    |-> NON => label_nofr
+        """
 
         sous_page = {
                 'de': u'Allemand',          'en': u'Anglais',
@@ -65,12 +71,15 @@ class ListageQualite:
             taille = unicode(l['taille'])
             trad = l['traduction']
             imp  = l['importance']
-            if not trad:
+            avan = l['avancement']
+            if trad is None:
                 trad = u'-'
-            if not imp:
+            if imp is None:
                 imp  = u'-'
+            if avan is None:
+                avan = u'-'
             try:
-                pywikibot.output(u"%s : %s ; %s ; %s" % (k, taille, trad, imp) )
+                pywikibot.output(u"%s : %s ; %s ; %s ; %s" % (k, taille, trad, imp, avan) )
             except:
                 pywikibot.output(u"## Erreur avec la page de taille %s" % taille)
 
@@ -80,7 +89,6 @@ class ListageQualite:
 
     #######################################
     ### recherche d'infos
-    #'avancement': BeBot.info_wikiprojet(page, self.avancementER, 'avancement', self.retrait_avancement)
 
     def lycos(self, nom_base, conditions=None):
         """ Récupère les articles labellisés correspondants à certaines conditions
@@ -101,18 +109,20 @@ class ListageQualite:
                 page[champs[3]] = unicode(a[3], 'UTF-8')
             else:
                 page[champs[3]] = None
+            page['avancement'] = BeBot.info_wikiprojet( \
+                    pywikibot.Page(self.site_fr, nom_page), \
+                    self.avancementER, 'avancement', \
+                    self.retrait_avancement)
             rep[nom_page] = page
         return rep
 
     def run(self):
-        #self.label_nofr = self.lycos(self.nom_base)
         self.label_se = self.lycos(self.nom_base, conditions="traduction IS NULL")
 
         art_etrangers = self.lycos(self.nom_base, conditions="traduction IS NOT NULL")
         art_fr = self.lycos('contenu_de_qualite_fr')
         for page_et, infos_et in art_etrangers.items():
             eq_fr = infos_et['traduction']
-            pywikibot.warning(u'eq_fr:'+repr(eq_fr))
             if art_fr.has_key(eq_fr):
                 self.label_deux[page_et] = infos_et
             else:
@@ -123,13 +133,13 @@ class ListageQualite:
                 else:
                     self.label_nofr[page_et] = infos_et
 
-        pywikibot.output(u"* %s Elements de label_se :" % str(len(self.label_se)) )
+        pywikibot.output(u"** %s Elements de label_se :" % str(len(self.label_se)) )
         self.afficher_labels(self.label_se)
-        pywikibot.output(u"* Elements de label_deux :")
+        pywikibot.output(u"** %s Elements de label_deux :" % str(len(self.label_deux)))
         self.afficher_labels(self.label_deux)
-        pywikibot.output(u"* Elements de label_nofr :")
+        pywikibot.output(u"** %s Elements de label_nofr :" % str(len(self.label_nofr)))
         self.afficher_labels(self.label_nofr)
-        pywikibot.output(u"* Elements de label_trad :")
+        pywikibot.output(u"** %s Elements de label_trad :" % str(len(self.label_trad)))
         self.afficher_labels(self.label_trad)
 
 def main():
@@ -142,7 +152,7 @@ def main():
     if len(args) > 0:
         wikis = args
     else:
-        wikis = ['fr']
+        wikis = ['nl']
 
     log =  u"<center style='font-size:larger;'>'''Log « Listage qualité »'''" \
             + u" ; exécution du %s</center>\n{{Sommaire à droite}}\n\n" \
