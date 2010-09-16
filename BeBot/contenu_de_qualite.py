@@ -21,6 +21,7 @@ class ContenuDeQualite:
         Tri et sauvegarde les AdQ/BA existants par date.
         (Persistance du nom de l'article, de son espace de nom, de la date
         de labellisation, de son label, du nombre de visites...)
+        Comparer avec http://fr.wikipedia.org/wiki/Utilisateur:Maloq/Stats
 
     Paramètres :
     * Site (pywikibot. où travailler
@@ -39,6 +40,7 @@ class ContenuDeQualite:
 
         TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
+        TODO : simplifier la colonne "label" (adq ou ba)
     """
     def __init__(self, site, mode_maj):
         self.site = site
@@ -108,7 +110,7 @@ class ContenuDeQualite:
         """
         Log des modifications à apporter à la bdd
         """
-        resu = u'== Sur WP:%s ==\n' % self.langue
+        resu = u'\n== Sur WP:%s ==\n' % self.langue
         resu += u"%s nouveaux articles labellisés trouvés : %s AdQ" \
             % (str(len(self.nouveau)), str(self.nb_label(self.cat_qualite[0], [self.nouveau])))
         if len(self.cat_qualite) > 1:
@@ -129,7 +131,7 @@ class ContenuDeQualite:
             resu += u"\n=== Articles sans date de labellisation ===\n"
             resu += u"{{Boîte déroulante début |titre=%s articles}}" % len(self.pasdedate)
             resu += u"%s\n{{Boîte déroulante fin}}" % self.lister_article(self.pasdedate)
-        return resu
+        return resu + u'\n'
 
     def nb_label(self, label, tab):
         """
@@ -375,7 +377,7 @@ def main():
         wikis = ['fr']
 
     log =  u"<center style='font-size:larger;'>'''Log « Contenu de qualité »'''" \
-            + u" ; exécution du %s</center>\n{{Sommaire à droite}}\n\n" \
+            + u" ; exécution du %s</center>\n{{Sommaire à droite}}\n" \
             % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
 
     for cl in wikis:
@@ -386,9 +388,9 @@ def main():
         cdq.sauvegarder()
     pywikibot.Page(pywikibot.Site('fr'), \
         u'Utilisateur:BeBot/Contenu de qualité').put(log, \
-        comment=u'Repérage du contenu de qualité au ' \
-        + datetime.date.today().strftime("%Y-%m-%d"), \
-        minorEdit=False)
+            comment=u'Repérage du contenu de qualité au ' \
+            + datetime.date.today().strftime("%Y-%m-%d"), \
+            minorEdit=False)
 
 if __name__ == "__main__":
     try:

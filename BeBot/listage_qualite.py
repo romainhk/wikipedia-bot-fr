@@ -17,6 +17,7 @@ class ListageQualite:
     def __init__(self, site):
         self.resume = u'Listage des articles de qualité du ' + datetime.date.today().strftime("%Y-%m-%d")
         self.site = site
+        self.site_fr = pywikibot.Site(u'fr')
         self.langue = self.site.language()
         self.label_se = {} # Liste des adq/ba Sens Equivalent sur fr
         self.label_nofr = {} # Liste des adq/ba sans label sur fr
@@ -111,10 +112,11 @@ class ListageQualite:
         art_fr = self.lycos('contenu_de_qualite_fr')
         for page_et, infos_et in art_etrangers.items():
             eq_fr = infos_et['traduction']
+            pywikibot.warning(u'eq_fr:'+repr(eq_fr))
             if art_fr.has_key(eq_fr):
                 self.label_deux[page_et] = infos_et
             else:
-                page_trad = BeBot.togglePageTrad(pywikibot.Page(self.site, eq_fr))
+                page_trad = BeBot.togglePageTrad(pywikibot.Page(self.site_fr, eq_fr))
                 if page_trad.exists():
                     self.label_trad[page_et] = infos_et
                     self.label_trad[page_et]['traduction'] = page_trad

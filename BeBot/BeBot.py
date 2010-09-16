@@ -61,7 +61,9 @@ def togglePageTrad(page):
     Retourne la page de traduction associée à un page, ou la page associée à une traduction
     """
     site = page.site
-    if not site.language() == 'fr': return u''
+    if not site.language() == 'fr':
+        raise pywikibot.exceptions.NoPage(pywikibot.Page(page.site, \
+                page.toggleTalkPage().title()+"/Traduction"))
     trad = re.compile(u"/Traduction$", re.LOCALE)
     if trad.search(page.title()):
         #Déjà une
