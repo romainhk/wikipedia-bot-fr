@@ -10,7 +10,8 @@ class ListageQualite:
     """ Listage Qualité
         Liste les AdQ/BA existants par avancement ( et theme ? ) sur le P:SAdQaW
 
-        TODO : lister les adq/ba
+        TODO : lister les adq/ba par avancement 
+                                 par theme
         TODO : propositions d'apposition pour Lien AdQ|Lien BA
         TODO : date de maj sur "Projet:Suivi des articles de qualité des autres wikipédias/Listes"
     """
@@ -31,8 +32,8 @@ class ListageQualite:
         """
 
         sous_page = {
-                'de': u'Allemand',          'en': u'Anglais',
-                'es': u'Espagnol',          'it': u'Italien',
+                'de': u'Allemand',      'en': u'Anglais',
+                'es': u'Espagnol',      'it': u'Italien',
                 'nl': u'Néerlandais'
                 }
         if sous_page.has_key(self.langue):
@@ -40,7 +41,8 @@ class ListageQualite:
                 u"Projet:Suivi des articles de qualité des autres wikipédias/%s" \
                 % sous_page[self.langue] )
         else:
-            self.page_projet = None
+            raise pywikibot.exceptions.Error( \
+                    u'Impossible de trouver la page adaptée à %s dans le projet' % self.langue)
 
         #Avancement
         self.avancementER = re.compile( u'Article.*avancement (?P<avancement>[\wé]+)$' )
@@ -84,8 +86,55 @@ class ListageQualite:
                 pywikibot.output(u"## Erreur avec la page de taille %s" % taille)
 
     def publier(self):
-        """ Génère la page à publier
+        """ Génère le contenu de la page à publier
         """
+        rep = u"<noinclude>''Page générée le %s''\n" \
+                % datetime.date.today().strftime("%e %B %Y")
+        # Inexistants sur fr
+        rep += u'\n== Articles équivalents inexistants en français ==\n{{Colonnes|nombre=2|\n'
+        for titre, infos in self.label_se:
+            rep += u"* [[%s:%s]]\n" % (self.langue, titre)
+        rep += u'}}\n'
+
+        # Comparaison
+        #TODO: séparer par theme ou par avancement
+        rep += u'\n== Comparaisons des AdQ %s avec leur équivalent en français ==\n' \
+                % self.sous_page(self.langue).lower()
+        rep += u'{| class="wikitable sortable"\n' \
+            + u'! scope=col | Article original !! scope=col | Article français\n' \
+            + u'!! scope=col class="unsortable"\n' \
+            + u'!! scope=col | Ratio !! scope=col | Notes\n'
+        for titre, infos in self.label_nofr:
+            sp = u''
+            rep += u'|-\n|[[%s:%s|%s]] (%s ko)\n' \
+                    % (self.langue, titre, titre, infos['taille'])
+                #sp = u'[[%s|sous-page]]' % infos['souspage_trad'].title()
+            rep += u'|%s||%s\n' % (infos['traduction'], sp)
+            rep += u'|%s||%s\n' % (u'nil', u'')
+            #Manque taillefr et donc ratio
+        rep += u'|}\n'
+        #Suppression de la colonne sous-page
+
+        # Traductions
+        rep += u'\n== AdQ et traduction ==\n'
+        rep += u'</noinclude>{| class="wikitable sortable" style="margin:auto;"\n' \
+            + u'! scope=col | Article !! scope=col | Statut !! scope=col | Avancement\n'
+        for titre, infos in self.label_trad:
+            rep += u'|-\n|[[%s]] || %s || [[%s|%s %]]\n' \
+                    % (titre, u'statut', infos['souspage_trad'].title(), u'x')
+            #TODO: séparer les terminées à labeliser
+
+        # Statistiques
+        total = len(self.label_se) + len(self.label_nofr) + len(self.label_deux) + len(self.label_trad)
+        rep += u'\n== Statistiques ==\n' \
+            + u'Sur %i AdQ traités pour WP:%s :' % (total, self.langue) \
+            + u'* %i articles de qualité ne le sont pas sur WP:fr ;\n' % len(self.label_nofr) \
+            + u'* %i le sont sur les deux ;\n' % len(self.label_deux) \
+            + u'* %i n´existent pas en français ;\n' % len(self.label_se) \
+            + u'* %i sont en cours de traduction/traduit (%.2f % du total).\n' % (len(self.label_trad), len(label_trad/total))
+
+        rep += u'\n[[Catégorie:Liste de suivi des articles de qualité des autres wikipédias|%s]]</noinclude>' % self.langue
+        return rep
 
     #######################################
     ### recherche d'infos
@@ -129,9 +178,10 @@ class ListageQualite:
                 page_trad = BeBot.togglePageTrad(pywikibot.Page(self.site_fr, eq_fr))
                 if page_trad.exists():
                     self.label_trad[page_et] = infos_et
-                    self.label_trad[page_et]['traduction'] = page_trad
+                    self.label_trad[page_et]['souspage_trad'] = page_trad
                 else:
                     self.label_nofr[page_et] = infos_et
+                    #self.label_nofr[page_et]['souspage_trad'] = page_trad
 
         pywikibot.output(u"** %s Elements de label_se :" % str(len(self.label_se)) )
         self.afficher_labels(self.label_se)
@@ -159,10 +209,13 @@ def main():
             % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
     for cl in wikis:
         pywikibot.output( u"== WP:%s ..." % cl )
-        lq = ListageQualite(pywikibot.Site(cl))
+        try:
+            lq = ListageQualite(pywikibot.Site(cl))
+        except:
+            continue
         lq.run()
         log += unicode(lq)
-        lq.publier()
+        print lq.publier()
     #pywikibot.Page(pywikibot.Site('fr'), u'Utilisateur:BeBot/Listage qualité').put(log, \
     #        comment=lq.resume, minorEdit=False)
 
