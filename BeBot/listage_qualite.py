@@ -9,6 +9,9 @@ from pywikibot import pagegenerators, catlib
 class ListageQualite:
     """ Listage Qualité
         Liste les AdQ/BA existants par avancement ( et theme ? ) sur le P:SAdQaW
+        
+        #Suppression de la colonne "traduction" avec le lien sous-page
+        #Supprimmer "Notes" ?
 
         TODO : lister les adq/ba par avancement 
                                  par theme
@@ -70,7 +73,7 @@ class ListageQualite:
         """ Affiche les éléments du dictionnaire de dictionnaire "labels"
         """
         for k, l in labels.items():
-            taille = unicode(l['taille'])
+            taille = l['taille']
             trad = l['traduction']
             imp  = l['importance']
             avan = l['avancement']
@@ -81,9 +84,9 @@ class ListageQualite:
             if avan is None:
                 avan = u'-'
             try:
-                pywikibot.output(u"%s : %s ; %s ; %s ; %s" % (k, taille, trad, imp, avan) )
+                pywikibot.output(u"%s : %i ; %s ; %s ; %s" % (k, taille, trad, imp, avan) )
             except:
-                pywikibot.output(u"## Erreur avec la page de taille %s" % taille)
+                pywikibot.output(u"## Erreur avec la page de taille %i" % taille)
 
     def publier(self):
         """ Génère le contenu de la page à publier
@@ -99,41 +102,42 @@ class ListageQualite:
         # Comparaison
         #TODO: séparer par theme ou par avancement
         rep += u'\n== Comparaisons des AdQ %s avec leur équivalent en français ==\n' \
-                % self.sous_page(self.langue).lower()
+                % self.sous_page[self.langue].lower()
         rep += u'{| class="wikitable sortable"\n' \
             + u'! scope=col | Article original !! scope=col | Article français\n' \
-            + u'!! scope=col class="unsortable"\n' \
-            + u'!! scope=col | Ratio !! scope=col | Notes\n'
+            + u'! scope=col | Ratio !! scope=col | Notes\n'
         for titre, infos in self.label_nofr.items():
-            sp = u''
             rep += u'|-\n|[[%s:%s|%s]] (%s ko)\n' \
                     % (self.langue, titre, titre, infos['taille'])
-                #sp = u'[[%s|sous-page]]' % infos['souspage_trad'].title()
             rep += u'|%s||%s\n' % (infos['traduction'], sp)
             rep += u'|%s||%s\n' % (u'nil', u'')
-            #Manque taillefr et donc ratio
+            #Manque taillefr et donc ratio (! négatifs)
         rep += u'|}\n'
-        #Suppression de la colonne sous-page
 
         # Traductions
         rep += u'\n== AdQ et traduction ==\n'
         rep += u'</noinclude>{| class="wikitable sortable" style="margin:auto;"\n' \
             + u'! scope=col | Article !! scope=col | Statut !! scope=col | Avancement\n'
         for titre, infos in self.label_trad.items():
-            rep += u'|-\n|[[%s]] || %s || [[%s|%s %]]\n' \
-                    % (titre, u'statut', infos['souspage_trad'].title(), u'x')
+            rep += u'|-\n| [[%s]] || %s || [[%s|%s % ]]\n' \
+                    % (titre, u'statut', infos['souspage_trad'].title(), u'xx')
+            #TODO: trier par statut
             #TODO: séparer les terminées à labeliser
 
         # Statistiques
-        total = len(self.label_se) + len(self.label_nofr) + len(self.label_deux) + len(self.label_trad)
+        total = len(self.label_se) + len(self.label_nofr) \
+                + len(self.label_deux) + len(self.label_trad)
         rep += u'\n== Statistiques ==\n' \
-            + u'Sur %i AdQ traités pour WP:%s :' % (total, self.langue) \
-            + u'* %i articles de qualité ne le sont pas sur WP:fr ;\n' % len(self.label_nofr) \
+            + u'Sur %i AdQ traités pour WP:%s :\n' % (total, self.langue) \
+            + u'* %i articles de qualité ne le sont pas sur WP:fr ;\n' \
+                % len(self.label_nofr) \
             + u'* %i le sont sur les deux ;\n' % len(self.label_deux) \
             + u'* %i n´existent pas en français ;\n' % len(self.label_se) \
-            + u'* %i sont en cours de traduction/traduit (%.2f % du total).\n' % (len(self.label_trad), len(label_trad/total))
+            + u'* %i sont en cours de traduction/traduit (%.1f % du total).\n' \
+                % (len(self.label_trad), len(self.label_trad/total))
 
-        rep += u'\n[[Catégorie:Liste de suivi des articles de qualité des autres wikipédias|%s]]</noinclude>' % self.langue
+        rep += u'\n[[Catégorie:Liste de suivi des articles de qualité des autres wikipédias|%s]]</noinclude>' \
+                % self.langue
         return rep
 
     #######################################
@@ -165,6 +169,16 @@ class ListageQualite:
             rep[nom_page] = page
         return rep
 
+    def trier_traductions(self):
+        """ Tri les traduction par statut
+        """
+        trads = {}
+        for titre, infos in self.label_trad.items():
+            statut = getStatus(infos['souspage_trad'])
+            trads[statut] = { titre : infos }
+
+        self.label_trad = trads
+
     def run(self):
         self.label_se = self.lycos(self.nom_base, conditions="traduction IS NULL")
 
@@ -181,16 +195,15 @@ class ListageQualite:
                     self.label_trad[page_et]['souspage_trad'] = page_trad
                 else:
                     self.label_nofr[page_et] = infos_et
-                    #self.label_nofr[page_et]['souspage_trad'] = page_trad
 
-        pywikibot.output(u"** %s Elements de label_se :" % str(len(self.label_se)) )
-        self.afficher_labels(self.label_se)
-        pywikibot.output(u"** %s Elements de label_deux :" % str(len(self.label_deux)))
-        self.afficher_labels(self.label_deux)
-        pywikibot.output(u"** %s Elements de label_nofr :" % str(len(self.label_nofr)))
-        self.afficher_labels(self.label_nofr)
-        pywikibot.output(u"** %s Elements de label_trad :" % str(len(self.label_trad)))
-        self.afficher_labels(self.label_trad)
+        #pywikibot.output(u"** %s Elements de label_se :" % str(len(self.label_se)) )
+        #self.afficher_labels(self.label_se)
+        #pywikibot.output(u"** %s Elements de label_deux :" % str(len(self.label_deux)))
+        #self.afficher_labels(self.label_deux)
+        #pywikibot.output(u"** %s Elements de label_nofr :" % str(len(self.label_nofr)))
+        #self.afficher_labels(self.label_nofr)
+        #pywikibot.output(u"** %s Elements de label_trad :" % str(len(self.label_trad)))
+        #self.afficher_labels(self.label_trad)
 
 def main():
     try:
