@@ -54,7 +54,11 @@ def taille_page(page):
     """
     Retourne la taille d'une page en millier de caractères/signes
     """
-    return len(page.get())/1000
+    try:
+        p = page.get()
+    except:
+        p = []
+    return len(p)/1000
 
 def togglePageTrad(page):
     """
