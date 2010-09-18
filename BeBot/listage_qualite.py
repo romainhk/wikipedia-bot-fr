@@ -94,9 +94,9 @@ class ListageQualite:
         rep = u"<noinclude>''Page générée le %s''\n" \
                 % datetime.date.today().strftime("%e %B %Y")
         # Inexistants sur fr
-        rep += u'\n== Articles équivalents inexistants en français ==\n{{Colonnes|nombre=2|\n'
-        for titre, infos in self.label_se.items():
-            rep += u"* [[%s:%s]]\n" % (self.langue, titre)
+        rep += u'\n== Articles équivalents inexistants en français ==\n{{Colonnes|nombre=2|1=\n'
+        for titre, infos in sorted(self.label_se.iteritems()):
+            rep += u"* [[:%s:%s|%s]]\n" % (self.langue, titre, titre)
         rep += u'}}\n'
 
         # Comparaison
@@ -106,11 +106,13 @@ class ListageQualite:
         rep += u'{| class="wikitable sortable"\n' \
             + u'! scope=col | Article original !! scope=col | Article français\n' \
             + u'! scope=col | Ratio !! scope=col | Notes\n'
-        for titre, infos in self.label_nofr.items():
-            rep += u'|-\n|[[%s:%s|%s]] (%s ko)\n' \
+        for titre, infos in sorted(self.label_nofr.iteritems()):
+            rep += u'|-\n|[[:%s:%s|%s]] (%s ko)\n' \
                     % (self.langue, titre, titre, infos['taille'])
-            rep += u'|%s||%s\n' % (infos['traduction'], sp)
-            rep += u'|%s||%s\n' % (u'nil', u'')
+            rep += u'|[[%s]]|| %s || %s\n' % \
+                    (infos['traduction'], \
+                    self.ratio(infos['taille'], infos['taillefr']), \
+                    u'')
             #Manque taillefr et donc ratio (! négatifs)
         rep += u'|}\n'
 
@@ -118,11 +120,15 @@ class ListageQualite:
         rep += u'\n== AdQ et traduction ==\n'
         rep += u'</noinclude>{| class="wikitable sortable" style="margin:auto;"\n' \
             + u'! scope=col | Article !! scope=col | Statut !! scope=col | Avancement\n'
-        for titre, infos in self.label_trad.items():
-            rep += u'|-\n| [[%s]] || %s || [[%s|%s % ]]\n' \
-                    % (titre, u'statut', infos['souspage_trad'].title(), u'xx')
+        for titre, infos in sorted(self.label_trad.iteritems()):
+            rep += u'|-\n|[[%s]]||%s\n|[[%s|%s %%]]\n' \
+                    % (infos['traduction'], \
+                    u'statut', \
+                    infos['souspage_trad'].title(), \
+                    u'xx')
             #TODO: trier par statut
             #TODO: séparer les terminées à labeliser
+        rep += u'|}\n'
 
         # Statistiques
         total = len(self.label_se) + len(self.label_nofr) \
@@ -133,12 +139,17 @@ class ListageQualite:
                 % len(self.label_nofr) \
             + u'* %i le sont sur les deux ;\n' % len(self.label_deux) \
             + u'* %i n´existent pas en français ;\n' % len(self.label_se) \
-            + u'* %i sont en cours de traduction/traduit (%.1f % du total).\n' \
-                % (len(self.label_trad), len(self.label_trad/total))
+            + u'* %i sont en cours de traduction/traduit (%.1f %% du total).\n' \
+                % (len(self.label_trad), len(self.label_trad)/total)
 
         rep += u'\n[[Catégorie:Liste de suivi des articles de qualité des autres wikipédias|%s]]</noinclude>' \
                 % self.langue
         return rep
+
+    def ratio(self, taille, taillefr):
+        """ Calcul un ratio entier entre les tailles d'articles équivalents
+        """
+        return round(((taille - taillefr) * 10) / (taille + taillefr))
 
     #######################################
     ### recherche d'infos
@@ -174,7 +185,6 @@ class ListageQualite:
         """
         trads = {}
         for titre, infos in self.label_trad.items():
-            statut = getStatus(infos['souspage_trad'])
             trads[statut] = { titre : infos }
 
         self.label_trad = trads
@@ -193,8 +203,10 @@ class ListageQualite:
                 if page_trad.exists():
                     self.label_trad[page_et] = infos_et
                     self.label_trad[page_et]['souspage_trad'] = page_trad
+                    self.label_trad[page_et]['statut'] = u'statut'
                 else:
                     self.label_nofr[page_et] = infos_et
+                    self.label_nofr[page_et]['taillefr'] = 0
 
         #pywikibot.output(u"** %s Elements de label_se :" % str(len(self.label_se)) )
         #self.afficher_labels(self.label_se)
