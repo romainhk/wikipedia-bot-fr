@@ -24,6 +24,7 @@ class ListageQualite:
         self.site = site
         self.site_fr = pywikibot.Site(u'fr')
         self.langue = self.site.language()
+
         self.label_se = {} # Liste des adq/ba Sens Equivalent sur fr
         self.label_nofr = {} # Liste des adq/ba sans label sur fr
         self.label_deux = {} # Liste des adq/ba doublement labellisés
@@ -46,15 +47,18 @@ class ListageQualite:
                 % self.sous_page[self.langue] )
         else:
             raise pywikibot.exceptions.Error( \
-                    u'Impossible de trouver la page adaptée à %s dans le projet' % self.langue)
+                u'Impossible de trouver la page adaptée à %s dans le projet' \
+                % self.langue)
+
         self.statutER = re.compile(u'\| ?status\s*=\s*(?P<statut>[1-5]{1})', re.LOCALE)
         self.progression = u'\| ?avancement_%s\s*=\s*(?P<progression>[0-9]{1,3})'
 
-        #Avancement
-        self.avancementER = re.compile( u'Article.*avancement (?P<avancement>[\wé]+)$' )
-        self.retrait_avancement = [ u'AdQ', u'BA', u'A', u'B', u'BD', u'ébauche', u'inconnue' ]
+        #Avancement wikiprojet
+        self.avancementER = re.compile(u'Article.*avancement (?P<avancement>[\wé]+)$')
+        self.retrait_avancement = [ \
+                u'AdQ', u'BA', u'A', u'B', u'BD', u'ébauche', u'inconnue' ]
 
-        # DB
+        #DB
         self.db = MySQLdb.connect(db="u_romainhk", \
                                 read_default_file="/home/romainhk/.my.cnf", \
                                 use_unicode=True, charset='utf8')
@@ -64,15 +68,14 @@ class ListageQualite:
         self.db.close()
 
     #######################################
-    ### __str__
+    ### Présentation
     def __str__(self):
         """ Log des modifications à apporter à la bdd
         """
         total = len(self.label_se) + len(self.label_nofr) \
                 + len(self.label_deux) + len(self.label_trad)
-        resu = u'== Sur WP:%s ==\n' % self.langue \
-            + u'%i AdQ traités pour WP:%s :\n' % (total, self.langue) \
-            + u'* %i articles de qualité ne le sont pas sur WP:fr ;\n' \
+        resu = u'== %i articles pour WP:%s ==\n' % (total, self.langue) \
+            + u'* %i adq/ba ne le sont pas sur WP:fr ;\n' \
                 % len(self.label_nofr) \
             + u'* %i n´existent pas en français ;\n' % len(self.label_se) \
             + u'* %i sont en cours de traduction/traduit (%.1f %% du total).' \
@@ -82,7 +85,8 @@ class ListageQualite:
     def publier(self):
         """ Génère le contenu de la page à publier
         """
-        rep = u"<noinclude>''Page générée le %s''\n" \
+        rep = u"<noinclude>{{Sommaire à droite}}\nLog « Listage qualité ».\n\n"
+                + u"''Page générée le %s''\n{{Clr}}\n" \
                 % datetime.date.today().strftime("%e %B %Y")
         # Inexistants sur fr
         rep += u'\n== Articles sans équivalent en français ==\n{{Colonnes|nombre=2|1=\n'
@@ -93,13 +97,13 @@ class ListageQualite:
         # Comparaison
         rep += u'\n== Comparaisons entre AdQ %s et leur équivalent en français ==\n' \
                 % self.sous_page[self.langue].lower()
+        rep += u"Tri selon l'avancement de l'article en français.\n"
         #TODO: séparer par theme aussi
         for avan in self.retrait_avancement:
             rep += u'\n=== %s ===\n' % avan
             rep += u'{| class="wikitable sortable"\n' \
                 + u'! scope=col | Article original !! scope=col | Article français\n' \
                 + u'! scope=col | Ratio\n'
-            #for titre, infos in sorted(self.label_nofr.iteritems()):
             for titre, infos in self.trier_comparaison(avan):
                 rep += u'|-\n|[[:%s:%s|%s]] (%s ko)\n' \
                         % (self.langue, titre, titre, infos['taille'])
@@ -136,7 +140,7 @@ class ListageQualite:
     def ratio(self, taille, taille_fr):
         """ Calcul un ratio entier entre les tailles d'articles équivalents
         """
-        return round(((taille - taille_fr) * 10) / (taille + taille_fr))
+        return int(round(((taille - taille_fr) * 10) / (taille + taille_fr)))
 
     def afficher_pagetrad(self, elus="1234"):
         """ Affiche un tableau des pages de suivi de traduction selon leur statut
@@ -146,7 +150,7 @@ class ListageQualite:
         for titre, infos in self.trier_pagetrad(elus):
             rep += u'|-\n|[[%s]]||%i\n|[[%s|%i %%]]\n' \
                     % (infos['traduction'], \
-                    infos['statut'], \
+                    BeBot.stou(infos['statut']), \
                     infos['souspage_trad'].title(), \
                     infos['progression'] )
         rep += u'|}\n'
@@ -167,7 +171,7 @@ class ListageQualite:
         """ Tri les comparaisons entre articles par avancement
         """
         ok = {}
-        for cle, infos in self.retrait_avancement.items():
+        for cle, infos in self.label_nofr.iteritems():
             if infos['avancement'] == critere:
                 ok[cle] = infos
 
@@ -175,8 +179,7 @@ class ListageQualite:
             yield p
 
     #######################################
-    ### recherche d'infos
-
+    ### Recherche d'infos
     def lycos(self, nom_base, conditions=None):
         """ Récupère les articles labellisés correspondants à certaines conditions
         """
@@ -223,7 +226,7 @@ class ListageQualite:
             progressionER = re.compile(self.progression % recherche, re.LOCALE)
             prog = progressionER.search(page)
             if prog is not None:
-                infos['progression'] = prog.group('progression')
+                infos['progression'] = int(prog.group('progression'))
         return infos
 
     def run(self):
@@ -243,6 +246,7 @@ class ListageQualite:
                     ipt = self.infos_page_suivi(page_trad)
                     self.label_trad[page_et]['statut'] = ipt['statut']
                     self.label_trad[page_et]['progression'] = ipt['progression']
+                    pywikibot.output(u'%s : %i ; %i' % (page_trad.title(), ipt['statut'], ipt['progression']) )
                 else:
                     self.label_nofr[page_et] = infos_et
                     self.label_nofr[page_et]['taille_fr'] = BeBot.taille_page( \
@@ -260,9 +264,7 @@ def main():
     else:
         wikis = ['nl']
 
-    log =  u"<center style='font-size:larger;'>'''Log « Listage qualité »'''" \
-            + u" ; exécution du %s</center>\n{{Sommaire à droite}}\n\n" \
-            % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
+    log = u''
     for cl in wikis:
         pywikibot.output( u"== WP:%s ..." % cl )
         try:
