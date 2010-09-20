@@ -51,7 +51,7 @@ class ListageQualite:
                 % self.langue)
 
         self.statutER = re.compile(u'\| ?status\s*=\s*(?P<statut>[1-5]{1})', re.LOCALE)
-        self.progression = u'\| ?avancement_%s\s*=\s*(?P<progression>[0-9]{1,3})'
+        self.progression = u'^\| ?avancement_%s\s*= *(?P<progression>[0-9]{1,3})'
 
         #Avancement wikiprojet
         self.avancementER = re.compile(u'Article.*avancement (?P<avancement>[\wé]+)$')
@@ -85,7 +85,7 @@ class ListageQualite:
     def publier(self):
         """ Génère le contenu de la page à publier
         """
-        rep = u"<noinclude>{{Sommaire à droite}}\nLog « Listage qualité ».\n\n"
+        rep = u"<noinclude>{{Sommaire à droite}}\nLog « Listage qualité ».\n\n" \
                 + u"''Page générée le %s''\n{{Clr}}\n" \
                 % datetime.date.today().strftime("%e %B %Y")
         # Inexistants sur fr
@@ -212,8 +212,10 @@ class ListageQualite:
         infos = {   'statut' : 0,
                     'progression' : 0 }
         try:
-            page = Pagetrad.get()
+            page = pagetrad.get()
         except:
+            pywikibot.warning(u'impossible de récupérer la page %s' \
+                    % pagetrad.title())
             return infos
         statut = self.statutER.search(page)
         if statut is not None:
@@ -246,7 +248,7 @@ class ListageQualite:
                     ipt = self.infos_page_suivi(page_trad)
                     self.label_trad[page_et]['statut'] = ipt['statut']
                     self.label_trad[page_et]['progression'] = ipt['progression']
-                    pywikibot.output(u'%s : %i ; %i' % (page_trad.title(), ipt['statut'], ipt['progression']) )
+                    #pywikibot.output(u'%s : %i ; %i' % (page_trad.title(), ipt['statut'], ipt['progression']) )
                 else:
                     self.label_nofr[page_et] = infos_et
                     self.label_nofr[page_et]['taille_fr'] = BeBot.taille_page( \
