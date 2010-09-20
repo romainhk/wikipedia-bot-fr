@@ -52,7 +52,7 @@ class ListageQualite:
 
         #Avancement
         self.avancementER = re.compile( u'Article.*avancement (?P<avancement>[\wé]+)$' )
-        self.retrait_avancement = [ u'AdQ', u'BA', u'A', u'B', u'BD', u'ébauche' ] # inconnue
+        self.retrait_avancement = [ u'AdQ', u'BA', u'A', u'B', u'BD', u'ébauche', u'inconnue' ]
 
         # DB
         self.db = MySQLdb.connect(db="u_romainhk", \
@@ -75,7 +75,7 @@ class ListageQualite:
             + u'* %i articles de qualité ne le sont pas sur WP:fr ;\n' \
                 % len(self.label_nofr) \
             + u'* %i n´existent pas en français ;\n' % len(self.label_se) \
-            + u'* %i sont en cours de traduction/traduit (%.1f %% du total).\n' \
+            + u'* %i sont en cours de traduction/traduit (%.1f %% du total).' \
                 % (len(self.label_trad), len(self.label_trad)/total)
         return resu
 
@@ -91,28 +91,31 @@ class ListageQualite:
         rep += u'}}\n'
 
         # Comparaison
-        #TODO: séparer par theme ou par avancement
         rep += u'\n== Comparaisons entre AdQ %s et leur équivalent en français ==\n' \
                 % self.sous_page[self.langue].lower()
-        rep += u'{| class="wikitable sortable"\n' \
-            + u'! scope=col | Article original !! scope=col | Article français\n' \
-            + u'! scope=col | Ratio\n'
-        for titre, infos in sorted(self.label_nofr.iteritems()):
-            rep += u'|-\n|[[:%s:%s|%s]] (%s ko)\n' \
-                    % (self.langue, titre, titre, infos['taille'])
-            rep += u'|[[%s]] (%s ko)||%s\n' % \
-                    (infos['traduction'], \
-                    infos['taille_fr'], \
-                    unicode(self.ratio(infos['taille'], \
-                        infos['taille_fr'])).replace(u'-',u'–') )
-        rep += u'|}\n'
+        #TODO: séparer par theme aussi
+        for avan in self.retrait_avancement:
+            rep += u'\n=== %s ===\n' % avan
+            rep += u'{| class="wikitable sortable"\n' \
+                + u'! scope=col | Article original !! scope=col | Article français\n' \
+                + u'! scope=col | Ratio\n'
+            #for titre, infos in sorted(self.label_nofr.iteritems()):
+            for titre, infos in self.trier_comparaison(avan):
+                rep += u'|-\n|[[:%s:%s|%s]] (%s ko)\n' \
+                        % (self.langue, titre, titre, infos['taille'])
+                rep += u'|[[%s]] (%s ko)||%s\n' % \
+                        (infos['traduction'], \
+                        infos['taille_fr'], \
+                        unicode(self.ratio(infos['taille'], \
+                            infos['taille_fr'])).replace(u'-',u'–') )
+            rep += u'|}\n'
 
         # Traductions
         rep += u'\n== AdQ et traduction ==\n'
-        rep += u'</noinclude>' + self.afficher_pagetrad(self, elus="1 2 3 4") \
-                + u'<noinclude>'
+        rep += u'</noinclude>' + self.afficher_pagetrad(elus="1234") \
+                + u'<noinclude>\n'
         rep += u'\n=== Traductions terminées à labellisées ===\n'
-        rep += self.afficher_pagetrad(self, elus="5")
+        rep += self.afficher_pagetrad(elus="5")
 
         # Statistiques
         total = len(self.label_se) + len(self.label_nofr) \
@@ -135,12 +138,12 @@ class ListageQualite:
         """
         return round(((taille - taille_fr) * 10) / (taille + taille_fr))
 
-    def afficher_pagetrad(self, elus="1 2 3 4"):
+    def afficher_pagetrad(self, elus="1234"):
         """ Affiche un tableau des pages de suivi de traduction selon leur statut
         """
-        rep += u'{| class="wikitable sortable" style="margin:auto;"\n' \
+        rep = u'{| class="wikitable sortable" style="margin:auto;"\n' \
             + u'! scope=col | Article !! scope=col | Statut !! scope=col | Progression\n'
-        for titre, infos in self.trier_pagetrad(self.label_trad, elus):
+        for titre, infos in self.trier_pagetrad(elus):
             rep += u'|-\n|[[%s]]||%i\n|[[%s|%i %%]]\n' \
                     % (infos['traduction'], \
                     infos['statut'], \
@@ -149,17 +152,27 @@ class ListageQualite:
         rep += u'|}\n'
         return rep
 
-    def trier_pagetrad(self, dico, elus="1 2 3 4"):
-        """ Tri un dictionnaire contenant les pages de suivi de traduction par statut
+    def trier_pagetrad(self, elus="1234"):
+        """ Tri les pages de suivi de traduction par statut
         """
-        statut = [ [], [], [], [], [], [] ]
-        for cle, infos in dico.items():
-            statut[infos['statut']].append( { cle : infos } )
+        statut = [ {}, {}, {}, {}, {}, {} ]
+        for cle, infos in self.label_trad.items():
+            statut[infos['statut']][cle] = infos
 
         for t in elus:
-            for s in statut[t]:
-                for p in sorted(s.iteritems()):
-                    yield p
+            for p in sorted(statut[int(t)].iteritems()):
+                yield p
+
+    def trier_comparaison(self, critere):
+        """ Tri les comparaisons entre articles par avancement
+        """
+        ok = {}
+        for cle, infos in self.retrait_avancement.items():
+            if infos['avancement'] == critere:
+                ok[cle] = infos
+
+        for p in sorted(ok.iteritems()):
+            yield p
 
     #######################################
     ### recherche d'infos
@@ -201,7 +214,7 @@ class ListageQualite:
             return infos
         statut = self.statutER.search(page)
         if statut is not None:
-            infos['statut'] = statut.group('statut')
+            infos['statut'] = int(statut.group('statut'))
         if statut > 1:
             if statut < 4:
                 recherche = u'traduction'
