@@ -35,6 +35,7 @@ class ListageQualite:
                 |-> NON : traduction ouverte ?  -> OUI => label_trad
                     |-> NON => label_nofr
         """
+        self.total = 0
 
         self.sous_page = {
                 'de': u'Allemand',      'en': u'Anglais',
@@ -51,7 +52,7 @@ class ListageQualite:
                 % self.langue)
 
         self.statutER = re.compile(u'\| ?status\s*=\s*(?P<statut>[1-5]{1})', re.LOCALE)
-        self.progression = u'\| ?avancement_%s *= *(?P<progression>[0-9]{1,3})'
+        self.progression = u'^[^ ]\| ?avancement_%s *= *(?P<progression>\d{1,3})$'
 
         #Avancement wikiprojet
         self.avancementER = re.compile(u'Article.*avancement (?P<avancement>[\wé]+)$')
@@ -72,32 +73,37 @@ class ListageQualite:
     def __str__(self):
         """ Log des modifications à apporter à la bdd
         """
-        total = len(self.label_se) + len(self.label_nofr) \
-                + len(self.label_deux) + len(self.label_trad)
-        resu = u'== %i articles pour WP:%s ==\n' % (total, self.langue) \
+        resu = u'== %i articles pour WP:%s ==\n' % (self.total, self.langue) \
             + u'* %i adq/ba ne le sont pas sur WP:fr ;\n' \
                 % len(self.label_nofr) \
             + u'* %i n´existent pas en français ;\n' % len(self.label_se) \
             + u'* %i sont en cours de traduction/traduit (%.1f %% du total).' \
-                % (len(self.label_trad), len(self.label_trad)/total)
+                % (len(self.label_trad), len(self.label_trad)/self.total)
         return resu
 
     def publier(self):
         """ Génère le contenu de la page à publier
         """
-        rep = u"<noinclude>{{Sommaire à droite}}\nLog « Listage qualité ».\n\n" \
-                + u"''Page générée le %s''\n{{Clr}}\n" \
-                % datetime.date.today().strftime("%e %B %Y")
+        rep = u"<noinclude>{{Sommaire à droite}}\n" \
+                + u"''Page générée le %s.''\n\n" \
+                    % datetime.date.today().strftime("%e %B %Y") \
+                + u'%i AdQ traités pour WP:%s ; ' % (self.total, self.langue) \
+                + u'%i sont labellisés sur les deux wikis.\n' \
+                    % len(self.label_deux) \
+                + u"{{Clr}}\n"
         # Inexistants sur fr
-        rep += u'\n== Articles sans équivalent en français ==\n{{Colonnes|nombre=2|1=\n'
+        rep += u'\n== % articles sans équivalent en français ==\n' \
+                % len(self.label_se)
+        rep += u'{{Colonnes|nombre=2|1=\n'
         for titre, infos in sorted(self.label_se.iteritems()):
             rep += u"* [[:%s:%s|%s]]\n" % (self.langue, titre, titre)
         rep += u'}}\n'
 
         # Comparaison
-        rep += u'\n== Comparaisons entre AdQ %s et leur équivalent en français ==\n' \
+        rep += u'\n== Comparaisons entre AdQ %s et son équivalent en français ==\n' \
                 % self.sous_page[self.langue].lower()
-        rep += u"Tri selon l'avancement de l'article en français.\n"
+        rep += u"''Tri des %i articles selon l'avancement de l'article en français.''\n" \
+                % len(self.label_nofr)
         #TODO: séparer par theme aussi
         for avan in self.retrait_avancement[2:]:
             rep += u'\n=== %s ===\n' % avan.capitalize()
@@ -116,23 +122,12 @@ class ListageQualite:
             rep += u'|}\n'
 
         # Traductions
-        rep += u'\n== AdQ et traduction ==\n'
+        rep += u'\n== %i AdQ en traduction/traduit ==\n' % len(self.label_trad) \
+            + u'Soit %.1f %% du total.\n' % len(self.label_trad)/self.total
         rep += u'</noinclude>' + self.afficher_pagetrad(elus="1234") \
                 + u'<noinclude>\n'
         rep += u'\n=== Traductions terminées à labelliser ===\n'
         rep += self.afficher_pagetrad(elus="5")
-
-        # Statistiques
-        total = len(self.label_se) + len(self.label_nofr) \
-                + len(self.label_deux) + len(self.label_trad)
-        rep += u'\n== Statistiques ==\n' \
-            + u'Sur %i AdQ traités pour WP:%s :\n' % (total, self.langue) \
-            + u'* %i articles de qualité ne le sont pas sur WP:fr ;\n' \
-                % len(self.label_nofr) \
-            + u'* %i le sont sur les deux ;\n' % len(self.label_deux) \
-            + u'* %i n´existent pas en français ;\n' % len(self.label_se) \
-            + u'* %i sont en cours de traduction/traduit (%.1f %% du total).\n' \
-                % (len(self.label_trad), len(self.label_trad)/total)
 
         rep += u'\n[[Catégorie:Liste de suivi des articles de qualité des autres wikipédias|%s]]</noinclude>' \
                 % self.langue
@@ -147,7 +142,7 @@ class ListageQualite:
         """ Affiche un tableau des pages de suivi de traduction selon leur statut
         """
         rep = u'{| class="wikitable sortable" style="margin:auto;"\n' \
-            + u'! scope=col | Article !! scope=col | Statut !! scope=col | Progression\n'
+            + u'! scope=col | Article fr !! scope=col | Statut !! scope=col | Progression\n'
         for titre, infos in self.trier_pagetrad(elus):
             rep += u'|-\n|[[%s]]||%s\n|[[%s|%i %%]]\n' \
                     % (infos['traduction'], \
@@ -227,7 +222,7 @@ class ListageQualite:
             else:
                 recherche = u'relecture'
             progressionER = re.compile(self.progression % recherche, re.LOCALE)
-            prog = progressionER.findall(page).pop()
+            prog = progressionER.search(page)
             if prog is not None:
                 infos['progression'] = int(prog.group('progression'))
         return infos
@@ -254,6 +249,8 @@ class ListageQualite:
                     self.label_nofr[page_et] = infos_et
                     self.label_nofr[page_et]['taille_fr'] = BeBot.taille_page( \
                             pywikibot.Page(self.site_fr, eq_fr))
+        self.total = len(self.label_se) + len(self.label_nofr) \
+                + len(self.label_deux) + len(self.label_trad)
 
 def main():
     try:
