@@ -51,7 +51,7 @@ class ListageQualite:
                 % self.langue)
 
         self.statutER = re.compile(u'\| ?status\s*=\s*(?P<statut>[1-5]{1})', re.LOCALE)
-        self.progression = u'^\| ?avancement_%s\s*= *(?P<progression>[0-9]{1,3})'
+        self.progression = u'\| ?avancement_%s *= *(?P<progression>[0-9]{1,3})'
 
         #Avancement wikiprojet
         self.avancementER = re.compile(u'Article.*avancement (?P<avancement>[\wé]+)$')
@@ -99,10 +99,11 @@ class ListageQualite:
                 % self.sous_page[self.langue].lower()
         rep += u"Tri selon l'avancement de l'article en français.\n"
         #TODO: séparer par theme aussi
-        for avan in self.retrait_avancement:
-            rep += u'\n=== %s ===\n' % avan
+        for avan in self.retrait_avancement[2:]:
+            rep += u'\n=== %s ===\n' % avan.capitalize()
             rep += u'{| class="wikitable sortable"\n' \
-                + u'! scope=col | Article original !! scope=col | Article français\n' \
+                + u'! scope=col | Article %s !! scope=col | Article français\n' \
+                % self.sous_page[self.langue].lower() \
                 + u'! scope=col | Ratio\n'
             for titre, infos in self.trier_comparaison(avan):
                 rep += u'|-\n|[[:%s:%s|%s]] (%s ko)\n' \
@@ -118,7 +119,7 @@ class ListageQualite:
         rep += u'\n== AdQ et traduction ==\n'
         rep += u'</noinclude>' + self.afficher_pagetrad(elus="1234") \
                 + u'<noinclude>\n'
-        rep += u'\n=== Traductions terminées à labellisées ===\n'
+        rep += u'\n=== Traductions terminées à labelliser ===\n'
         rep += self.afficher_pagetrad(elus="5")
 
         # Statistiques
@@ -148,7 +149,7 @@ class ListageQualite:
         rep = u'{| class="wikitable sortable" style="margin:auto;"\n' \
             + u'! scope=col | Article !! scope=col | Statut !! scope=col | Progression\n'
         for titre, infos in self.trier_pagetrad(elus):
-            rep += u'|-\n|[[%s]]||%i\n|[[%s|%i %%]]\n' \
+            rep += u'|-\n|[[%s]]||%s\n|[[%s|%i %%]]\n' \
                     % (infos['traduction'], \
                     BeBot.stou(infos['statut']), \
                     infos['souspage_trad'].title(), \
@@ -226,7 +227,7 @@ class ListageQualite:
             else:
                 recherche = u'relecture'
             progressionER = re.compile(self.progression % recherche, re.LOCALE)
-            prog = progressionER.search(page)
+            prog = progressionER.findall(page).pop()
             if prog is not None:
                 infos['progression'] = int(prog.group('progression'))
         return infos

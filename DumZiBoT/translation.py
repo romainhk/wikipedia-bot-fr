@@ -73,11 +73,11 @@ languages = [
         [ 'wuu', 'wu',      "le&nbsp;" ]
     ]
 
-cats = [[u'Article à traduire', 'Demande de traduction',        'Demandes', 'Demandes de traduction'],
-        [u'Article en cours de traduction', 'Traduction en cours',  'En cours', 'Traductions en cours'],
-        [u'Article à relire', u'Traduction à relire',           'A relire', u'Traductions à relire'],
-        [u'Article en cours de relecture', u'Relecture en cours',   'En relecture', 'Relectures en cours'],
-        [u'Traduction terminée', u'Traduction terminée',        u'Terminée', u'Traductions terminées']]
+cats = [ [u'Article à traduire', 'Demande de traduction',        'Demandes', 'Demandes de traduction'],
+         [u'Article en cours de traduction', 'Traduction en cours',  'En cours', 'Traductions en cours'],
+         [u'Article à relire', u'Traduction à relire',           'A relire', u'Traductions à relire'],
+         [u'Article en cours de relecture', u'Relecture en cours',   'En relecture', 'Relectures en cours'],
+         [u'Traduction terminée', u'Traduction terminée',        u'Terminée', u'Traductions terminées'] ]
 
 int2month = [u'placeholder_zero', u'janvier', u'février', u'mars', u'avril',
              u'mai', u'juin', u'juillet', u'août', u'septembre', u'octobre',

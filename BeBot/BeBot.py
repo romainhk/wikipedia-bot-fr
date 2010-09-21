@@ -149,7 +149,7 @@ def info_wikiprojet(page, ER, nom_groupe, tab_elimination):
     return rep
 
 def stou(statut):
-    """ Convertit un entier "Statut" en message unicode
+    """ Convertit un entier "Statut" (1 <= s <= 5) en message unicode
     """
     if   statut == 1:
         return u'Demande de traduction'
