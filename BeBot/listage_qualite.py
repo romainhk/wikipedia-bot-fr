@@ -216,7 +216,8 @@ class ListageQualite:
             return infos
         statut = self.statutER.search(page)
         if statut is not None:
-            infos['statut'] = int(statut.group('statut'))
+            statut = int(statut.group('statut'))
+            infos['statut'] = statut
 
         if statut < 4:
             recherche = u'traduction'
@@ -224,20 +225,15 @@ class ListageQualite:
             recherche = u'relecture'
         progressionER = re.compile(self.progression % recherche, re.LOCALE)
         prog = progressionER.search(page)
-        pywikibot.output(u'%s : %s .' % (page_trad.title(), prog.group()) )
         if prog is not None:
+            #pywikibot.output(u'%s : %s .' % (pagetrad.title(), prog.groups()) )
             infos['progression'] = int(prog.group('progression'))
         return infos
 
     def run(self):
         self.label_se = self.lycos(self.nom_base, conditions="traduction IS NULL")
 
-        #art_etrangers = self.lycos(self.nom_base, conditions="traduction IS NOT NULL")
-        art_etrangers = {
-                'Eindhoven' : { 'taille':0, 'traduction': u'Eindhoven', 'importance':'B' },
-                'Franz Kafka' : { 'taille':0, 'traduction': u'Franz Kafka', 'importance':'B' },
-                'Augustus' : { 'taille':0, 'traduction': u'Auguste', 'importance':'B' }
-                }
+        art_etrangers = self.lycos(self.nom_base, conditions="traduction IS NOT NULL")
         art_fr = self.lycos('contenu_de_qualite_fr')
         for page_et, infos_et in art_etrangers.items():
             eq_fr = infos_et['traduction']
