@@ -113,9 +113,9 @@ class ListageQualite:
                 % self.sous_page[self.langue].lower() \
                 + u'! scope=col | Ratio\n'
             for titre, infos in self.trier_comparaison(avan):
-                rep += u'|-\n|[[:%s:%s|%s]] (%s ko)\n' \
+                rep += u'|-\n|[[:%s:%s|%s]] – %s ko\n' \
                         % (self.langue, titre, titre, infos['taille'])
-                rep += u'|[[%s]] (%s ko)||%s\n' % \
+                rep += u'|[[%s]] – %s ko||%s\n' % \
                         (infos['traduction'], \
                         infos['taille_fr'], \
                         unicode(self.ratio(infos['taille'], \
@@ -217,21 +217,27 @@ class ListageQualite:
         statut = self.statutER.search(page)
         if statut is not None:
             infos['statut'] = int(statut.group('statut'))
-        if statut > 1:
-            if statut < 4:
-                recherche = u'traduction'
-            else:
-                recherche = u'relecture'
-            progressionER = re.compile(self.progression % recherche, re.LOCALE)
-            prog = progressionER.search(page)
-            if prog is not None:
-                infos['progression'] = int(prog.group('progression'))
+
+        if statut < 4:
+            recherche = u'traduction'
+        else:
+            recherche = u'relecture'
+        progressionER = re.compile(self.progression % recherche, re.LOCALE)
+        prog = progressionER.search(page)
+        pywikibot.output(u'%s : %s .' % (page_trad.title(), prog.group()) )
+        if prog is not None:
+            infos['progression'] = int(prog.group('progression'))
         return infos
 
     def run(self):
         self.label_se = self.lycos(self.nom_base, conditions="traduction IS NULL")
 
-        art_etrangers = self.lycos(self.nom_base, conditions="traduction IS NOT NULL")
+        #art_etrangers = self.lycos(self.nom_base, conditions="traduction IS NOT NULL")
+        art_etrangers = {
+                'Eindhoven' : { 'taille':0, 'traduction': u'Eindhoven', 'importance':'B' },
+                'Franz Kafka' : { 'taille':0, 'traduction': u'Franz Kafka', 'importance':'B' },
+                'Augustus' : { 'taille':0, 'traduction': u'Auguste', 'importance':'B' }
+                }
         art_fr = self.lycos('contenu_de_qualite_fr')
         for page_et, infos_et in art_etrangers.items():
             eq_fr = infos_et['traduction']
@@ -245,7 +251,6 @@ class ListageQualite:
                     ipt = self.infos_page_suivi(page_trad)
                     self.label_trad[page_et]['statut'] = ipt['statut']
                     self.label_trad[page_et]['progression'] = ipt['progression']
-                    #pywikibot.output(u'%s : %i ; %i' % (page_trad.title(), ipt['statut'], ipt['progression']) )
                 else:
                     self.label_nofr[page_et] = infos_et
                     self.label_nofr[page_et]['taille_fr'] = BeBot.taille_page( \
