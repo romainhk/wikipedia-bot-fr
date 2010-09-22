@@ -52,7 +52,7 @@ class ListageQualite:
                 % self.langue)
 
         self.statutER = re.compile(u'\| ?status\s*=\s*(?P<statut>[1-5]{1})', re.LOCALE)
-        self.progression = u'^[^ ]\| ?avancement_%s *= *(?P<progression>\d{1,3})$'
+        self.progression = u'[^ ]\| ?avancement_%s *= *(?P<progression>\d{1,3})'
 
         #Avancement wikiprojet
         self.avancementER = re.compile(u'Article.*avancement (?P<avancement>[\wé]+)$')
@@ -87,12 +87,13 @@ class ListageQualite:
         rep = u"<noinclude>{{Sommaire à droite}}\n" \
                 + u"''Page générée le %s.''\n\n" \
                     % datetime.date.today().strftime("%e %B %Y") \
-                + u'%i AdQ traités pour WP:%s ; ' % (self.total, self.langue) \
+                + u'%i articles labellisés traités pour WP:%s ;<br />\n' \
+                    % (self.total, self.langue) \
                 + u'%i sont labellisés sur les deux wikis.\n' \
                     % len(self.label_deux) \
                 + u"{{Clr}}\n"
         # Inexistants sur fr
-        rep += u'\n== % articles sans équivalent en français ==\n' \
+        rep += u'\n== %i articles sans équivalent en français ==\n' \
                 % len(self.label_se)
         rep += u'{{Colonnes|nombre=2|1=\n'
         for titre, infos in sorted(self.label_se.iteritems()):
@@ -102,7 +103,7 @@ class ListageQualite:
         # Comparaison
         rep += u'\n== Comparaisons entre AdQ %s et son équivalent en français ==\n' \
                 % self.sous_page[self.langue].lower()
-        rep += u"''Tri des %i articles selon l'avancement de l'article en français.''\n" \
+        rep += u"''Tri de %i articles selon l'avancement wikiprojet minimum de l'article en français.''\n" \
                 % len(self.label_nofr)
         #TODO: séparer par theme aussi
         for avan in self.retrait_avancement[2:]:
@@ -122,8 +123,8 @@ class ListageQualite:
             rep += u'|}\n'
 
         # Traductions
-        rep += u'\n== %i AdQ en traduction/traduit ==\n' % len(self.label_trad) \
-            + u'Soit %.1f %% du total.\n' % len(self.label_trad)/self.total
+        rep += u'\n== %i articles en traduction/traduit ==\n' % len(self.label_trad) \
+            + u'Soit %.1f %% du total.\n' % (len(self.label_trad)/self.total)
         rep += u'</noinclude>' + self.afficher_pagetrad(elus="1234") \
                 + u'<noinclude>\n'
         rep += u'\n=== Traductions terminées à labelliser ===\n'
