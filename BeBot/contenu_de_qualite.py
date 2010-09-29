@@ -59,7 +59,7 @@ class ContenuDeQualite:
                 'es': [ u'Categoría:Wikipedia:Artículos destacados',  u'Categoría:Wikipedia:Artículos buenos' ],
        # pas celle-ci        'it': [ u'Voci in vetrina' ],
                 'nl': [ u'Categorie:Wikipedia:Etalage-artikelen' ]
-                }
+                } #! l'ordre est important
         self.cat_qualite = self.categories_de_qualite[self.langue]
             # Nom des catégories correspondant aux deux labels
 
@@ -111,25 +111,23 @@ class ContenuDeQualite:
         Log des modifications à apporter à la bdd
         """
         resu = u'\n== Sur WP:%s ==\n' % self.langue
-        resu += u"%s nouveaux articles labellisés trouvés : %s AdQ" \
-            % (str(len(self.nouveau)), str(self.nb_label(self.cat_qualite[0], [self.nouveau])))
+        resu += u"%i nouveaux articles labellisés trouvés : %i AdQ" \
+            % (len(self.nouveau), self.nb_label(self.cat_qualite[0], [self.nouveau]))
         if len(self.cat_qualite) > 1:
-            resu += u" et %s BA" % str(self.nb_label(self.cat_qualite[1], [self.nouveau]))
-        resu += u". (Total avant sauvegarde : %s articles. Après : %s articles ; %s AdQ" \
-                % ( str(self.total_avant), str(len(self.nouveau) + len(self.connaitdeja)),\
-                str(self.nb_label( self.cat_qualite[0], [self.nouveau, self.connaitdeja])) )
+            resu += u" et %i BA" % self.nb_label(self.cat_qualite[1], [self.nouveau])
+        resu += u". (Total avant sauvegarde : %i articles. Après : %s articles ; %i AdQ" \
+                % ( self.total_avant, str(len(self.nouveau) + len(self.connaitdeja)),\
+                self.nb_label( self.cat_qualite[0], [self.nouveau, self.connaitdeja]) )
         if len(self.cat_qualite) > 1:
-            resu += u' et %s BA' % str(self.nb_label( self.cat_qualite[1], [self.nouveau, self.connaitdeja]))
-        resu += u")\n\nAu reste, il y a %s articles sans date précisée, et %s déjà connus." \
-                % ( str(len(self.pasdedate)), str(len(self.connaitdeja)) )
+            resu += u' et %i BA' % self.nb_label( self.cat_qualite[1], [self.nouveau, self.connaitdeja])
+        resu += u")\n\nAu reste, il y a %i articles sans date précisée, et %i déjà connus." \
+                % ( len(self.pasdedate), len(self.connaitdeja) )
         if len(self.nouveau) > 0 and not self.maj_stricte and len(self.nouveau) < 100:
             resu += u"\n=== Nouveau contenu de qualité ===\n"
             resu += self.lister_article(self.nouveau)
-#            if self.maj_stricte:
-#                resu += u'mode stricte :\n%s' % self.lister_article(self.connaitdeja)
         if BeBot.hasDateLabel(self.langue) and len(self.pasdedate) > 0:
             resu += u"\n=== Articles sans date de labellisation ===\n"
-            resu += u"{{Boîte déroulante début |titre=%s articles}}" % len(self.pasdedate)
+            resu += u"{{Boîte déroulante début |titre=%i articles}}" % len(self.pasdedate)
             resu += u"%s\n{{Boîte déroulante fin}}" % self.lister_article(self.pasdedate)
         return resu + u'\n'
 
@@ -313,7 +311,7 @@ class ContenuDeQualite:
             'page': page.title(), \
             'espacedenom': page.namespace(), \
             'date': date, \
-            'label': cat, \
+            'label': self.cattoa(cat), \
             'taille': BeBot.taille_page(page), \
             'consultations':BeBot.stat_consultations(page, \
                 codelangue=self.langue), \
@@ -322,6 +320,16 @@ class ContenuDeQualite:
                 'importance', self.retrait_importance)
             }
         return infos
+
+    def cattoa(self, cat):
+        """ Convertir le nom d'une catégorie en son type adq ou ba
+        """
+        ordre = [ u'AdQ', u'BA' ]
+        try:
+            i = self.categories_de_qualite[self.langue].index(cat)
+        except:
+            return u'?'
+        return ordre[i]
 
     def run(self):
         connus = BeBot.charger_bdd(self.db, self.nom_base)
@@ -339,7 +347,6 @@ class ContenuDeQualite:
                     continue
                 article_connu = False
                 for con in connus: #Comparaison avec le contenu de la bdd
-#                    pywikibot.output(u"%s ; %s" % (page.title(), unicode(con[0], 'UTF-8')))
                     if page.title() == unicode(con[0], 'UTF-8'): #con[0]=page
                         article_connu = True
                         break
@@ -353,12 +360,12 @@ class ContenuDeQualite:
                         self.connaitdeja.append(infos)
                 else:
                     self.connaitdeja.append( { 'page': page.title(), \
-                          'espacedenom': page.namespace(),    'label': cat, \
+                          'espacedenom': page.namespace(), \
+                          'label': self.cattoa(cat), \
                           'importance': None } ) # Ils ne seront pas ajoutés
 
-        pywikibot.log( u"Total: %s ajouts ; %s déjà connus ; %s sans date." \
-                % (str(len(self.nouveau)), str(len(self.connaitdeja)), \
-                str(len(self.pasdedate))) )
+        pywikibot.log( u"Total: %i ajouts ; %i déjà connus ; %i sans date." \
+                % (len(self.nouveau), len(self.connaitdeja), len(self.pasdedate)) )
 
 def main():
     mode = u'nouveaux-seulement'
