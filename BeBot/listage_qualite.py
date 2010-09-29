@@ -77,7 +77,7 @@ class ListageQualite:
             + u'* %i adq/ba ne le sont pas sur WP:fr ;\n' \
                 % len(self.label_nofr) \
             + u'* %i n´existent pas en français ;\n' % len(self.label_se) \
-            + u'* %i sont en cours de traduction/traduit (%.1f %% du total).' \
+            + u'* %i sont en cours de traduction/traduit (%.2f %% du total).' \
                 % (len(self.label_trad), len(self.label_trad)/self.total)
         return resu
 
@@ -95,15 +95,19 @@ class ListageQualite:
         # Inexistants sur fr
         rep += u'\n== %i articles sans équivalent en français ==\n' \
                 % len(self.label_se)
+        if len(self.label_se) > 100:
+            rep += u'{{Boîte déroulante début|titre=Trop de pages}}\n'
         rep += u'{{Colonnes|nombre=2|1=\n'
         for titre, infos in sorted(self.label_se.iteritems()):
             rep += u"* [[:%s:%s|%s]]\n" % (self.langue, titre, titre)
         rep += u'}}\n'
+        if len(self.label_se) > 100:
+            rep += u'{{Boîte déroulante fin}}\n'
 
         # Comparaison
         rep += u'\n== Comparaisons entre AdQ %s et son équivalent en français ==\n' \
                 % self.sous_page[self.langue].lower()
-        rep += u"''Tri de %i articles selon l'avancement wikiprojet minimum de l'article en français.''\n" \
+        rep += u"''Tri de %i articles selon l'avancement wikiprojet minimum de l'article en français hors traductions.''\n" \
                 % len(self.label_nofr)
         #TODO: séparer par theme aussi
         for avan in self.retrait_avancement[2:]:
@@ -124,11 +128,28 @@ class ListageQualite:
 
         # Traductions
         rep += u'\n== %i articles en traduction/traduit ==\n' % len(self.label_trad) \
-            + u'Soit %.1f %% du total.\n' % (len(self.label_trad)/self.total)
-        rep += u'</noinclude>' + self.afficher_pagetrad(elus="1234") \
-                + u'<noinclude>\n'
-        rep += u'\n=== Traductions terminées à labelliser ===\n'
-        rep += self.afficher_pagetrad(elus="5")
+            + u'Soit %.2f %% du total.\n' % (len(self.label_trad)/self.total)
+        rep += u'</noinclude>'
+        rep += u'{| class="wikitable sortable" style="margin:auto;"\n' \
+            + u'! scope=col | Article fr !! scope=col | Statut !! scope=col | Progression\n'
+        for titre, infos in self.trier_pagetrad("1234"):
+            rep += u'|-\n|[[%s]]||%s\n|[[%s|%i %%]]\n' \
+                    % (infos['traduction'], \
+                    BeBot.stou(infos['statut']), \
+                    infos['souspage_trad'].title(), \
+                    infos['progression'] )
+        rep += u'|}\n<noinclude>\n'
+
+        rep += u'\n=== %i traductions terminées à labelliser ===\n' \
+                % len(self.label_trad[5])
+        rep += u'{| class="wikitable sortable" style="margin:auto;"\n' \
+            + u'! scope=col | Article fr !! scope=col | Progression\n'
+        for titre, infos in self.trier_pagetrad("5"):
+            rep += u'|-\n|[[%s]]||[[%s|%i %%]]\n' \
+                    % (infos['traduction'], \
+                    infos['souspage_trad'].title(), \
+                    infos['progression'] )
+        rep += u'|}\n'
 
         rep += u'\n[[Catégorie:Liste de suivi des articles de qualité des autres wikipédias|%s]]</noinclude>' \
                 % self.langue
@@ -138,20 +159,6 @@ class ListageQualite:
         """ Calcul un ratio entier entre les tailles d'articles équivalents
         """
         return int(round(((taille - taille_fr) * 10) / (taille + taille_fr)))
-
-    def afficher_pagetrad(self, elus="1234"):
-        """ Affiche un tableau des pages de suivi de traduction selon leur statut
-        """
-        rep = u'{| class="wikitable sortable" style="margin:auto;"\n' \
-            + u'! scope=col | Article fr !! scope=col | Statut !! scope=col | Progression\n'
-        for titre, infos in self.trier_pagetrad(elus):
-            rep += u'|-\n|[[%s]]||%s\n|[[%s|%i %%]]\n' \
-                    % (infos['traduction'], \
-                    BeBot.stou(infos['statut']), \
-                    infos['souspage_trad'].title(), \
-                    infos['progression'] )
-        rep += u'|}\n'
-        return rep
 
     def trier_pagetrad(self, elus="1234"):
         """ Tri les pages de suivi de traduction par statut
@@ -210,6 +217,8 @@ class ListageQualite:
                     'progression' : 0 }
         try:
             page = pagetrad.get()
+        except pywikibot.exception.IsRedirectPage:
+            return self.infos_page_suivi(pagetrad.getRedirectTarget())
         except:
             pywikibot.warning(u'impossible de récupérer la page %s' \
                     % pagetrad.title())
