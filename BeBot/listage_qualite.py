@@ -11,11 +11,7 @@ class ListageQualite:
     """ Listage Qualité
         Liste les AdQ/BA existants par avancement ( et theme ? ) sur le P:SAdQaW
         
-        #Suppression de la colonne "Traduction" avec le lien sous-page
-        #Suppression de la colonne "Notes"
-
-        TODO : lister les adq/ba par avancement 
-                                 par theme
+        TODO : lister les adq/ba par theme
         TODO : propositions d'apposition pour Lien AdQ|Lien BA
         TODO : date de maj sur "Projet:Suivi des articles de qualité des autres wikipédias/Listes"
     """
@@ -105,7 +101,7 @@ class ListageQualite:
             rep += u'{{Boîte déroulante fin}}\n'
 
         # Comparaison
-        rep += u'\n== Comparaisons entre AdQ %s et son équivalent en français ==\n' \
+        rep += u'\n== Comparaisons entre AdQ/BA %s et son équivalent en français ==\n' \
                 % self.sous_page[self.langue].lower()
         rep += u"''Tri de %i articles selon l'avancement wikiprojet minimum de l'article en français hors traductions.''\n" \
                 % len(self.label_nofr)
@@ -127,11 +123,10 @@ class ListageQualite:
             rep += u'|}\n'
 
         # Traductions
-        rep += u'\n== %i articles en traduction/traduit ==\n' % len(self.label_trad) \
-            + u'Soit %.2f %% du total.\n' % (len(self.label_trad)/self.total)
+        rep += u'\n== %i articles en traduction/traduit ==\n' % len(self.label_trad)
         rep += u'</noinclude>'
         rep += u'{| class="wikitable sortable" style="margin:auto;"\n' \
-            + u'! scope=col | Article fr !! scope=col | Statut !! scope=col | Progression\n'
+            + u'!scope=col| Article fr !!scope=col| Statut !!scope=col| Progression\n'
         for titre, infos in self.trier_pagetrad("1234"):
             rep += u'|-\n|[[%s]]||%s\n|[[%s|%i %%]]\n' \
                     % (infos['traduction'], \
@@ -140,16 +135,13 @@ class ListageQualite:
                     infos['progression'] )
         rep += u'|}\n<noinclude>\n'
 
-        rep += u'\n=== %i traductions terminées à labelliser ===\n' \
-                % len(self.label_trad[5])
-        rep += u'{| class="wikitable sortable" style="margin:auto;"\n' \
-            + u'! scope=col | Article fr !! scope=col | Progression\n'
+        rep += u'\n=== Traductions terminées à labelliser ===\n'
+        rep += u'{{Colonnes|nombre=2|1=\n'
         for titre, infos in self.trier_pagetrad("5"):
-            rep += u'|-\n|[[%s]]||[[%s|%i %%]]\n' \
+            rep += u'* [[%s]] - [[%s|sp]]\n' \
                     % (infos['traduction'], \
-                    infos['souspage_trad'].title(), \
-                    infos['progression'] )
-        rep += u'|}\n'
+                    infos['souspage_trad'].title() )
+        rep += u'}}\n'
 
         rep += u'\n[[Catégorie:Liste de suivi des articles de qualité des autres wikipédias|%s]]</noinclude>' \
                 % self.langue
@@ -217,7 +209,9 @@ class ListageQualite:
                     'progression' : 0 }
         try:
             page = pagetrad.get()
-        except pywikibot.exception.IsRedirectPage:
+        except pywikibot.exceptions.IsRedirectPage:
+            pywikibot.warning(u"verifier les interlangues pour %s (redirection)." \
+                    % pagetrad.title() )
             return self.infos_page_suivi(pagetrad.getRedirectTarget())
         except:
             pywikibot.warning(u'impossible de récupérer la page %s' \
@@ -228,15 +222,15 @@ class ListageQualite:
             statut = int(statut.group('statut'))
             infos['statut'] = statut
 
-        if statut < 4:
-            recherche = u'traduction'
-        else:
-            recherche = u'relecture'
-        progressionER = re.compile(self.progression % recherche, re.LOCALE)
-        prog = progressionER.search(page)
-        if prog is not None:
-            #pywikibot.output(u'%s : %s .' % (pagetrad.title(), prog.groups()) )
-            infos['progression'] = int(prog.group('progression'))
+        if statut != 5:
+            if statut < 4:
+                recherche = u'traduction'
+            else:
+                recherche = u'relecture'
+            progressionER = re.compile(self.progression % recherche, re.LOCALE)
+            prog = progressionER.search(page)
+            if prog is not None:
+                infos['progression'] = int(prog.group('progression'))
         return infos
 
     def run(self):
@@ -260,6 +254,7 @@ class ListageQualite:
                     self.label_nofr[page_et] = infos_et
                     self.label_nofr[page_et]['taille_fr'] = BeBot.taille_page( \
                             pywikibot.Page(self.site_fr, eq_fr))
+
         self.total = len(self.label_se) + len(self.label_nofr) \
                 + len(self.label_deux) + len(self.label_trad)
 
