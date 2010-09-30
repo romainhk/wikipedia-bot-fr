@@ -9,9 +9,9 @@ locale.setlocale(locale.LC_ALL, '')
 
 class ListageQualite:
     """ Listage Qualité
-        Liste les AdQ/BA existants par avancement ( et theme ? ) sur le P:SAdQaW
+        Liste les AdQ/BA existants par avancement sur le P:SAdQaW
         
-        TODO : lister les adq/ba par theme
+        TODO : lister les adq/ba par theme ?
         TODO : propositions d'apposition pour Lien AdQ|Lien BA
         TODO : date de maj sur "Projet:Suivi des articles de qualité des autres wikipédias/Listes"
     """
@@ -95,7 +95,7 @@ class ListageQualite:
             rep += u'{{Boîte déroulante début|titre=Trop de pages}}\n'
         rep += u'{{Colonnes|nombre=2|1=\n'
         for titre, infos in sorted(self.label_se.iteritems()):
-            rep += u"* [[:%s:%s|%s]]\n" % (self.langue, titre, titre)
+            rep += u"* [[:%s:%s]]\n" % (self.langue, titre)
         rep += u'}}\n'
         if len(self.label_se) > 100:
             rep += u'{{Boîte déroulante fin}}\n'
@@ -103,9 +103,8 @@ class ListageQualite:
         # Comparaison
         rep += u'\n== Comparaisons entre AdQ/BA %s et son équivalent en français ==\n' \
                 % self.sous_page[self.langue].lower()
-        rep += u"''Tri de %i articles selon l'avancement wikiprojet minimum de l'article en français hors traductions.''\n" \
-                % len(self.label_nofr)
-        #TODO: séparer par theme aussi
+        rep += u"''Tri de %i articles selon l'avancement" % len(self.label_nofr) \
+            + u" wikiprojet minimum de l'article en français hors traductions.''\n"
         for avan in self.retrait_avancement[2:]:
             rep += u'\n=== %s ===\n' % avan.capitalize()
             rep += u'{| class="wikitable sortable"\n' \
