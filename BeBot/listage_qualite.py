@@ -12,6 +12,7 @@ class ListageQualite:
         Liste les AdQ/BA existants par avancement sur le P:SAdQaW
         
         TODO : lister les adq/ba par theme ?
+        TODO : supporter l'italien
         TODO : propositions d'apposition de Lien AdQ|Lien BA => à part
     """
     def __init__(self, site):
@@ -38,7 +39,7 @@ class ListageQualite:
                 'nl': u'Néerlandais'
                 }
         if self.sous_page.has_key(self.langue):
-            self.page_projet = pywikibot.Page(self.site, \
+            self.page_projet = pywikibot.Page(self.site_fr, \
                 u"Projet:Suivi des articles de qualité des autres wikipédias/%s" \
                 % self.sous_page[self.langue] )
         else:
