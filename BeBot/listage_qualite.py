@@ -12,8 +12,7 @@ class ListageQualite:
         Liste les AdQ/BA existants par avancement sur le P:SAdQaW
         
         TODO : lister les adq/ba par theme ?
-        TODO : propositions d'apposition pour Lien AdQ|Lien BA
-        TODO : date de maj sur "Projet:Suivi des articles de qualité des autres wikipédias/Listes"
+        TODO : propositions d'apposition de Lien AdQ|Lien BA => à part
     """
     def __init__(self, site):
         self.resume = u'Listage des articles de qualité du ' + datetime.date.today().strftime("%Y-%m-%d")
@@ -69,11 +68,11 @@ class ListageQualite:
     def __str__(self):
         """ Log des modifications à apporter à la bdd
         """
-        resu = u'== %i articles pour WP:%s ==\n' % (self.total, self.langue) \
+        resu = u'\n== %i articles pour WP:%s ==\n' % (self.total, self.langue) \
             + u'* %i adq/ba ne le sont pas sur WP:fr ;\n' \
                 % len(self.label_nofr) \
             + u'* %i n´existent pas en français ;\n' % len(self.label_se) \
-            + u'* %i sont en cours de traduction/traduit (%.2f %% du total).' \
+            + u'* %i sont en cours de traduction/traduit (%.2f %% du total).\n' \
                 % (len(self.label_trad), len(self.label_trad)/self.total)
         return resu
 
@@ -92,7 +91,7 @@ class ListageQualite:
         rep += u'\n== %i articles sans équivalent en français ==\n' \
                 % len(self.label_se)
         if len(self.label_se) > 100:
-            rep += u'{{Boîte déroulante début|titre=Trop de pages}}\n'
+            rep += u'{{Boîte déroulante début|titre=Plus de cent pages}}\n'
         rep += u'{{Colonnes|nombre=2|1=\n'
         for titre, infos in sorted(self.label_se.iteritems()):
             rep += u"* [[:%s:%s]]\n" % (self.langue, titre)
@@ -137,7 +136,7 @@ class ListageQualite:
         rep += u'\n=== Traductions terminées à labelliser ===\n'
         rep += u'{{Colonnes|nombre=2|1=\n'
         for titre, infos in self.trier_pagetrad("5"):
-            rep += u'* [[%s]] - [[%s|sp]]\n' \
+            rep += u'* [[%s]] ([[%s|spt]])\n' \
                     % (infos['traduction'], \
                     infos['souspage_trad'].title() )
         rep += u'}}\n'
@@ -176,7 +175,8 @@ class ListageQualite:
     #######################################
     ### Recherche d'infos
     def lycos(self, nom_base, conditions=None):
-        """ Récupère les articles labellisés correspondants à certaines conditions
+        """ Récupère les articles labellisés de la base correspondants
+            à certaines conditions
         """
         champs = [ 'page', 'taille', 'traduction', 'importance' ]
         articles = BeBot.charger_bdd(self.db, nom_base, \
@@ -202,7 +202,7 @@ class ListageQualite:
         return rep
 
     def infos_page_suivi(self, pagetrad):
-        """ Récupère le statut d'une page de suivi de traduction
+        """ Récupère statut et progression d'une page de suivi de traduction
         """
         infos = {   'statut' : 0,
                     'progression' : 0 }
@@ -277,9 +277,11 @@ def main():
         except:
             continue
         lq.run()
-        pywikibot.output(unicode(lq))
-        log += lq.publier()
-    pywikibot.Page(pywikibot.Site('fr'), u'Utilisateur:BeBot/Listage qualité').put(log, \
+        lq.page_projet.put(lq.publier(), \
+                comment=u'Mise à jour mensuelle des listings', minorEdit=False)
+        log += unicode(lq)
+    pywikibot.Page(pywikibot.Site('fr'), \
+            u'Utilisateur:BeBot/Listage qualité').put(log, \
             comment=lq.resume, minorEdit=False)
 
 if __name__ == "__main__":
