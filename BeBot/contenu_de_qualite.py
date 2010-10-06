@@ -112,14 +112,14 @@ class ContenuDeQualite:
         """
         resu = u'\n== Sur WP:%s ==\n' % self.langue
         resu += u"%i nouveaux articles labellisés trouvés : %i AdQ" \
-            % (len(self.nouveau), self.nb_label(self.cat_qualite[0], [self.nouveau]))
+            % (len(self.nouveau), self.nb_label(u"AdQ", [self.nouveau]))
         if len(self.cat_qualite) > 1:
-            resu += u" et %i BA" % self.nb_label(self.cat_qualite[1], [self.nouveau])
+            resu += u" et %i BA" % self.nb_label(u"BA", [self.nouveau])
         resu += u". (Total avant sauvegarde : %i articles. Après : %s articles ; %i AdQ" \
                 % ( self.total_avant, str(len(self.nouveau) + len(self.connaitdeja)),\
-                self.nb_label( self.cat_qualite[0], [self.nouveau, self.connaitdeja]) )
+                self.nb_label( u"AdQ", [self.nouveau, self.connaitdeja]) )
         if len(self.cat_qualite) > 1:
-            resu += u' et %i BA' % self.nb_label( self.cat_qualite[1], [self.nouveau, self.connaitdeja])
+            resu += u' et %i BA' % self.nb_label( u"BA", [self.nouveau, self.connaitdeja])
         resu += u")\n\nAu reste, il y a %i articles sans date précisée, et %i déjà connus." \
                 % ( len(self.pasdedate), len(self.connaitdeja) )
         if len(self.nouveau) > 0 and not self.maj_stricte and len(self.nouveau) < 100:
@@ -398,6 +398,7 @@ def main():
             comment=u'Repérage du contenu de qualité au ' \
             + datetime.date.today().strftime("%Y-%m-%d"), \
             minorEdit=False)
+    pywikibot.output(u'Passer voir le log sur http://fr.wikipedia.org/wiki/Utilisateur:BeBot/Contenu_de_qualit%C3%A9')
 
 if __name__ == "__main__":
     try:
