@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, MySQLdb, getopt, sys, locale
+import re, datetime, MySQLdb, getopt, sys, locale, hotshot
 from MySQLdb.constants import ER
 import pywikibot
 from pywikibot import pagegenerators, catlib
@@ -242,23 +242,18 @@ class ContenuDeQualite:
         """
         Donne la date de labellisation d'un article
         """
-        try:
-            page = pywikibot.Page(self.site, titre).get()
-        except pywikibot.exceptions.NoPage:
-            raise PasDeDate(titre)
-        if self.dateRE is not None:
-            d = self.dateRE.search(page)
-            if d is not None:
-                mti = BeBot.moistoint(d.group('mois'))
-                if mti > 0:
-                    return datetime.date(int(d.group('annee')), \
-                        BeBot.moistoint(d.group('mois')), int(d.group('jour')))
-        else:
-            #TODO: Recherche dans l'historique l'ajout du modèle
-            # -> fullVersionHistory() !! lourd
-            pass
-
         if BeBot.hasDateLabel(self.langue):
+            try:
+                page = pywikibot.Page(self.site, titre).get()
+            except pywikibot.exceptions.NoPage:
+                raise PasDeDate(titre)
+            if self.dateRE is not None:
+                d = self.dateRE.search(page)
+                if d is not None:
+                    mti = BeBot.moistoint(d.group('mois'))
+                    if mti > 0:
+                        return datetime.date(int(d.group('annee')), \
+                            BeBot.moistoint(d.group('mois')), int(d.group('jour')))
             raise PasDeDate(titre)
         else:
             return datetime.date(1970, 1, 1) #Epoch
@@ -298,7 +293,7 @@ class ContenuDeQualite:
                     return res.group('iw')
             return None
 
-    def get_infos(self, page, cat):
+    def get_infos(self, page, cattoa):
         """
         Recherche toutes les informations nécessaires associées à une page
         """
@@ -311,7 +306,7 @@ class ContenuDeQualite:
             'page': page.title(), \
             'espacedenom': page.namespace(), \
             'date': date, \
-            'label': self.cattoa(cat), \
+            'label': cattoa, \
             'taille': BeBot.taille_page(page), \
             'consultations':BeBot.stat_consultations(page, \
                 codelangue=self.langue), \
@@ -321,23 +316,20 @@ class ContenuDeQualite:
             }
         return infos
 
-    def cattoa(self, cat):
-        """ Convertir le nom d'une catégorie en son type adq ou ba
-        """
-        ordre = [ u'AdQ', u'BA' ]
-        try:
-            i = self.categories_de_qualite[self.langue].index(cat)
-        except:
-            return u'?'
-        return ordre[i]
-
     def run(self):
         connus = BeBot.charger_bdd(self.db, self.nom_base)
         self.total_avant = len(connus)
+        ordre_cat = [ u'AdQ', u'BA', u'?' ]
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
             cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
             #cpg = pagegenerators.PreloadingGenerator(cpg, step=125)
+            try:
+                i = self.categories_de_qualite[self.langue].index(cat)
+            except:
+                i = 2
+            cattoa = ordre_cat[i]
+
             for p in cpg:
                 if p.namespace() == 0:
                     page = p
@@ -351,17 +343,17 @@ class ContenuDeQualite:
                         article_connu = True
                         break
                 if not article_connu:
-                    infos = self.get_infos(page, cat)
+                    infos = self.get_infos(page, cattoa)
                     if infos is not None:
                         self.nouveau.append(infos)
                 elif self.maj_stricte:
-                    infos = self.get_infos(page, cat)
+                    infos = self.get_infos(page, cattoa)
                     if infos is not None:
                         self.connaitdeja.append(infos)
                 else:
                     self.connaitdeja.append( { 'page': page.title(), \
                           'espacedenom': page.namespace(), \
-                          'label': self.cattoa(cat), \
+                          'label': cattoa, \
                           'importance': None } ) # Ils ne seront pas ajoutés
 
         pywikibot.log( u"Total: %i ajouts ; %i déjà connus ; %i sans date." \
@@ -387,12 +379,17 @@ def main():
             + u" ; exécution du %s</center>\n{{Sommaire à droite}}\n" \
             % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
 
+    prof = hotshot.Profile('profil.prof') 
+    prof.start()
     for cl in wikis:
         pywikibot.log( u"== WP:%s ..." % cl )
         cdq = ContenuDeQualite(pywikibot.Site(cl), mode)
         cdq.run()
         log += unicode(cdq)
         cdq.sauvegarder()
+    prof.stop()
+    prof.close()
+
     pywikibot.Page(pywikibot.Site('fr'), \
         u'Utilisateur:BeBot/Contenu de qualité').put(log, \
             comment=u'Repérage du contenu de qualité au ' \
