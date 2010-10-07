@@ -41,6 +41,8 @@ class ContenuDeQualite:
         TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
         TODO : simplifier la colonne "label" (adq ou ba)
+        TODO : alléger if page.title() == unicode(con[0], 'UTF-8'): => o(n²)
+            => modifier charger_bdd() pour créer un dictionnaire à la place d'une liste
     """
     def __init__(self, site, mode_maj):
         self.site = site

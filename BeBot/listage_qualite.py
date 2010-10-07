@@ -99,7 +99,7 @@ class ListageQualite:
         if len(self.label_se) > 100:
             rep += u'{{Boîte déroulante début|titre=Plus de cent pages}}\n'
         rep += u'{{Colonnes|nombre=2|1=\n'
-        for titre, infos in sorted(self.label_se[tronq:].iteritems()):
+        for titre, infos in sorted(self.label_se[:tronq].iteritems()):
             rep += u"* [[:%s:%s]]\n" % (self.langue, titre)
         rep += u'}}\n'
         if len(self.label_se) > 100:
