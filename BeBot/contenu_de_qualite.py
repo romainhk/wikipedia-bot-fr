@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, MySQLdb, getopt, sys, locale, hotshot
+import re, datetime, MySQLdb, getopt, sys, locale
 from MySQLdb.constants import ER
 import pywikibot
 from pywikibot import pagegenerators, catlib
@@ -379,23 +379,19 @@ def main():
             + u" ; exécution du %s</center>\n{{Sommaire à droite}}\n" \
             % unicode(datetime.date.today().strftime("%A %e %B %Y"), "utf-8")
 
-    prof = hotshot.Profile('profil.prof') 
-    prof.start()
     for cl in wikis:
         pywikibot.log( u"== WP:%s ..." % cl )
         cdq = ContenuDeQualite(pywikibot.Site(cl), mode)
         cdq.run()
         log += unicode(cdq)
         cdq.sauvegarder()
-    prof.stop()
-    prof.close()
 
     pywikibot.Page(pywikibot.Site('fr'), \
         u'Utilisateur:BeBot/Contenu de qualité').put(log, \
             comment=u'Repérage du contenu de qualité au ' \
             + datetime.date.today().strftime("%Y-%m-%d"), \
             minorEdit=False)
-    pywikibot.output(u'Passer voir le log sur http://fr.wikipedia.org/wiki/Utilisateur:BeBot/Contenu_de_qualit%C3%A9')
+    pywikibot.log(u'Passer voir le log sur http://fr.wikipedia.org/wiki/Utilisateur:BeBot/Contenu_de_qualit%C3%A9')
 
 if __name__ == "__main__":
     try:

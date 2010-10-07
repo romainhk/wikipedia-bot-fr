@@ -151,16 +151,10 @@ def info_wikiprojet(page, ER, nom_groupe, tab_elimination):
 def stou(statut):
     """ Convertit un entier "Statut" (1 <= s <= 5) en message unicode
     """
-    if   statut == 1:
-        return u'Demande de traduction'
-    elif statut == 2:
-        return u'Traduction'
-    elif statut == 3:
-        return u'Demande de relecture'
-    elif statut == 4:
-        return u'Relecture'
-    elif statut == 5:
-        return u'Traduction terminé'
-    else:
-        #if statut < 1 or statut > 5:
-        return u'Statut inconnu'
+    stat = [ u'Statut inconnu', \
+            u'Demande de traduction',   u'Traduction', \
+            u'Demande de relecture',    u'Relecture', \
+            u'Traduction terminé' ]
+    if statut >= 1 and statut <= 5:
+        return stat[statut]
+    return stat[0]
