@@ -34,8 +34,10 @@ class ListageQualite:
         self.total = 0
 
         self.sous_page = {
-                'de': u'Allemand',      'en': u'Anglais',
-                'es': u'Espagnol',      'it': u'Italien',
+                'en': u'Anglais',
+                'de': u'Allemand',
+                'es': u'Espagnol',
+                'it': u'Italien',
                 'nl': u'Néerlandais'
                 }
         if self.sous_page.has_key(self.langue):
@@ -69,12 +71,12 @@ class ListageQualite:
     def __str__(self):
         """ Log des modifications à apporter à la bdd
         """
-        resu = u'\n== %i articles pour WP:%s ==\n' % (self.total, self.langue) \
+        resu = u'\n== %i articles pour [[%s|WP:%s] ==\n' \
+                % (self.total, self.page_projet.title(), self.langue ) \
             + u'* %i adq/ba ne le sont pas sur WP:fr ;\n' \
                 % len(self.label_nofr) \
             + u'* %i n´existent pas en français ;\n' % len(self.label_se) \
-            + u'* %i sont en cours de traduction/traduit (%.2f %% du total).\n' \
-                % (len(self.label_trad), len(self.label_trad)/self.total)
+            + u'* %i sont en cours de traduction/traduit.\n'
         return resu
 
     def publier(self):
@@ -91,10 +93,13 @@ class ListageQualite:
         # Inexistants sur fr
         rep += u'\n== %i articles sans équivalent en français ==\n' \
                 % len(self.label_se)
+        tronq = 500
+        if len(self.label_se) > tronq:
+            rep += u"''Tronqué à %i articles.''\n" % tronq
         if len(self.label_se) > 100:
             rep += u'{{Boîte déroulante début|titre=Plus de cent pages}}\n'
         rep += u'{{Colonnes|nombre=2|1=\n'
-        for titre, infos in sorted(self.label_se.iteritems()):
+        for titre, infos in sorted(self.label_se[tronq:].iteritems()):
             rep += u"* [[:%s:%s]]\n" % (self.langue, titre)
         rep += u'}}\n'
         if len(self.label_se) > 100:
