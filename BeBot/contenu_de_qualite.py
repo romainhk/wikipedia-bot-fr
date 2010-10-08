@@ -40,9 +40,6 @@ class ContenuDeQualite:
 
         TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
-        TODO : simplifier la colonne "label" (adq ou ba)
-        TODO : alléger if page.title() == unicode(con[0], 'UTF-8'): => o(n²)
-            => modifier charger_bdd() pour créer un dictionnaire à la place d'une liste
     """
     def __init__(self, site, mode_maj):
         self.site = site
@@ -319,7 +316,7 @@ class ContenuDeQualite:
         return infos
 
     def run(self):
-        connus = BeBot.charger_bdd(self.db, self.nom_base)
+        connus = BeBot.charger_bdd(self.db, self.nom_base, champs=u'page')
         self.total_avant = len(connus)
         ordre_cat = [ u'AdQ', u'BA', u'?' ]
         for cat in self.cat_qualite:
@@ -339,12 +336,7 @@ class ContenuDeQualite:
                     page = p.toggleTalkPage()
                 else:
                     continue
-                article_connu = False
-                for con in connus: #Comparaison avec le contenu de la bdd
-                    if page.title() == unicode(con[0], 'UTF-8'): #con[0]=page
-                        article_connu = True
-                        break
-                if not article_connu:
+                if page.title() in connus: #Comparaison avec le contenu de la bdd
                     infos = self.get_infos(page, cattoa)
                     if infos is not None:
                         self.nouveau.append(infos)
