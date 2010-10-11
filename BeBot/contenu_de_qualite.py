@@ -286,7 +286,6 @@ class ContenuDeQualite:
                     pywikibot.warning('interlangue en KeyError %s pour "%s:%s".' \
                         % (ke.args[0], self.langue, page.title()) )
                     continue
-                    #return None
                 res = self.interwikifrRE.search(text)
                 if res is not None:
                     return res.group('iw')
@@ -322,7 +321,7 @@ class ContenuDeQualite:
         connus = BeBot.charger_bdd(self.db, self.nom_base, champs=u'page')
         self.total_avant = len(connus)
         connus = map(self.normaliser_page, connus)
-        ordre_cat = [ u'AdQ', u'BA', u'?' ]
+        ordre_cats = [ u'AdQ', u'BA', u'?' ]
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
             cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
@@ -331,7 +330,7 @@ class ContenuDeQualite:
                 i = self.categories_de_qualite[self.langue].index(cat)
             except:
                 i = 2
-            cattoa = ordre_cat[i]
+            cattoa = ordre_cats[i]
 
             for p in cpg:
                 if p.namespace() == 0:
@@ -340,7 +339,7 @@ class ContenuDeQualite:
                     page = p.toggleTalkPage()
                 else:
                     continue
-                if page.title() in connus: #Comparaison avec le contenu de la bdd
+                if page.title() not in connus: #Comparaison avec le contenu de la bdd
                     infos = self.get_infos(page, cattoa)
                     if infos is not None:
                         self.nouveau.append(infos)
@@ -349,7 +348,8 @@ class ContenuDeQualite:
                     if infos is not None:
                         self.connaitdeja.append(infos)
                 else:
-                    self.connaitdeja.append( { 'page': page.title(), \
+                    self.connaitdeja.append( \
+                           { 'page': page.title(), \
                           'espacedenom': page.namespace(), \
                           'label': cattoa, \
                           'importance': None } ) # Ils ne seront pas ajoutés
