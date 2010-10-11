@@ -116,7 +116,7 @@ class ContenuDeQualite:
             resu += u" et %i BA" % self.nb_label(u"BA", [self.nouveau])
         resu += u". (Total avant sauvegarde : %i articles. Après : %s articles ; %i AdQ" \
                 % ( self.total_avant, str(len(self.nouveau) + len(self.connaitdeja)),\
-                self.nb_label( u"AdQ", [self.nouveau, self.connaitdeja]) )
+                self.nb_label(u"AdQ", [self.nouveau, self.connaitdeja]) )
         if len(self.cat_qualite) > 1:
             resu += u' et %i BA' % self.nb_label( u"BA", [self.nouveau, self.connaitdeja])
         resu += u")\n\nAu reste, il y a %i articles sans date précisée, et %i déjà connus." \
@@ -315,9 +315,13 @@ class ContenuDeQualite:
             }
         return infos
 
+    def normaliser_page(self, con):
+        return unicode(con[0], 'UTF-8')
+
     def run(self):
         connus = BeBot.charger_bdd(self.db, self.nom_base, champs=u'page')
         self.total_avant = len(connus)
+        connus = map(self.normaliser_page, connus)
         ordre_cat = [ u'AdQ', u'BA', u'?' ]
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
@@ -385,7 +389,8 @@ def main():
             comment=u'Repérage du contenu de qualité au ' \
             + datetime.date.today().strftime("%Y-%m-%d"), \
             minorEdit=False)
-    pywikibot.log(u'Passer voir le log sur http://fr.wikipedia.org/wiki/Utilisateur:BeBot/Contenu_de_qualit%C3%A9')
+    pywikibot.log(u'\nPasser voir le log complet sur ' \
+            + u'http://fr.wikipedia.org/wiki/Utilisateur:BeBot/Contenu_de_qualit%C3%A9')
 
 if __name__ == "__main__":
     try:
