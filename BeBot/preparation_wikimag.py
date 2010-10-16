@@ -143,10 +143,11 @@ class PreparationWikimag:
 
         # AdQ, BA
         modeleRE = re.compile("\{\{[aA]rticle de qualit[^\}]*\| *date *=([^\|\}]+)", re.LOCALE)
-        self.adq= self.articles_promus(u'Wikipédia:Articles de qualité/Justification de leur promotion/'+str(self.date.year), modeleRE)
+        self.adq= self.articles_promus(u'Wikipédia:Articles de qualité/Justification de leur promotion/%i' \
+                % self.date.year, modeleRE)
         modeleRE = re.compile("\{\{[bB]on article[^\}]*\| *date *=([^\|\}]+)", re.LOCALE)
-        self.ba = self.articles_promus(u'Wikipédia:Bons articles/Justification de leur promotion/'+str(self.date.year), modeleRE)
-
+        self.ba = self.articles_promus(u'Wikipédia:Bons articles/Justification de leur promotion/%i' \
+                % self.date.year, modeleRE)
 
 def main():
     site = pywikibot.getSite()
