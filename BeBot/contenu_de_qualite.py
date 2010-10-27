@@ -121,7 +121,7 @@ class ContenuDeQualite:
             resu += u' et %i BA' % self.nb_label( u"BA", [self.nouveau, self.connaitdeja])
         resu += u")\n\nAu reste, il y a %i articles sans date précisée, et %i déjà connus." \
                 % ( len(self.pasdedate), len(self.connaitdeja) )
-        if len(self.nouveau) > 0 and not self.maj_stricte and len(self.nouveau) < 100:
+        if len(self.nouveau) > 0 and not self.maj_stricte and len(self.nouveau) < 12:
             resu += u"\n=== Nouveau contenu de qualité ===\n"
             resu += self.lister_article(self.nouveau)
         if BeBot.hasDateLabel(self.langue) and len(self.pasdedate) > 0:
