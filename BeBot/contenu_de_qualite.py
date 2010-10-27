@@ -319,8 +319,8 @@ class ContenuDeQualite:
 
     def run(self):
         connus = BeBot.charger_bdd(self.db, self.nom_base, champs=u'page')
-        self.total_avant = len(connus)
         connus = map(self.normaliser_page, connus)
+        self.total_avant = len(connus)
         ordre_cats = [ u'AdQ', u'BA', u'?' ]
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
