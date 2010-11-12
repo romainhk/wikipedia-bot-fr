@@ -190,7 +190,7 @@ class ContenuDeQualite:
                     q['label'], \
                     str(q['taille']), \
                     str(q['consultations']), \
-                    self._put_null(q['traduction']), \
+                    self._put_null(q['traduction']).replace('"', '\\"'), \
                     self._put_null(q['importance']) )
         elif mode == 'update':
             req = u'UPDATE %s SET' % self.nom_base \
@@ -200,7 +200,7 @@ class ContenuDeQualite:
                     q['label'], \
                     str(q['taille']), \
                     str(q['consultations']), \
-                    self._put_null(q['traduction']), \
+                    self._put_null(q['traduction']).replace('"', '\\"'), \
                     self._put_null(q['importance']) ) \
                 + u' WHERE page="%s"' % q['page'].replace('"', '\\"')
         elif mode == 'delete':
