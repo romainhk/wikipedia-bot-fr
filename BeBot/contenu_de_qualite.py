@@ -24,10 +24,8 @@ class ContenuDeQualite:
         Comparer avec http://fr.wikipedia.org/wiki/Utilisateur:Maloq/Stats
 
     Paramètres :
-    * Site (pywikibot. où travailler
-    * Mode de mise à jour : voir "options".
-    Options :
-    * Mode de mise à jour : en mode strict, les informations des 
+    * pywikibot.Site où travailler
+    * Mode de mise à jour (optionnel) : en mode strict, les informations des 
     articles déjà connus seront systématiquement mises à jour (UPDATE) et
     les articles déchus retirés. 
     Pour l'activer, utiliser l'option "-s".
@@ -309,8 +307,9 @@ class ContenuDeQualite:
             'consultations':BeBot.stat_consultations(page, \
                 codelangue=self.langue), \
             'traduction': self.traduction(page), \
-            'importance': BeBot.info_wikiprojet(page, self.importanceER, \
-                'importance', self.retrait_importance)
+            'importance': u''
+            #'importance': BeBot.info_wikiprojet(page, self.importanceER, \
+            #    'importance', self.retrait_importance)
             }
         return infos
 
