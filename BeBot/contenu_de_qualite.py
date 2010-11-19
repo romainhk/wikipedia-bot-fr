@@ -181,7 +181,7 @@ class ContenuDeQualite:
         if mode == 'insert':
             req = u'INSERT INTO %s' % self.nom_base \
                 + '(page, espacedenom, date, label, taille, consultations, traduction, importance) ' \
-                + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s, %s)' \
+                + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")' \
                 % ( q['page'].replace('"', '\\"'), \
                     str(q['espacedenom']), \
                     q['date'].strftime("%Y-%m-%d"), \
@@ -192,7 +192,7 @@ class ContenuDeQualite:
                     self._put_null(q['importance']) )
         elif mode == 'update':
             req = u'UPDATE %s SET' % self.nom_base \
-                + u' espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s, importance=%s' \
+                + u' espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction="%s", importance="%s"' \
                 % ( str(q['espacedenom']), \
                     q['date'].strftime("%Y-%m-%d"), \
                     q['label'], \
