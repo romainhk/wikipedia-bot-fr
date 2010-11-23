@@ -1,6 +1,6 @@
 #!/usr/bin/python
-#$ -m ae
 # -*- coding: utf-8  -*-
+#$ -m ae
 import re, datetime, MySQLdb, getopt, sys, locale
 from MySQLdb.constants import ER
 import pywikibot
