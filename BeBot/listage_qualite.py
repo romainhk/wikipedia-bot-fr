@@ -1,4 +1,5 @@
 #!/usr/bin/python
+#$ -m ae
 # -*- coding: utf-8  -*-
 import re, datetime, MySQLdb, getopt, sys, locale
 from MySQLdb.constants import ER
@@ -77,7 +78,7 @@ class ListageQualite:
                 % len(self.label_nofr) \
             + u'* %i n´existent pas en français ;\n' % len(self.label_se) \
             + u'* %i sont en cours de traduction/traduit.\n'
-        return resu
+        return resu + u'\n'
 
     def publier(self):
         """ Génère le contenu de la page à publier

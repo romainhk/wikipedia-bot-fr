@@ -1,4 +1,5 @@
 #!/usr/bin/python
+#$ -m ae
 # -*- coding: utf-8  -*-
 import re, datetime, MySQLdb, getopt, sys, locale
 from MySQLdb.constants import ER

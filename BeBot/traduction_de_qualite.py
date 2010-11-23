@@ -1,4 +1,5 @@
 #!/usr/bin/python
+#$ -m ae
 # -*- coding: utf-8  -*-
 import re, datetime, locale
 import BeBot
@@ -76,7 +77,7 @@ class TraductionDeQualite:
             for t in self.trads[0]:
                 resultat += u'* [[%s]]\n' % t.title()
 
-        return resultat
+        return resultat + u'\n'
 
     def langueCible(self, page):
         """

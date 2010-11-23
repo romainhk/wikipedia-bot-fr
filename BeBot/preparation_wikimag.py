@@ -1,4 +1,5 @@
 #!/usr/bin/python
+#$ -m ae
 # -*- coding: utf-8  -*-
 import re, datetime, locale
 import BeBot
@@ -65,7 +66,7 @@ class PreparationWikimag:
             resultat += u"\n=== Inconnus ===\n"
             for a in self.inconnu:
                 resultat += u'* [[' + a + u']]\n'
-        return resultat
+        return resultat+u'\n'
 
     def articles_promus(self, nompage, RE):
         """ Traitement pour les articles promus
