@@ -80,6 +80,21 @@ class ListageQualite:
             + u'* %i sont en cours de traduction/traduit.\n'
         return resu + u'\n'
 
+    def liste_sans_equivalent(les_se, titre, tronq):
+        lim_deroul = 50
+        rep = u"\n=== %s ===\n" % titre
+        if len(les_se) > tronq:
+            rep += u"''%i %s, tronqués à partir de %i articles.''\n" % (len(les_se), titre, tronq)
+        if len(les_se) > lim_deroul:
+            rep += u'{{Boîte déroulante début|titre=Plus de %i %s}}\n' % (lim_deroul, titre)
+        rep += u'{{Colonnes|nombre=2|1=\n'
+        for titre, infos in sorted(les_se[:tronq].iteritems()):
+            rep += u"* [[:%s:%s]]\n" % (self.langue, titre)
+        rep += u'}}\n'
+        if len(les_se) > lim_deroul:
+            rep += u'{{Boîte déroulante fin}}\n'
+        return rep
+
     def publier(self):
         """ Génère le contenu de la page à publier
         """
@@ -94,17 +109,15 @@ class ListageQualite:
         # Inexistants sur fr
         rep += u'\n== %i articles sans équivalent en français ==\n' \
                 % len(self.label_se)
-        tronq = 500
-        if len(self.label_se) > tronq:
-            rep += u"''Tronqué à %i articles.''\n" % tronq
-        if len(self.label_se) > 100:
-            rep += u'{{Boîte déroulante début|titre=Plus de cent pages}}\n'
-        rep += u'{{Colonnes|nombre=2|1=\n'
-        for titre, infos in sorted(self.label_se[:tronq].iteritems()):
-            rep += u"* [[:%s:%s]]\n" % (self.langue, titre)
-        rep += u'}}\n'
-        if len(self.label_se) > 100:
-            rep += u'{{Boîte déroulante fin}}\n'
+        label_se_adq = []
+        label_se_ba = []
+        for lse in self.label_se:
+            if lse['label'] == 'AdQ':
+                label_se_adq.append(lse)
+            else:
+                label_se_ba.append(lse)
+        rep += liste_sans_equivalent(label_se_adq, 'AdQ', 250)
+        rep += liste_sans_equivalent(label_se_ba, 'BA', 100)
 
         # Comparaison
         rep += u'\n== Comparaisons entre AdQ/BA %s et son équivalent en français ==\n' \
@@ -185,7 +198,7 @@ class ListageQualite:
         """ Récupère les articles labellisés de la base correspondants
             à certaines conditions
         """
-        champs = [ 'page', 'taille', 'traduction', 'importance' ]
+        champs = [ 'page', 'taille', 'traduction', 'importance', 'label' ]
         articles = BeBot.charger_bdd(self.db, nom_base, \
                 champs=", ".join(champs), cond=conditions)
         rep = {}
@@ -201,6 +214,7 @@ class ListageQualite:
                 page[champs[3]] = unicode(a[3], 'UTF-8')
             else:
                 page[champs[3]] = None
+            page[champs[4]] = unicode(a[4], 'UTF-8')
             page['avancement'] = BeBot.info_wikiprojet( \
                     pywikibot.Page(self.site_fr, nom_page), \
                     self.avancementER, 'avancement', \
