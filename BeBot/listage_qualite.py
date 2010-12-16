@@ -100,8 +100,8 @@ class ListageQualite:
         """
         rep = u"<noinclude>{{Sommaire à droite}}\n" \
                 + u"''Page générée le %s.''\n\n" \
-                    % datetime.date.today().strftime("%e %B %Y") \
-                + u'%i articles labellisés traités pour WP:%s ;<br />\n' \
+                    % unicode(datetime.date.today().strftime("%e %B %Y"), 'UTF-8')
+        rep += u'%i articles labellisés traités pour WP:%s ;<br />\n' \
                     % (self.total, self.langue) \
                 + u'%i sont labellisés sur les deux wikis.\n' \
                     % len(self.label_deux) \
@@ -116,8 +116,8 @@ class ListageQualite:
                 label_se_adq.append(lse)
             else:
                 label_se_ba.append(lse)
-        rep += liste_sans_equivalent(label_se_adq, 'AdQ', 250)
-        rep += liste_sans_equivalent(label_se_ba, 'BA', 100)
+        rep += self.liste_sans_equivalent(label_se_adq, 'AdQ', 250)
+        rep += self.liste_sans_equivalent(label_se_ba, 'BA', 100)
 
         # Comparaison
         rep += u'\n== Comparaisons entre AdQ/BA %s et son équivalent en français ==\n' \
