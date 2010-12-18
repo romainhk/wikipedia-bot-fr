@@ -72,15 +72,15 @@ class ListageQualite:
     def __str__(self):
         """ Log des modifications à apporter à la bdd
         """
-        resu = u'\n== %i articles pour [[%s|WP:%s] ==\n' \
+        resu = u'\n== %i articles pour [[%s|WP:%s]] ==\n' \
                 % (self.total, self.page_projet.title(), self.langue ) \
             + u'* %i adq/ba ne le sont pas sur WP:fr ;\n' \
                 % len(self.label_nofr) \
             + u'* %i n´existent pas en français ;\n' % len(self.label_se) \
-            + u'* %i sont en cours de traduction/traduit.\n'
+            + u'* %i sont en cours de traduction/traduit.\n' % len(self.label_trad)
         return resu + u'\n'
 
-    def liste_sans_equivalent(les_se, titre, tronq):
+    def liste_sans_equivalent(self, les_se, titre, tronq):
         lim_deroul = 50
         rep = u"\n=== %s ===\n" % titre
         if len(les_se) > tronq:
@@ -109,15 +109,17 @@ class ListageQualite:
         # Inexistants sur fr
         rep += u'\n== %i articles sans équivalent en français ==\n' \
                 % len(self.label_se)
-        label_se_adq = []
-        label_se_ba = []
-        for lse in self.label_se:
-            if lse['label'] == 'AdQ':
-                label_se_adq.append(lse)
+        label_se_adq = {}
+        label_se_ba = {}
+        for titre, infos in self.label_se:
+            if infos['label'] == 'AdQ':
+                label_se_adq[titre] = infos
             else:
-                label_se_ba.append(lse)
-        rep += self.liste_sans_equivalent(label_se_adq, 'AdQ', 250)
-        rep += self.liste_sans_equivalent(label_se_ba, 'BA', 100)
+                label_se_ba[titre] = infos
+        if len(label_se_adq) > 0:
+            rep += self.liste_sans_equivalent(label_se_adq, 'AdQ', 250)
+        if len(label_se_ba) > 0:
+            rep += self.liste_sans_equivalent(label_se_ba, 'BA', 100)
 
         # Comparaison
         rep += u'\n== Comparaisons entre AdQ/BA %s et son équivalent en français ==\n' \
