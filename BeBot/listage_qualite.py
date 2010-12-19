@@ -83,7 +83,8 @@ class ListageQualite:
 
     def liste_sans_equivalent(self, les_se, titre):
         lim_deroul = 50
-        rep = u"\n=== %s ===\n" % titre
+        #rep = u"\n=== %s ===\n" % titre
+        rep = u""
         if len(les_se) > lim_deroul:
             rep += u'{{Boîte déroulante début|titre=Plus de %i %s}}\n' % (lim_deroul, titre)
         rep += u'{{Colonnes|nombre=2|1=\n'
@@ -120,7 +121,8 @@ class ListageQualite:
             elif infos['label'] == 'BA' :
                 label_se_ba[titre] = infos
 #        rep += u"''Tronqué à partir de %i adq et %i ba.''\n" % (lim_adq, lim_ba)
-        rep += u"''Limité à %i articles.''\n" % self.limite_label_se
+        if len(label_se) == self.limite_label_se:
+            rep += u"''Limité à %i articles.''\n" % self.limite_label_se
         if len(label_se_adq) > 0:
             rep += self.liste_sans_equivalent(label_se_adq, 'AdQ')
         if len(label_se_ba) > 0:
@@ -214,6 +216,7 @@ class ListageQualite:
         for a in articles:
             if limite is not None and i >= limite:
                 break
+            i += 1
             page = {}
             nom_page = unicode(a[0], 'UTF-8')
             page[champs[1]] = int(a[1])
@@ -231,7 +234,6 @@ class ListageQualite:
                     self.avancementER, 'avancement', \
                     self.retrait_avancement)
             rep[nom_page] = page
-            i += 1
 
         return rep
 
