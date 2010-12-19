@@ -80,15 +80,13 @@ class ListageQualite:
             + u'* %i sont en cours de traduction/traduit.\n' % len(self.label_trad)
         return resu + u'\n'
 
-    def liste_sans_equivalent(self, les_se, titre, tronq):
+    def liste_sans_equivalent(self, les_se, titre):
         lim_deroul = 50
         rep = u"\n=== %s ===\n" % titre
-        if len(les_se) > tronq:
-            rep += u"''%i %s, tronqués à partir de %i articles.''\n" % (len(les_se), titre, tronq)
         if len(les_se) > lim_deroul:
             rep += u'{{Boîte déroulante début|titre=Plus de %i %s}}\n' % (lim_deroul, titre)
         rep += u'{{Colonnes|nombre=2|1=\n'
-        for titre, infos in sorted(les_se[:tronq].iteritems()):
+        for titre, infos in sorted(les_se.iteritems()):
             rep += u"* [[:%s:%s]]\n" % (self.langue, titre)
         rep += u'}}\n'
         if len(les_se) > lim_deroul:
@@ -110,16 +108,19 @@ class ListageQualite:
         rep += u'\n== %i articles sans équivalent en français ==\n' \
                 % len(self.label_se)
         label_se_adq = {}
+        lim_adq = 250
+        lim_ba = 100
         label_se_ba = {}
-        for titre, infos in self.label_se:
-            if infos['label'] == 'AdQ':
+        for titre, infos in self.label_se.items():
+            if infos['label'] == 'AdQ' and len(label_se_adq) < lim_adq :
                 label_se_adq[titre] = infos
-            else:
+            elif infos['label'] == 'BA' and len(label_se_ba) < lim_ba :
                 label_se_ba[titre] = infos
+        rep += u"''Tronqué à partir de %i adq et %i ba.''\n" % (lim_adq, lim_ba)
         if len(label_se_adq) > 0:
-            rep += self.liste_sans_equivalent(label_se_adq, 'AdQ', 250)
+            rep += self.liste_sans_equivalent(label_se_adq, 'AdQ')
         if len(label_se_ba) > 0:
-            rep += self.liste_sans_equivalent(label_se_ba, 'BA', 100)
+            rep += self.liste_sans_equivalent(label_se_ba, 'BA')
 
         # Comparaison
         rep += u'\n== Comparaisons entre AdQ/BA %s et son équivalent en français ==\n' \

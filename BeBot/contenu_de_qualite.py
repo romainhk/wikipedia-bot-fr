@@ -182,24 +182,24 @@ class ContenuDeQualite:
         if mode == 'insert':
             req = u'INSERT INTO %s' % self.nom_base \
                 + '(page, espacedenom, date, label, taille, consultations, traduction, importance) ' \
-                + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")' \
+                + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s, %s)' \
                 % ( q['page'].replace('"', '\\"'), \
                     str(q['espacedenom']), \
                     q['date'].strftime("%Y-%m-%d"), \
                     q['label'], \
                     str(q['taille']), \
                     str(q['consultations']), \
-                    self._put_null(q['traduction']).replace('"', '\\"'), \
+                    self._put_null(q['traduction']), \
                     self._put_null(q['importance']) )
         elif mode == 'update':
             req = u'UPDATE %s SET' % self.nom_base \
-                + u' espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction="%s", importance="%s"' \
+                + u' espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s, importance=%s' \
                 % ( str(q['espacedenom']), \
                     q['date'].strftime("%Y-%m-%d"), \
                     q['label'], \
                     str(q['taille']), \
                     str(q['consultations']), \
-                    self._put_null(q['traduction']).replace('"', '\\"'), \
+                    self._put_null(q['traduction']), \
                     self._put_null(q['importance']) ) \
                 + u' WHERE page="%s"' % q['page'].replace('"', '\\"')
         elif mode == 'delete':
@@ -219,7 +219,7 @@ class ContenuDeQualite:
 
     def _put_null(self, obj):
         if obj is not None:
-            return u'"%s"' % obj
+            return u'"%s"' % obj.replace('"', '\\"')
         else:
             return u'NULL'
 
@@ -299,6 +299,7 @@ class ContenuDeQualite:
         except PasDeDate as pdd:
             self.pasdedate.append( {'page': pdd.page, 'date': u''} )
             return None
+        pywikibot.output(page.title())
         infos = {
             'page': page.title(), \
             'espacedenom': page.namespace(), \
