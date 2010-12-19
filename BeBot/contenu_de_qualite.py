@@ -299,7 +299,6 @@ class ContenuDeQualite:
         except PasDeDate as pdd:
             self.pasdedate.append( {'page': pdd.page, 'date': u''} )
             return None
-        pywikibot.output(page.title())
         infos = {
             'page': page.title(), \
             'espacedenom': page.namespace(), \

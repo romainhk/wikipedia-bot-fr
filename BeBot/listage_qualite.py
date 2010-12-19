@@ -33,6 +33,7 @@ class ListageQualite:
                     |-> NON => label_nofr
         """
         self.total = 0
+        self.limite_label_se = 300
 
         self.sous_page = {
                 'en': u'Anglais',
@@ -108,15 +109,18 @@ class ListageQualite:
         rep += u'\n== %i articles sans équivalent en français ==\n' \
                 % len(self.label_se)
         label_se_adq = {}
-        lim_adq = 250
-        lim_ba = 100
+        #lim_adq = 250
+        #lim_ba = 100
         label_se_ba = {}
         for titre, infos in self.label_se.items():
-            if infos['label'] == 'AdQ' and len(label_se_adq) < lim_adq :
+            #if infos['label'] == 'AdQ' and len(label_se_adq) < lim_adq :
+            if infos['label'] == 'AdQ' :
                 label_se_adq[titre] = infos
-            elif infos['label'] == 'BA' and len(label_se_ba) < lim_ba :
+            #elif infos['label'] == 'BA' and len(label_se_ba) < lim_ba :
+            elif infos['label'] == 'BA' :
                 label_se_ba[titre] = infos
-        rep += u"''Tronqué à partir de %i adq et %i ba.''\n" % (lim_adq, lim_ba)
+#        rep += u"''Tronqué à partir de %i adq et %i ba.''\n" % (lim_adq, lim_ba)
+        rep += u"''Limité à %i articles.''\n" % self.limite_label_se
         if len(label_se_adq) > 0:
             rep += self.liste_sans_equivalent(label_se_adq, 'AdQ')
         if len(label_se_ba) > 0:
@@ -197,15 +201,19 @@ class ListageQualite:
 
     #######################################
     ### Recherche d'infos
-    def lycos(self, nom_base, conditions=None):
+    def lycos(self, nom_base, conditions=None, limite=None):
         """ Récupère les articles labellisés de la base correspondants
             à certaines conditions
         """
+        rep = {}
         champs = [ 'page', 'taille', 'traduction', 'importance', 'label' ]
         articles = BeBot.charger_bdd(self.db, nom_base, \
                 champs=", ".join(champs), cond=conditions)
-        rep = {}
+        #articles = sorted(articles.items())
+        i = 0
         for a in articles:
+            if limite is not None and i >= limite:
+                break
             page = {}
             nom_page = unicode(a[0], 'UTF-8')
             page[champs[1]] = int(a[1])
@@ -223,6 +231,8 @@ class ListageQualite:
                     self.avancementER, 'avancement', \
                     self.retrait_avancement)
             rep[nom_page] = page
+            i += 1
+
         return rep
 
     def infos_page_suivi(self, pagetrad):
@@ -257,7 +267,8 @@ class ListageQualite:
         return infos
 
     def run(self):
-        self.label_se = self.lycos(self.nom_base, conditions="traduction IS NULL")
+        self.label_se = self.lycos(self.nom_base, \
+                conditions="traduction IS NULL", limite=self.limite_label_se)
 
         art_etrangers = self.lycos(self.nom_base, conditions="traduction IS NOT NULL")
         art_fr = self.lycos('contenu_de_qualite_fr')
