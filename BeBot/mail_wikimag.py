@@ -22,32 +22,35 @@ class MailWikimag:
         # Préparation du contenu du mail
         modele = re.compile("\{\{[cC]omposition wikimag", re.LOCALE)
         pagetmp = pywikibot.Page(self.site, self.tmp)
-        pagetmp.text = modele.sub('{{subst:%s' % self.modele_de_presentation, self.mag.text)
+        pagetmp.text = modele.sub(u'{{subst:%s|' % self.modele_de_presentation, self.mag.text)
         try:
             pagetmp.save(comment=u'Préparation du mail pour le Wikimag', minor=False)
         except:
             pywikibot.error(u"Impossible d'effectuer la substitution")
             sys.exit(2)
-        pywikibot.output(pagetmp._textgetter())
+        #pywikibot.output(pagetmp._textgetter())
 
         pagetmp = pywikibot.Page(self.site, self.tmp)
+        #pagetmp.text = u'{{annonces|4|bonjour àààà.}}\n[[Image:Salut.jpg|thumb|24px|AAAAAAA]]\n'
+        #pagetmp.text += u'[http://fr.planet.wikimedia.org/ Planète]\n[http://meta.wikimedia.org]\n'
+        #pagetmp.text += u'[[Nord]]\n[[Utilisateur:BeBot|Bebot]]'
         #Annonces
-        r = re.compile("\{\{[aA]nnonces\|(\d+)\|([^\|\]]+)\}\}", re.LOCALE)
-        pagetmp.text = r.sub('* \1 : \2', pagetmp.text)
+        r = re.compile(u"\{\{[aA]nnonces\|(\d+)\|([^\|\]]+)\}\}", re.LOCALE)
+        pagetmp.text = r.sub(r'* \1 : \2', pagetmp.text)
         #Images
-        r = re.compile("\[\[{[iI]mage|[fF]ile|[fF]ichier}:[^\]]+\]\]", re.LOCALE)
-        pagetmp.text = r.sub('', pagetmp.text)
+        r = re.compile(u"\[\[([iI]mage|[fF]ile|[fF]ichier):[^\]]+\]\]\s*", re.LOCALE)
+        pagetmp.text = r.sub(r'', pagetmp.text)
         #Liens externes
-        r = re.compile("\[(http:[^\] ]+) ([^\]])+\]", re.LOCALE)
-        pagetmp.text = r.sub('\2 [\1]', pagetmp.text)
-        r = re.compile("\[(http:[^\] ]+)\]", re.LOCALE)
-        pagetmp.text = r.sub('\1', pagetmp.text)
+        r = re.compile(u"\[(http:[^\] ]+) ([^\]]+)\]", re.LOCALE)
+        pagetmp.text = r.sub(r'\2 [\1]', pagetmp.text)
+        r = re.compile(u"\[(http:[^\] ]+)\]", re.LOCALE)
+        pagetmp.text = r.sub(r'\1', pagetmp.text)
         #Liens internes
         #Pas d'interwiki, ni d'interlangue
-        r = re.compile("\[\[([^\]])+\|([^\]])+\]\]", re.LOCALE)
-        pagetmp.text = r.sub('\2 (http:/fr.wikipedia.org/wiki/\1)', pagetmp.text)
-        r = re.compile("\[\[([^\]])+\]\]", re.LOCALE)
-        pagetmp.text = r.sub('\1 (http:/fr.wikipedia.org/wiki/\1)', pagetmp.text)
+        r = re.compile(u"\[\[([^\]\|]+)\|([^\]]+)\]\]", re.LOCALE)
+        pagetmp.text = r.sub(r'\2 (http:/fr.wikipedia.org/wiki/\1)', pagetmp.text)
+        r = re.compile(u"\[\[([^\]]+)\]\]", re.LOCALE)
+        pagetmp.text = r.sub(r'http:/fr.wikipedia.org/wiki/\1', pagetmp.text)
 
         # Publication du mail sur la ml
         pywikibot.output(pagetmp.text)
@@ -55,8 +58,6 @@ class MailWikimag:
 def main():
     site = pywikibot.getSite()
     mw = MailWikimag(site)
-#    pywikibot.output(repr(mw))
-#    if mw != 2:
     mw.run()
 
 if __name__ == "__main__":
