@@ -165,12 +165,13 @@ def stou(statut):
 def fichier_conf(fichier):
     """ Lit un fichier de configuration et retourne un dictionnaire des valeurs
     Format du fichier de conf : "clé=valeur"
-    Tou ce qui est à droite de # est ignoré
+    Tout ce qui est à droite de # est ignoré
     """
     conf = {}
     with open(fichier, "r") as f:
         for l in f.xreadlines():
             a = l.split('#', 1)
-            b = a[0].split('=', 1)
-            conf[b[0].strip()] = b[1].strip()
+            if len(a) == 1:
+                b = a[0].split('=', 1)
+                conf[b[0].strip()] = b[1].strip()
     return conf

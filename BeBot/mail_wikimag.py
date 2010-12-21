@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, locale, sys, smtplib
+import re, datetime, locale, sys, smtplib, os
 from email.MIMEText import MIMEText
 from email.Utils import formatdate
 import BeBot
@@ -10,17 +10,23 @@ locale.setlocale(locale.LC_ALL, '')
 class MailWikimag:
     """ Mail Wikimag
         Publie une version mail du wikimag
+
+        Nécessite en argument l'adresse d'un fichier de configuration du type :
+mailinglist=    # sur laquel on va publier le mag
+serveur=        # smtp à utiliser, smtp.
+port=
+from=           # adresse de l'expédieur, truc@toto.fr
+motdepasse=
+#utilisateur=    # (facultatif) nom du compte sur le serveur si différent du from
     """
-    def __init__(self, site):
+    def __init__(self, site, fichier_conf):
         self.site = site
+        self.conf_mail = fichier_conf
         self.tmp = u'Utilisateur:BeBot/MailWikimag'
         self.modele_de_presentation = u'Utilisateur:Romainhk/Souspage2'
         self.date = datetime.date.today()
         self.mag = pywikibot.Page(site, u'Wikipédia:Wikimag/%s' % \
                 unicode(self.date.strftime("%Y/%W"), "utf-8"))
-        # Mail
-        self.mailing_list = u'romainhk@gmail.com'
-        self.conf_mail = u'mail_wikimag.conf'
 
     def run(self):
         # Préparation du contenu du mail
@@ -56,13 +62,18 @@ class MailWikimag:
         text = r.sub(r'http:/fr.wikipedia.org/wiki/\1', text)
 
         conf = BeBot.fichier_conf(self.conf_mail)
+        if 'from' not in conf or 'mailinglist' not in conf or 'serveur' not in conf or 'port' not in conf:
+            pywikibot.warning(u"fichier de configuration incomplet")
+            sys.exit(3)
+        if 'utilisateur' not in conf:
+            conf['utilisateur'] = conf['from'].split('@', 1)[0]
         # Publication du mail sur la ml
 #        mail = email.message_from_string(text)
         #text = 'testestset sdsgggéàà@@@ççÉÀÀÀÀÀ:«»«»ø~´`}]d'
         msg = MIMEText(text, 'plain', 'utf8')
         #msg = MIMEText(text, 'plain', 'iso8859-15')
         msg['From'] = conf['from']
-        msg['To'] = self.mailing_list
+        msg['To'] = conf['mailinglist']
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = u'Wikimag du %s' % \
                 unicode(self.date.strftime("%e/%m/%Y - semaine %W"), "utf-8")
@@ -70,16 +81,23 @@ class MailWikimag:
             smtp = smtplib.SMTP(conf['serveur'], conf['port'])
             smtp.starttls()
             smtp.login(conf['utilisateur'], conf['motdepasse'])
-            smtp.sendmail(conf['from'], self.mailing_list, msg.as_string())
+            smtp.sendmail(conf['from'], conf['mailinglist'], msg.as_string())
             smtp.quit()
         except smtplib.SMTPException, mssg:
             print mssg
         #pywikibot.output(msg.as_string())
 
 def main():
-    site = pywikibot.getSite()
-    mw = MailWikimag(site)
-    mw.run()
+    if len(sys.argv) > 1:
+        fichier_conf = sys.argv[1]
+    else:
+        fichier_conf = u''
+    if os.path.exists(fichier_conf):
+        site = pywikibot.getSite()
+        mw = MailWikimag(site, fichier_conf)
+        mw.run()
+    else:
+        pywikibot.output(u"Argument invalide: Ce script attend l'adresse d'un fichier de configuration comme unique argument (voir doc).")
 
 if __name__ == "__main__":
     try:
