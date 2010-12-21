@@ -15,6 +15,7 @@ Rassemble plusieurs fonctions génériques :
 * consultation mensuelle d'une page
 * dire si un wiki possède un wikiprojet ou s'il donne la date de labellisation
 * récupérer une table dans un bdd...
+* lire un fichier de configuration
 """
 
 def moistoint(mois):
@@ -160,3 +161,16 @@ def stou(statut):
     if statut >= 1 and statut <= 5:
         return stat[statut]
     return stat[0]
+
+def fichier_conf(fichier):
+    """ Lit un fichier de configuration et retourne un dictionnaire des valeurs
+    Format du fichier de conf : "clé=valeur"
+    Tou ce qui est à droite de # est ignoré
+    """
+    conf = {}
+    with open(fichier, "r") as f:
+        for l in f.xreadlines():
+            a = l.split('#', 1)
+            b = a[0].split('=', 1)
+            conf[b[0].strip()] = b[1].strip()
+    return conf
