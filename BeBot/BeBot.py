@@ -14,8 +14,9 @@ Rassemble plusieurs fonctions génériques :
 * page de traduction associée
 * consultation mensuelle d'une page
 * dire si un wiki possède un wikiprojet ou s'il donne la date de labellisation
-* récupérer une table dans un bdd...
+* récupérer une table dans un bdd
 * lire un fichier de configuration
+* retourner une chaine de caractère...
 """
 
 def moistoint(mois):
@@ -175,3 +176,13 @@ def fichier_conf(fichier):
                 b = a[0].split('=', 1)
                 conf[b[0].strip()] = b[1].strip()
     return conf
+
+def reverse(chaine):
+    """ Retourne une chaine de caractère
+    """
+    rep = u''
+    i = len(chaine)
+    while i > 0:
+        i -= 1
+        rep += chaine[i]
+    return rep

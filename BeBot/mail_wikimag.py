@@ -3,6 +3,7 @@
 import re, datetime, locale, sys, smtplib, os
 from email.MIMEText import MIMEText
 from email.Utils import formatdate
+from email import encoders
 import BeBot
 import pywikibot
 locale.setlocale(locale.LC_ALL, '')
@@ -17,16 +18,24 @@ serveur=        # smtp à utiliser, smtp.
 port=
 from=           # adresse de l'expédieur, truc@toto.fr
 motdepasse=
-#utilisateur=    # (facultatif) nom du compte sur le serveur si différent du from
+#utilisateur=    # (facultatif) nom du compte sur le serveur smtp si différent du from
     """
     def __init__(self, site, fichier_conf):
         self.site = site
         self.conf_mail = fichier_conf
         self.tmp = u'Utilisateur:BeBot/MailWikimag'
         self.modele_de_presentation = u'Utilisateur:Romainhk/Souspage2'
-        self.date = datetime.date.today()
+        date = datetime.date.today()
+        self.lundi = date - datetime.timedelta(days=date.weekday())
+        self.lundi_pre = self.lundi - datetime.timedelta(weeks=1)
         self.mag = pywikibot.Page(site, u'Wikipédia:Wikimag/%s' % \
-                unicode(self.date.strftime("%Y/%W"), "utf-8"))
+                unicode(self.lundi_pre.strftime("%Y/%W"), "utf-8"))
+        self.jocker = u'%$!' #Pour les liens http
+        self.ajocker = BeBot.reverse(self.jocker)
+
+    def url_(self, match):
+        return match.group(1).replace(' ', '_')
+        #return match.group(1).replace(' ', '_').replace("'", "\\'").replace('"', '\\"')
 
     def run(self):
         # Préparation du contenu du mail
@@ -40,26 +49,30 @@ motdepasse=
             sys.exit(2)
 
         text = pywikibot.Page(self.site, self.tmp).text
-        #text = u'{{annonces|4|bonjour àààà.}}\n[[Image:Salut.jpg|thumb|24px|AAAAAAA]]\n'
-        #text += u'[http://fr.planet.wikimedia.org/ Planète]\n[http://meta.wikimedia.org]\n'
-        #text += u'[[Nord]]\n[[Utilisateur:BeBot|Bebot]]'
+        r = re.compile(u"<br[ /]*>", re.LOCALE)
+        text = r.sub(r'', text)
         #Annonces
-        r = re.compile(u"\{\{[aA]nnonces\|(\d+)\|([^\|\]]+)\}\}", re.LOCALE)
+        #r = re.compile(u"\{\{[Aa]nnonce[ \w]*\|(\d+)\|([^\|]+)\}\}", re.LOCALE)
+        r = re.compile("\{\{[Aa]nnonce[ \w]*\|(\d+)\|(.+?)\}\}", re.LOCALE|re.UNICODE)
         text = r.sub(r'* \1 : \2', text)
         #Images
-        r = re.compile(u"\[\[([iI]mage|[fF]ile|[fF]ichier):[^\]]+\]\]\s*", re.LOCALE)
+        r = re.compile("\[\[([iI]mage|[fF]ile|[fF]ichier):[^\]]+\]\]\s*", re.LOCALE|re.UNICODE)
         text = r.sub(r'', text)
         #Liens externes
-        r = re.compile(u"\[(http:[^\] ]+) ([^\]]+)\]", re.LOCALE)
-        text = r.sub(r'\2 [ \1 ]', text)
-        r = re.compile(u"\[(http:[^\] ]+)\]", re.LOCALE)
-        text = r.sub(r'\1', text)
+        r = re.compile("\[(http:[^\] ]+) ([^\]]+)\]", re.LOCALE|re.UNICODE)
+        text = r.sub(r'\2 [ %s\1%s ]' % ( self.jocker, self.ajocker), text)
+        r = re.compile("\[(http:[^\] ]+)\]", re.LOCALE|re.UNICODE)
+        text = r.sub(r'%s\1%s' % ( self.jocker, self.ajocker), text)
         #Liens internes
         #Pas d'interwiki, ni d'interlangue
-        r = re.compile(u"\[\[([^\]\|]+)\|([^\]]+)\]\]", re.LOCALE)
-        text = r.sub(r'\2 ( http:/fr.wikipedia.org/wiki/\1 )', text)
-        r = re.compile(u"\[\[([^\]]+)\]\]", re.LOCALE)
-        text = r.sub(r'http:/fr.wikipedia.org/wiki/\1', text)
+        r = re.compile("\[\[([^\]\|]+)\|([^\]]+)\]\]", re.LOCALE|re.UNICODE)
+        text = r.sub(r'\2 ( %shttp://fr.wikipedia.org/wiki/\1%s )' % ( self.jocker, self.ajocker), text)
+        r = re.compile("\[\[([^\]]+)\]\]", re.LOCALE|re.UNICODE)
+        text = r.sub(r'%shttp://fr.wikipedia.org/wiki/\1%s' % ( self.jocker, self.ajocker), text)
+        #Modification des liens http
+        r = re.compile("%s(.*?)%s" % ( re.escape(self.jocker), re.escape(self.ajocker)), re.LOCALE|re.UNICODE)
+        text = r.sub(self.url_, text)
+        #pywikibot.output(text)
 
         conf = BeBot.fichier_conf(self.conf_mail)
         if 'from' not in conf or 'mailinglist' not in conf or 'serveur' not in conf or 'port' not in conf:
@@ -70,13 +83,12 @@ motdepasse=
         # Publication du mail sur la ml
 #        mail = email.message_from_string(text)
         #text = 'testestset sdsgggéàà@@@ççÉÀÀÀÀÀ:«»«»ø~´`}]d'
-        msg = MIMEText(text, 'plain', 'utf8')
-        #msg = MIMEText(text, 'plain', 'iso8859-15')
+        msg = MIMEText(text.encode('utf-8'), 'plain', 'utf8')
         msg['From'] = conf['from']
         msg['To'] = conf['mailinglist']
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = u'Wikimag du %s' % \
-                unicode(self.date.strftime("%e/%m/%Y - semaine %W"), "utf-8")
+                unicode(self.lundi_pre.strftime("%e/%m/%Y - semaine %W"), "utf-8")
         try:
             smtp = smtplib.SMTP(conf['serveur'], conf['port'])
             smtp.starttls()
@@ -85,7 +97,6 @@ motdepasse=
             smtp.quit()
         except smtplib.SMTPException, mssg:
             print mssg
-        #pywikibot.output(msg.as_string())
 
 def main():
     if len(sys.argv) > 1:
