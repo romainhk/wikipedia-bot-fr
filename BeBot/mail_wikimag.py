@@ -3,7 +3,6 @@
 import re, datetime, locale, sys, smtplib, os
 from email.MIMEText import MIMEText
 from email.Utils import formatdate
-from email import encoders
 import BeBot
 import pywikibot
 locale.setlocale(locale.LC_ALL, '')

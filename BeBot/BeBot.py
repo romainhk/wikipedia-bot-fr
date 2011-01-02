@@ -83,7 +83,10 @@ def stat_consultations(page, codelangue=u'fr', date=False):
     """
     if not date:
         date = datetime.date.today()
-        date = datetime.date(date.year, date.month-1, date.day)
+        if date.month > 1 :
+            date = datetime.date(date.year, date.month-1, date.day)
+        else:
+            date = datetime.date(date.year-1, 12, date.day)
     url = "http://stats.grok.se/json/%s/%s/%s" \
             % ( codelangue, date.strftime("%Y%m"), urllib2.quote(page.title().encode('utf-8')) )
     try:
