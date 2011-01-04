@@ -29,6 +29,8 @@ motdepasse=
         self.lundi_pre = self.lundi - datetime.timedelta(weeks=1)
         self.mag = pywikibot.Page(site, u'Wikipédia:Wikimag/%s' % \
                 unicode(self.lundi_pre.strftime("%Y/%W"), "utf-8"))
+        if self.mag.isRedirectPage():
+            self.mag = self.mag.getRedirectTarget()
         self.jocker = u'%$!' #Pour les liens http
         self.ajocker = BeBot.reverse(self.jocker)
 
