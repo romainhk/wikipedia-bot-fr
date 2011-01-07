@@ -23,7 +23,7 @@ motdepasse=
         self.site = site
         self.conf_mail = fichier_conf
         self.tmp = u'Utilisateur:BeBot/MailWikimag'
-        self.modele_de_presentation = u'Modèle:Wikimag_par_mail'
+        self.modele_de_presentation = u'Wikimag_par_mail'
         date = datetime.date.today()
         self.lundi = date - datetime.timedelta(days=date.weekday())
         self.lundi_pre = self.lundi - datetime.timedelta(weeks=1)

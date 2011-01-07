@@ -121,7 +121,7 @@ class ListageQualite:
             elif infos['label'] == 'BA' :
                 label_se_ba[titre] = infos
 #        rep += u"''Tronqué à partir de %i adq et %i ba.''\n" % (lim_adq, lim_ba)
-        if len(label_se) == self.limite_label_se:
+        if len(self.label_se) == self.limite_label_se:
             rep += u"''Limité à %i articles.''\n" % self.limite_label_se
         if len(label_se_adq) > 0:
             rep += self.liste_sans_equivalent(label_se_adq, 'AdQ')
