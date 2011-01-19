@@ -181,7 +181,7 @@ def fichier_conf(fichier):
     return conf
 
 def reverse(chaine):
-    """ Retourne une chaine de caractère
+    """ Retourne la chaine de caractères mise à l'envers
     """
     rep = u''
     i = len(chaine)
