@@ -20,7 +20,7 @@ class BotWikimag:
         lecteur = pywikibot.Page(self.site, u"Utilisateur:"+lecteur).toggleTalkPage()
         # Donne le mag au lecteur
         try:
-            lecteur.put_async(lecteur.text + msg, comment=u'Wikimag ! Prenez le Wikimag ! ... 0 cents !', minorEdit=False)
+            lecteur.put_async(lecteur.text + msg, comment=u'Prenez le Wikimag ! ... 0 cents !', minorEdit=False)
         except pywikibot.Error, e:
             pywikibot.warning(u"Impossible de refourger le mag à %s" % lecteur.title(withNamespace=True) )
 
