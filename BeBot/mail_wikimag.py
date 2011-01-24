@@ -47,16 +47,16 @@ motdepasse=
         modele = re.compile("\{\{[cC]omposition wikimag", re.LOCALE)
         pagetmp = pywikibot.Page(self.site, self.tmp)
         pagetmp.text = modele.sub(u'{{subst:%s|' % self.modele_de_presentation, self.mag.text)
-        try:
-            pagetmp.save(comment=u'Préparation du mail pour le Wikimag', minor=False)
-        except:
-            pywikibot.error(u"Impossible d'effectuer la substitution")
-            sys.exit(2)
         #Numéro du mag
         num = re.compile(u"\|numéro *= *(\d+)", re.LOCALE|re.UNICODE)
         m = num.search(pagetmp.text)
         if m is not None:
             self.numero = m.group(1)
+        try:
+            pagetmp.save(comment=u'Préparation du mail pour le Wikimag', minor=False)
+        except:
+            pywikibot.error(u"Impossible d'effectuer la substitution")
+            sys.exit(2)
 
         text = pywikibot.Page(self.site, self.tmp).text
         r = re.compile(u"<br[ /]*>", re.LOCALE)
