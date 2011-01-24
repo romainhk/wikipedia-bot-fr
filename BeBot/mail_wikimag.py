@@ -43,11 +43,11 @@ motdepasse=
         #return match.group(1).replace(' ', '_').replace("'", "\\'").replace('"', '\\"')
 
     def run(self):
-        # Préparation du contenu du mail
+        # Préparation du contenu
         modele = re.compile("\{\{[cC]omposition wikimag", re.LOCALE)
         pagetmp = pywikibot.Page(self.site, self.tmp)
         pagetmp.text = modele.sub(u'{{subst:%s|' % self.modele_de_presentation, self.mag.text)
-        #Numéro du mag
+        # Numéro du mag
         num = re.compile(u"\|numéro *= *(\d+)", re.LOCALE|re.UNICODE)
         m = num.search(pagetmp.text)
         if m is not None:
@@ -61,25 +61,24 @@ motdepasse=
         text = pywikibot.Page(self.site, self.tmp).text
         r = re.compile(u"<br[ /]*>", re.LOCALE)
         text = r.sub(r'', text)
-        #Annonces
-        #r = re.compile(u"\{\{[Aa]nnonce[ \w]*\|(\d+)\|([^\|]+)\}\}", re.LOCALE)
+        # Annonces
         r = re.compile("\{\{[Aa]nnonce[ \w]*\|(\d+)\|(.+?)\}\}", re.LOCALE|re.UNICODE)
         text = r.sub(r'* \1 : \2', text)
-        #Images
+        # Images
         r = re.compile("\[\[([iI]mage|[fF]ile|[fF]ichier):[^\]]+\]\]\s*", re.LOCALE|re.UNICODE)
         text = r.sub(r'', text)
-        #Liens externes
+        # Liens externes
         r = re.compile("\[(http:[^\] ]+) ([^\]]+)\]", re.LOCALE|re.UNICODE)
         text = r.sub(r'\2 [ %s\1%s ]' % ( self.jocker, self.ajocker), text)
         r = re.compile("\[(http:[^\] ]+)\]", re.LOCALE|re.UNICODE)
         text = r.sub(r'%s\1%s' % ( self.jocker, self.ajocker), text)
-        #Liens internes
+        # Liens internes
         #Pas d'interwiki, ni d'interlangue
         r = re.compile("\[\[([^\]\|]+)\|([^\]]+)\]\]", re.LOCALE|re.UNICODE)
         text = r.sub(r'\2 ( %shttp://fr.wikipedia.org/wiki/\1%s )' % ( self.jocker, self.ajocker), text)
         r = re.compile("\[\[([^\]]+)\]\]", re.LOCALE|re.UNICODE)
         text = r.sub(r'%shttp://fr.wikipedia.org/wiki/\1%s' % ( self.jocker, self.ajocker), text)
-        #Modification des liens http ( -> url_() )
+        # Modification des liens http ( -> url_() )
         r = re.compile("%s(.*?)%s" % ( re.escape(self.jocker), re.escape(self.ajocker)), re.LOCALE|re.UNICODE)
         text = r.sub(self.url_, text)
         #pywikibot.output(text)
@@ -91,8 +90,6 @@ motdepasse=
         if 'utilisateur' not in conf:
             conf['utilisateur'] = conf['from'].split('@', 1)[0]
         # Publication du mail sur la ml
-#        mail = email.message_from_string(text)
-        #text = 'testestset sdsgggéàà@@@ççÉÀÀÀÀÀ:«»«»ø~´`}]d'
         msg = MIMEText(text.encode('utf-8'), 'plain', 'utf8')
         msg['From'] = conf['from']
         msg['To'] = conf['mailinglist']
