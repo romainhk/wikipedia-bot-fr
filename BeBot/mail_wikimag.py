@@ -96,7 +96,7 @@ motdepasse=
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = u'#%s, semaine %s - %s' % \
                 (self.numero, self.semaine, \
-                 self.lundi_pre.strftime("%e %b %Y").lstrip(' ') )
+                 unicode(self.lundi_pre.strftime("%e %b %Y").lstrip(' '), 'utf-8') )
         try:
             smtp = smtplib.SMTP(conf['serveur'], conf['port'])
             smtp.starttls()
