@@ -9,6 +9,8 @@ locale.setlocale(locale.LC_ALL, '')
 class PreparationWikimag:
     """ Préparation d'un wikimag : 
         annonces, images et promotions AdQ/BA de la semaine courante.
+        TODO : problème de reconnaissance des dates :
+            {{Article de qualité|...|date=1{{er}} février 2011}}
     """
     def __init__(self, site):
         self.site = site

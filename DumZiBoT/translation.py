@@ -70,6 +70,8 @@ languages = [
         [ 'br', 'breton',   "le&nbsp;" ],
         [ 'la', 'latin',    "le&nbsp;" ],
         [ 'wa', 'wallon',   "le&nbsp;" ],
+        [ 'oc', 'occitan',   "l'" ],
+        [ 'sq', 'albanais',   "l'" ],
         [ 'wuu', 'wu',      "le&nbsp;" ]
     ]
 
