@@ -21,8 +21,10 @@ class BotWikimag:
         if lecteur.isRedirectPage():
             lecteur = lecteur.getRedirectTarget()
         # Donne le mag au lecteur
+        lecteur.text = lecteur.text + msg
         try:
-            lecteur.put_async(lecteur.text + msg, comment=u'Demandez Cannes Midi. Le tueur de Cannes frappe encore... 5 cents', minorEdit=False)
+            #lecteur.put_async(lecteur.text + msg, comment=u'Demandez Cannes Midi. Le tueur de Cannes frappe encore... 5 cents', minorEdit=False)
+            lecteur.save(comment=u'Demandez Cannes Midi. Le tueur de Cannes frappe encore... 5 cents', minor=False, async=True)
         except pywikibot.Error, e:
             pywikibot.warning(u"Impossible de refourger le mag à %s" % lecteur.title(withNamespace=True) )
 

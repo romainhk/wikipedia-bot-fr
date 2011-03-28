@@ -3,6 +3,7 @@
 import sys
 from irclib import nm_to_n, nm_to_h, irc_lower, ip_numstr_to_quad, ip_quad_to_numstr
 from ircbot import SingleServerIRCBot
+#import pywikibot
  
 """
     Bot IRC gérant le chan de l'Atelier de lecture
@@ -16,14 +17,27 @@ class Bot(SingleServerIRCBot):
     def __init__(self, channel, nickname, realname, server, port=6667):
         self.server = SingleServerIRCBot.__init__(self, [(server, port)], nickname, realname)
         self.channel = channel
+        #self.site = pywikibot.getSite()
+        #self.page = pywikibot.Page(self.site, "Utilisateur:BeBot/Statut_Chan_Adl")
+        self.total = 0
+        self.modele = u"{| class=\"wikitable\"\n|-\n" \
+            + u"|[http://webchat.freenode.net/?channels=#Adl Chan #Adl]\n|-\n|%d connectés\n|}"
 
     def on_join(self, serv, e):
         serv.execute_delayed(5, self.nb_connect)
 
     def nb_connect(self):
-        #Écrire un json avec le nombre de connexions
         c = self.channels.items()[0][1]
         total = len(c.users()) + len(c.opers()) + len(c.voiced())
+        if self.total != total:
+            # Publier sur le serveur web et récupérer en ajax depuis le gadget
+            """
+            try:
+                self.page.put(self.modele % total, comment=u'Maj du status', minorEdit=True)
+            except pywikibot.Error, e:
+                pywikibot.warning(u"Impossible de donner le statut")
+            """
+            self.total = total
         self.connection.execute_delayed(30, self.nb_connect)
 
     def on_nicknameinuse(self, c, e):
@@ -73,7 +87,7 @@ def main():
     port = 6667
     channel = '#Adl'
     nickname = 'BeBot'
-    realname = 'Bot Romainhk'
+    realname = 'Romainhk Bot'
  
     # Connection
     bot = Bot(channel, nickname, realname, server, port)
