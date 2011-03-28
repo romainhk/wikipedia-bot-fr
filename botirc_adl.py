@@ -17,16 +17,16 @@ class Bot(SingleServerIRCBot):
     def __init__(self, channel, nickname, realname, server, port=6667):
         self.server = SingleServerIRCBot.__init__(self, [(server, port)], nickname, realname)
         self.channel = channel
+        self.total = 0
         #self.site = pywikibot.getSite()
         #self.page = pywikibot.Page(self.site, "Utilisateur:BeBot/Statut_Chan_Adl")
-        self.total = 0
         #self.modele = u"{| class=\"wikitable\"\n|-\n" \
         #   + u"|[http://webchat.freenode.net/?channels=#Adl Chan #Adl]\n|-\n|%d connectés\n|}"
         self.fichier = "/home/romainhk/public_html/chan_adl"
 
 
     def on_join(self, serv, e):
-        serv.execute_delayed(5, self.nb_connect)
+        serv.execute_delayed(4, self.nb_connect)
 
     def nb_connect(self):
         c = self.channels.items()[0][1]
@@ -38,7 +38,7 @@ class Bot(SingleServerIRCBot):
             except pywikibot.Error, e:
                 pywikibot.warning(u"Impossible de donner le statut")
             """
-            # Publier sur le serveur web et récupérer en ajax depuis le gadget
+            # Publier sur le serveur web ; à récupérer en ajax depuis le gadget
             f = open(self.fichier, 'w')
             f.write(str(total))
             f.close()
