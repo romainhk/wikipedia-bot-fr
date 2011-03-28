@@ -23,7 +23,6 @@ class Bot(SingleServerIRCBot):
         #self.modele = u"{| class=\"wikitable\"\n|-\n" \
         #   + u"|[http://webchat.freenode.net/?channels=#Adl Chan #Adl]\n|-\n|%d connectés\n|}"
         self.fichier = "/home/romainhk/public_html/chan_adl"
-        self.f = open(self.fichier, 'w')
 
 
     def on_join(self, serv, e):
@@ -31,7 +30,7 @@ class Bot(SingleServerIRCBot):
 
     def nb_connect(self):
         c = self.channels.items()[0][1]
-        total = len(c.users()) + len(c.opers()) + len(c.voiced())
+        total = len(c.users())
         if self.total != total:
             """ En passant par wikipédia
             try:
@@ -40,7 +39,9 @@ class Bot(SingleServerIRCBot):
                 pywikibot.warning(u"Impossible de donner le statut")
             """
             # Publier sur le serveur web et récupérer en ajax depuis le gadget
-            self.f.write(total)
+            f = open(self.fichier, 'w')
+            f.write(str(total))
+            f.close()
             self.total = total
         self.connection.execute_delayed(30, self.nb_connect)
 
@@ -80,8 +81,7 @@ class Bot(SingleServerIRCBot):
                 voiced = chobj.voiced()
                 voiced.sort()
                 c.notice(nick, "Voiced: " + ", ".join(voiced))
-                total = len(users) + len(opers) + len(voiced)
-                c.notice(nick, "Total : " + str(total))
+                c.notice(nick, "Total : " + str(len(users)))
         else:
             c.notice(nick, "Command inconnue: " + cmd)
 
