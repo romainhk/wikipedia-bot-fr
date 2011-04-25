@@ -22,8 +22,6 @@ motdepasse=
 
         TODO  gérer les interwiki/interlangue
         TODO  version html...
-                SOMMAIRE
-                codage des URLs
     """
     def __init__(self, site, fichier_conf):
         self.site = site
@@ -39,12 +37,16 @@ motdepasse=
         self.numero = 0
         if self.mag.isRedirectPage():
             self.mag = self.mag.getRedirectTarget()
+
         self.jocker = u'%$!' #Pour repérer les liens http
         self.ajocker = BeBot.reverse(self.jocker)
+        self.sommaire_jocker = '###141### SOMMAIRE ###592###'
         self.exps = {
                 'split'     : re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'br'        : re.compile("<br[ /]*>", re.LOCALE|re.UNICODE),
-                'annonces'  : re.compile("\*? ?\{\{[Aa]nnonce[ \w]*\|(\d+)\|(.+?)\}\}", re.LOCALE|re.UNICODE),
+                'W_br'      : re.compile("\n\n", re.LOCALE|re.UNICODE|re.MULTILINE),
+                'http'      : re.compile("(http)%3A", re.LOCALE|re.UNICODE|re.MULTILINE),
+                'annonces'  : re.compile("\*? ?\{\{[Aa]nnonce[ \w\xe9]*\|(\d+)\|(.+?)\}\}", re.LOCALE|re.UNICODE),
                 'image'     : re.compile("\[\[([iI]mage|[fF]ile|[fF]ichier):[^\]]+\]\]\s*", re.LOCALE|re.UNICODE),
                 'lien_ext'  : re.compile("\[(http:[^\] ]+) ?([^\]]*)\]", re.LOCALE|re.UNICODE),
        #         'lien_ext2' : re.compile("\[(http:[^\] ]+)\]", re.LOCALE|re.UNICODE),
@@ -57,7 +59,8 @@ motdepasse=
                 'i'         : re.compile("(?P<quote>'{2})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
                 'comment'   : re.compile("<!--(.*?)-->", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'liste'     : re.compile("\*\s?(.*)", re.LOCALE|re.UNICODE),
-                'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE)
+                'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE),
+                'sommaire'  : re.compile(self.sommaire_jocker, re.LOCALE|re.UNICODE)
                 }
 
     def url_(self, match):
@@ -101,48 +104,55 @@ motdepasse=
         text = self.exps['i'].sub(r'<i>\2</i>', text)
         text = self.exps['comment'].sub(r'', text)
         text = self.exps['W_uma'].sub(r'\1', text)
+        text = self.exps['W_br'].sub(r'<br />\n', text)
+        self.sommaire = '<span style="padding-left:6ex; font-weight:bolder;">Sommaire</span>\n<ol class="sommaire">\n'
 
-        # En-tête
+        # HEAD
         r = u'<html>\n<head>\n'
         r +=  '\t<title>Wikimag '+str(self.numero)+'</title>\n' \
             + '\t<meta http-equiv="Content-language" content="fr" />\n' \
             + '\t<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />\n'
+        r +=  '<style type="text/css">\n' \
+            + '\th1 { text-align:center; }\n' \
+            + '\t.sommaire { padding-left:8ex; }\n' \
+            + '</style>\n'
+        # BODY
         r += '</head>\n<body>\n'
         r += u'<h1>Wikimag '+str(self.numero)+u' (semaine '+self.semaine+u')</h1>\n'
-        r += '<div style="float:right;"><img src="http://upload.wikimedia.org/wikipedia/commons/7/72/Wikimag-fr.svg" alt="Logo du Wikimag" width="120px" /></div>\n'
         r += self.html_paragraphe(u'Du lundi ' + self.lundi.strftime("%e %b %Y").lstrip(' ') \
                 + ' au dimanche ' + (self.lundi + datetime.timedelta(days=6)).strftime("%e %b %Y").lstrip(' '))
+        r += '<div style="float:right;"><img src="http://upload.wikimedia.org/wikipedia/commons/7/72/Wikimag-fr.svg" alt="Logo du Wikimag" width="120px" /></div>\n'
+        r += self.sommaire_jocker + '\n'
 
         params = {} # Les paramètres du mag
         a = re.split(self.exps['split'], text)
         for i in range(1, len(a), 2):
             params[a[i].lower()] = a[i+1].rstrip('\n').strip(' ')
-        #for a,i in params.iteritems():
-        #    print a+'******'+i
 
         if (len(params[u'édito']) > 0):
             r += self.html_chapitre(u'Édito')
             r += self.html_paragraphe(params[u'édito'])
         if (len(params[u'annonces']) > 0):
             r += self.html_chapitre(u'Annonces')
-            tmp = self.html_liste(self.exps['html'].sub(r'', params['annonces']))
+            tmp = self.html_liste(self.exps['html'].sub(r'', params[u'annonces']))
             r  += self.exps['annonces'].sub(r'\1 : \2', tmp)
         if (len(params[u'bistro']) > 0):
             r += self.html_chapitre(u'Échos du bistro')
-            r += self.html_liste(params['bistro'])
+            r += self.html_liste(params[u'bistro'])
+        r += self.html_chapitre(u'Articles labellisés cette semaine')
         if (len(params[u'adq']) > 0):
-            r += self.html_chapitre(u'Articles de qualité')
-            r += self.html_liste(params['adq'])
+            r += self.html_chapitre(u'Articles de qualité', 3)
+            r += self.html_liste(params[u'adq'])
         if (len(params[u'ba']) > 0):
-            r += self.html_chapitre(u'Bon articles')
-            r += self.html_liste(params['ba'])
+            r += self.html_chapitre(u'Bon articles', 3)
+            r += self.html_liste(params[u'ba'])
         #image gauche / image droite ------
         if (len(params[u'actualités']) > 0):
             r += self.html_chapitre(u'Actualités')
-            r += self.html_liste(params['actualités'])
+            r += self.html_liste(params[u'actualités'])
         if (len(params[u'médias']) > 0):
             r += self.html_chapitre(u'Wikipédia dans les médias')
-            r += self.html_liste(params['médias'])
+            r += self.html_liste(params[u'médias'])
         if (len(params[u'entretien'])>0 and (len(params[u'entretien avec'])>0) ):
             r += self.html_chapitre(u'Entretien')
             r += self.html_paragraphe(u'Entretien proposé par ' \
@@ -156,9 +166,9 @@ motdepasse=
         if (len(params[u'histoire']) > 0):
             r += self.html_chapitre(u'Histoire')
             r += self.html_paragraphe(params[u'histoire'])
-        #if (len(params[u'citation']) > 0):
-        #    r += self.html_chapitre(u'Citation')
-        #    r += self.html_liste(params[u'citation'])
+        if (len(params[u'citation']) > 0):
+            r += self.html_chapitre(u'Citation')
+            r += self.html_liste(params[u'citation'])
         #astuce ----
         if (len(params[u'planete']) > 0):
             r += self.html_chapitre(u'Planète Wikimédia')
@@ -178,22 +188,37 @@ motdepasse=
                 nom = lien.group(1)
             r = b[0] +  self.html_lien(u'http://fr.wikipedia.org/wiki/'+lien.group(1), nom) + b[2]
         r = self.exps['modele'].sub(r'\1', r)
+
+        # Sommaire
+        r = self.exps['sommaire'].sub(self.sommaire+'</ol>\n', r)
         return r+u'</body>\n</html>'
 
     def html_liste(self, param):
+        """ Créer une liste au format html """
         r = u'<ul>\n'
         for l in re.finditer(self.exps['liste'], param):
             r += u'<li>' + l.group(1) + u'</li>\n'
         r += u'</ul>\n'
         return r
-    def html_lien(self, cible, nom):
+
+    def html_lien(self, cible, nom, url=True):
+        """ Créer un lien au format html """
         if (len(nom) == 0):
             nom = u'[lien]'
-        #return u'<a href="' + urllib.quote(cible) + u'">' + nom + u'</a>'
-        return u'<a href="' + cible.replace(' ', '_').replace("'", '%27') + u'">'+nom+u'</a>'
+        if url:
+            #cible = cible.replace(' ', '_').replace("'", '%27')
+            cible = self.exps['http'].sub(r'\1:', urllib.quote(cible.encode('utf8')))
+        return u'<a href="' + cible + u'">' + nom + u'</a>'
+
     def html_chapitre(self, nom, niveau=2):
+        """ Créer un chapitre au format html """
+        if niveau == 2:
+            self.sommaire += '\t<li>'+self.html_lien(u'#'+nom, nom, url=False)+'</li>\n'
+            nom = '<a name="%s">%s</a>' % (nom, nom)
         return u'<h'+str(niveau)+u'>' + nom + u'</h'+str(niveau)+u'>\n'
+
     def html_paragraphe(self, text, style=''):
+        """ Créer un paragraphe au format html """
         if len(style) > 0:
             style = ' style="'+style+'"'
         return u'<p'+style+'>'+text+u'</p>\n'
@@ -214,7 +239,6 @@ motdepasse=
         if 'mode' not in conf:
             conf['mode'] = 'text'
 
-        # Préparation du contenu
         pagetmp = pywikibot.Page(self.site, self.tmp)
         # Numéro du mag
         num = re.compile(u"\|numéro *= *(\d+)", re.LOCALE|re.UNICODE)
@@ -225,14 +249,16 @@ motdepasse=
         # Modes
         if conf['mode'] == "text":
             text = self.gen_plaintext(pagetmp)
+            msg = MIMEText(text.encode('utf-8'), 'plain', 'utf8')
         elif conf['mode'] == "html":
             text = self.gen_html()
+            msg = MIMEText(text.encode('utf-8'), 'html', 'utf8')
         elif conf['mode'] == "multi":
             text = self.gen_multipart(pagetmp)
+            msg = MIMEText(text.encode('utf-8'), 'multipart/alternative', 'utf8')
         #pywikibot.output(text)
 
         # Publication du mail sur la ml
-        msg = MIMEText(text.encode('utf-8'), 'plain', 'utf8')
         msg['From'] = conf['from']
         msg['To'] = conf['mailinglist']
         msg['Date'] = formatdate(localtime=True)

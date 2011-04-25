@@ -8,6 +8,8 @@ locale.setlocale(locale.LC_ALL, '')
 class BotWikimag:
     """ Bot Wikimag
         Publie le wikimag de la semaine sur la page de discussion des abonnées
+
+        TODO ajouter la liste des AdQ/BA à l'Atelier de relecture
     """
     def __init__(self, site):
         self.site = site
