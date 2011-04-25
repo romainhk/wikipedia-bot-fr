@@ -2,6 +2,7 @@
 # -*- coding: utf-8  -*-
 import re, datetime, locale, sys, smtplib, os, urllib
 from email.MIMEText import MIMEText
+from email.MIMEMultipart import MIMEMultipart
 from email.Utils import formatdate
 import BeBot
 import pywikibot
@@ -21,7 +22,6 @@ motdepasse=
 #mode=          # (facultatif) format d'envoi : text (*), html ou multi
 
         TODO  gérer les interwiki/interlangue
-        TODO  version html...
     """
     def __init__(self, site, fichier_conf):
         self.site = site
@@ -38,8 +38,6 @@ motdepasse=
         if self.mag.isRedirectPage():
             self.mag = self.mag.getRedirectTarget()
 
-        self.jocker = u'%$!' #Pour repérer les liens http
-        self.ajocker = BeBot.reverse(self.jocker)
         self.sommaire_jocker = '###141### SOMMAIRE ###592###'
         self.exps = {
                 'split'     : re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
@@ -64,12 +62,14 @@ motdepasse=
                 }
 
     def url_(self, match):
-        return match.group(1).replace(' ', '_')
-        #return match.group(1).replace(' ', '_').replace("'", "\\'").replace('"', '\\"')
+        #return match.group(1).replace(' ', '_')
+        return self.exps['http'].sub(r'\1:', urllib.quote(match.group(1).encode('utf8')))
 
     def gen_plaintext(self, pagetmp):
         """ Génération du format texte brut
         """
+        self.jocker = u'%$!' #Pour repérer les liens http
+        self.ajocker = BeBot.reverse(self.jocker)
         modele = re.compile("\{\{[cC]omposition wikimag", re.LOCALE)
         pagetmp.text = modele.sub(u'{{subst:%s|' % self.modele_de_presentation, self.mag.text)
         try:
@@ -188,10 +188,9 @@ motdepasse=
                 nom = lien.group(1)
             r = b[0] +  self.html_lien(u'http://fr.wikipedia.org/wiki/'+lien.group(1), nom) + b[2]
         r = self.exps['modele'].sub(r'\1', r)
-
         # Sommaire
         r = self.exps['sommaire'].sub(self.sommaire+'</ol>\n', r)
-        return r+u'</body>\n</html>'
+        return r + u'</body>\n</html>'
 
     def html_liste(self, param):
         """ Créer une liste au format html """
@@ -215,18 +214,13 @@ motdepasse=
         if niveau == 2:
             self.sommaire += '\t<li>'+self.html_lien(u'#'+nom, nom, url=False)+'</li>\n'
             nom = '<a name="%s">%s</a>' % (nom, nom)
-        return u'<h'+str(niveau)+u'>' + nom + u'</h'+str(niveau)+u'>\n'
+        return u'\n<h'+str(niveau)+u'>' + nom + u'</h'+str(niveau)+u'>\n'
 
     def html_paragraphe(self, text, style=''):
         """ Créer un paragraphe au format html """
         if len(style) > 0:
             style = ' style="'+style+'"'
         return u'<p'+style+'>'+text+u'</p>\n'
-
-    def gen_multipart(self, pagetmp):
-        """ Créer le mail sous deux formes : text et html 
-        """
-        pass
 
     def run(self):
         # Fichier de configuration
@@ -246,7 +240,7 @@ motdepasse=
         if m is not None:
             self.numero = m.group(1)
 
-        # Modes
+        # Génération du message
         if conf['mode'] == "text":
             text = self.gen_plaintext(pagetmp)
             msg = MIMEText(text.encode('utf-8'), 'plain', 'utf8')
@@ -254,11 +248,19 @@ motdepasse=
             text = self.gen_html()
             msg = MIMEText(text.encode('utf-8'), 'html', 'utf8')
         elif conf['mode'] == "multi":
-            text = self.gen_multipart(pagetmp)
-            msg = MIMEText(text.encode('utf-8'), 'multipart/alternative', 'utf8')
-        #pywikibot.output(text)
+            msg = MIMEMultipart('alternative', '-==_Partie_57696B696D6167204265426F74')
+            text = self.gen_plaintext(pagetmp)
+            #print text
+            msg1 = MIMEText(text.encode('utf-8'), 'plain', 'utf8')
+            msg.attach(msg1)
+            #print self.gen_html().encode('utf-8')
+            msg2 = MIMEText(self.gen_html().encode('utf-8'), 'html', 'utf8')
+            msg.attach(msg2)
+        else:
+            pywikibot.error(u"mode d'envoi du mail inconnu (text, html ou multi)")
+            sys.exit(4)
 
-        # Publication du mail sur la ml
+        # Publication sur la ml
         msg['From'] = conf['from']
         msg['To'] = conf['mailinglist']
         msg['Date'] = formatdate(localtime=True)
@@ -271,9 +273,8 @@ motdepasse=
             smtp.login(conf['utilisateur'], conf['motdepasse'])
             smtp.sendmail(conf['from'], conf['mailinglist'], msg.as_string())
             smtp.quit()
-        except smtplib.SMTPException, mssg:
-            print mssg
-        #pywikibot.output(msg.as_string())
+        except smtplib.SMTPException, esmtp:
+            print esmtp
 
 def main():
     if len(sys.argv) > 1:
