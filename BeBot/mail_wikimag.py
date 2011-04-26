@@ -47,9 +47,7 @@ motdepasse=
                 'annonces'  : re.compile("\*? ?\{\{[Aa]nnonce[ \w\xe9]*\|(\d+)\|(.+?)\}\}", re.LOCALE|re.UNICODE),
                 'image'     : re.compile("\[\[([iI]mage|[fF]ile|[fF]ichier):[^\]]+\]\]\s*", re.LOCALE|re.UNICODE),
                 'lien_ext'  : re.compile("\[(http:[^\] ]+) ?([^\]]*)\]", re.LOCALE|re.UNICODE),
-       #         'lien_ext2' : re.compile("\[(http:[^\] ]+)\]", re.LOCALE|re.UNICODE),
                 'lien_int'  : re.compile("\[\[([^\]\|]+)\|?([^\]]*)\]\]", re.LOCALE|re.UNICODE),
-       #         'lien_int2' : re.compile("\[\[([^\]]+)\]\]", re.LOCALE|re.UNICODE),
                 'modele'    : re.compile("\{\{[^\|\}:]*[\|:]?([^\|\}:]*)\}\}", re.LOCALE|re.UNICODE),
                 'html'      : re.compile("<(?P<balise>\w+)[^<>]*>(.*?)</(?P=balise)>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'quote'     : re.compile("(?P<quote>'{2,5})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
@@ -83,10 +81,8 @@ motdepasse=
         text = self.exps['image'].sub(r'', text)
         # Liens externes
         text = self.exps['lien_ext'].sub(r'\2 [ %s\1%s ]' % ( self.jocker, self.ajocker), text)
-     #   text = self.exps['lien_ext2'].sub(r'%s\1%s' % ( self.jocker, self.ajocker), text)
         # Liens internes
         text = self.exps['lien_int'].sub(r'\2 ( %shttp://fr.wikipedia.org/wiki/\1%s )' % ( self.jocker, self.ajocker), text)
-     #   text = self.exps['lien_int2'].sub(r'%shttp://fr.wikipedia.org/wiki/\1%s' % ( self.jocker, self.ajocker), text)
 
         text = self.exps['modele'].sub(r'\1', text)
         text = self.exps['html'].sub(r'\2', text)

@@ -39,10 +39,10 @@ class BotWikimag:
         icone = re.compile("^\* ", re.LOCALE|re.UNICODE|re.MULTILINE)
         params['adq'] = icone.sub(r'* {{AdQ|20px}} ', params['adq'])
         params['ba']  = icone.sub(r'* {{BA|20px}} ', params['ba'])
-        lumiere.text = u'[[Fichier:HSutvald2.svg|left|60px]]\nLes articles labellisés durant la semaine dernière.{{Clr}}\n\n' \
-                + u'<div style="height: 250px; overflow: auto; padding: 3px; border:1px solid #AAAAAA;" >\n' \
-                + u'== Adq ==\n{{colonnes|nombre=3|\n' + params['adq'] + u'\n}}\n' \
-                + u'\n== BA ==\n{{colonnes|nombre=3|\n' + params['ba'] + u'\n}}\n' \
+        lumiere.text = u'[[Fichier:HSutvald2.svg|left|60px]]\nLes articles labellisés durant la semaine dernière.{{Clr}}\n' \
+                + u'<div style="height: 220px; overflow: auto; padding: 3px; border:1px solid #AAAAAA;" >\n' \
+                + u'\n{{colonnes|nombre=3|\n' + params['adq'] + u'\n}}\n' \
+                + u'\n{{colonnes|nombre=3|\n' + params['ba'] + u'\n}}\n' \
                 + u'</div>\n<noinclude>\n[[Catégorie:Wikipédia:Atelier de lecture|Lumière sur...]]\n</noinclude>'
         #print lumiere.text
         try:
