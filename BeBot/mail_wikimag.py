@@ -21,7 +21,8 @@ motdepasse=
 #utilisateur=   # (facultatif) nom du compte sur le serveur smtp si différent du from
 #mode=          # (facultatif) format d'envoi : text (*), html ou multi
 
-        TODO  gérer les interwiki/interlangue
+        TODO    gérer les interwiki/interlangue
+                transclusion
     """
     def __init__(self, site, fichier_conf):
         self.site = site

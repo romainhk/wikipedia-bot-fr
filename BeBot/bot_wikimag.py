@@ -23,7 +23,7 @@ class BotWikimag:
         mag = pywikibot.Page(self.site, u'Wikipédia:Wikimag/%s/%s' % \
                 (self.lundi_pre.strftime("%Y"), self.semaine) )
         split = re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
-        params = {} # Les paramètres du mag
+        params = { 'adq': u'',  'ba': u'' } # Les paramètres du mag
         a = re.split(split, mag.text)
         for i in range(1, len(a), 2):
             params[a[i].lower()] = a[i+1].rstrip('\n').strip(' ')
@@ -40,10 +40,8 @@ class BotWikimag:
         params['adq'] = icone.sub(r'* {{AdQ|20px}} ', params['adq'])
         params['ba']  = icone.sub(r'* {{BA|20px}} ', params['ba'])
         lumiere.text = u'[[Fichier:HSutvald2.svg|left|60px]]\nLes articles labellisés durant la semaine dernière.{{Clr}}\n' \
-                #+ u'<div style="height: 180px; overflow: auto; padding: 3px; border:1px solid #AAAAAA;" >\n' \
                 + u'\n{{colonnes|nombre=3|\n' + params['adq'] + u'\n}}\n' \
                 + u'\n{{colonnes|nombre=3|\n' + params['ba'] + u'\n}}\n' \
-                #+ u'</div>\n<noinclude>\n[[Catégorie:Wikipédia:Atelier de lecture|Lumière sur...]]\n</noinclude>'
                 + u'<noinclude>\n[[Catégorie:Wikipédia:Atelier de lecture|Lumière sur...]]\n</noinclude>'
         #print lumiere.text
         try:
