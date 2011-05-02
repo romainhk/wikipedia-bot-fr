@@ -45,7 +45,7 @@ class BotWikimag:
                 + u'<noinclude>\n[[Catégorie:Wikipédia:Atelier de lecture|Lumière sur...]]\n</noinclude>'
         #print lumiere.text
         try:
-            lumiere.save(comment=u'Maj de la liste par BeBot (%s)' % self.date.strftime("%e/%m/%Y"), minor=False, async=True)
+            lumiere.save(comment=u'Maj hebdomadaire de la liste', minor=False, async=True)
         except pywikibot.Error, e:
             pywikibot.warning(u"Impossible de sauvegarder la liste des Adq/BA pour le Projet:Adl" )
 
