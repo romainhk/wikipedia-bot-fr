@@ -57,6 +57,7 @@ motdepasse=
                 'comment'   : re.compile("<!--(.*?)-->", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'liste'     : re.compile("\*\s?(.*)", re.LOCALE|re.UNICODE),
                 'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE),
+                'W_label'   : re.compile("\{\{a-label\|(\w+)\}\}", re.LOCALE|re.UNICODE),
                 'W_trans'   : re.compile("\{\{([^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'W_noinc'   : re.compile("<noinclude>(.*?)</noinclude>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'sommaire'  : re.compile(self.sommaire_jocker, re.LOCALE|re.UNICODE)
@@ -93,6 +94,7 @@ motdepasse=
         # Liens internes
         text = self.exps['lien_int'].sub(r'\2 ( %shttp://fr.wikipedia.org/wiki/\1%s )' % ( self.jocker, self.ajocker), text)
         text = self.exps['W_trans'].sub(r'Voir ( %shttp://fr.wikipedia.org/wiki/\1%s )' % ( self.jocker, self.ajocker), text)
+        text = self.exps['W_label'].sub(r'%shttp://fr.wikipedia.org/wiki/\1%s' % ( self.jocker, self.ajocker), text)
 
         text = self.exps['modele'].sub(r'\1', text)
         text = self.exps['html'].sub(r'\2', text)
@@ -108,11 +110,13 @@ motdepasse=
         text = self.mag.text
         text = self.exps['W_trans'].sub(self.transclusion, text)
         text = self.exps['W_uma'].sub(r'\1', text)
+        text = self.exps['W_label'].sub(r'\1', text)
         text = self.exps['W_br'].sub(r'<br />\n', text)
         text = self.exps['b'].sub(r'<b>\2</b>', text)
         text = self.exps['i'].sub(r'<i>\2</i>', text)
         text = self.exps['comment'].sub(r'', text)
         self.sommaire = '<span style="padding-left:6ex; font-weight:bolder;">Sommaire</span>\n<ol class="sommaire">\n'
+        self.sommaire_index = 0
 
         # HEAD
         r = u'<html>\n<head>\n'
@@ -129,7 +133,7 @@ motdepasse=
         r += self.html_paragraphe(u'Du lundi ' + self.lundi.strftime("%e %b %Y").lstrip(' ') \
                 + ' au dimanche ' + (self.lundi + datetime.timedelta(days=6)).strftime("%e %b %Y").lstrip(' '))
         r += '<div style="float:right;"><img src="http://upload.wikimedia.org/wikipedia/commons/7/72/Wikimag-fr.svg" alt="Logo Wikimag" width="120px" /></div>\n'
-        r += self.sommaire_jocker + '\n'
+        r += self.sommaire_jocker
 
         params = {} # Les paramètres du mag
         a = re.split(self.exps['split'], text)
@@ -218,8 +222,9 @@ motdepasse=
     def html_chapitre(self, nom, niveau=2):
         """ Créer un chapitre au format html """
         if niveau == 2:
-            self.sommaire += '\t<li>'+self.html_lien(u'#'+nom, nom, url=False)+'</li>\n'
-            nom = '<a name="%s">%s</a>' % (nom, nom)
+            self.sommaire_index += 1
+            self.sommaire += '\t<li>'+self.html_lien(u'#chap'+str(self.sommaire_index), nom, url=False)+'</li>\n'
+            nom = '<a name="#chap%i">%s</a>' % (self.sommaire_index, nom)
         return u'\n<h'+str(niveau)+u'>' + nom + u'</h'+str(niveau)+u'>\n'
 
     def html_paragraphe(self, text, style=''):

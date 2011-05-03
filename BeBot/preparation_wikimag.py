@@ -59,10 +59,12 @@ class PreparationWikimag:
         resultat += u"\n== Labels =="
         resultat += u"\n=== AdQ ===\n"
         for a in self.adq:
-            resultat += u'* [[' + a + u']]\n'
+            resultat += u'* {{a-label|' + a + u'}}\n'
+            #resultat += u'* [[' + a + u']]\n'
         resultat += u"\n=== BA ===\n"
         for a in self.ba:
-            resultat += u'* [[' + a + u']]\n'
+            resultat += u'* {{a-label|' + a + u'}}\n'
+            #resultat += u'* [[' + a + u']]\n'
 
         if len(self.inconnu) > 0:
             resultat += u"\n=== Inconnus ===\n"
