@@ -57,7 +57,7 @@ motdepasse=
                 'comment'   : re.compile("<!--(.*?)-->", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'liste'     : re.compile("\*\s?(.*)", re.LOCALE|re.UNICODE),
                 'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE),
-                'W_label'   : re.compile("\{\{a-label\|(\w+)\}\}", re.LOCALE|re.UNICODE),
+                'W_label'   : re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'W_trans'   : re.compile("\{\{([^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'W_noinc'   : re.compile("<noinclude>(.*?)</noinclude>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'sommaire'  : re.compile(self.sommaire_jocker, re.LOCALE|re.UNICODE)
@@ -110,7 +110,7 @@ motdepasse=
         text = self.mag.text
         text = self.exps['W_trans'].sub(self.transclusion, text)
         text = self.exps['W_uma'].sub(r'\1', text)
-        text = self.exps['W_label'].sub(r'\1', text)
+        text = self.exps['W_label'].sub(r'[[\1]]', text)
         text = self.exps['W_br'].sub(r'<br />\n', text)
         text = self.exps['b'].sub(r'<b>\2</b>', text)
         text = self.exps['i'].sub(r'<i>\2</i>', text)
@@ -224,7 +224,7 @@ motdepasse=
         if niveau == 2:
             self.sommaire_index += 1
             self.sommaire += '\t<li>'+self.html_lien(u'#chap'+str(self.sommaire_index), nom, url=False)+'</li>\n'
-            nom = '<a name="#chap%i">%s</a>' % (self.sommaire_index, nom)
+            nom = '<a name="chap%i">%s</a>' % (self.sommaire_index, nom)
         return u'\n<h'+str(niveau)+u'>' + nom + u'</h'+str(niveau)+u'>\n'
 
     def html_paragraphe(self, text, style=''):

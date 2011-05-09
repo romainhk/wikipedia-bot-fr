@@ -15,16 +15,25 @@ class BotWikimag:
         self.lundi = self.date - datetime.timedelta(days=self.date.weekday())
         self.lundi_pre = self.lundi - datetime.timedelta(weeks=1)
         self.semaine = self.lundi_pre.strftime("%W").lstrip('0')
+        self.annee = self.lundi_pre.strftime("%Y")
+
+        self.mag = pywikibot.Page(self.site, u'Wikipédia:Wikimag/%s/%s' % (self.annee, self.semaine) )
+        self.numero = '???'
+        num = re.compile(u"\|numéro *= *(\d+)", re.LOCALE|re.UNICODE)
+        m = num.search(self.mag.text)
+        if m is not None:
+            self.numero = m.group(1)
+
+        self.resume = u'Demandez [[Wikipédia:Wikimag/%s/%s|Cannes Midi (n°%s)]]. Le tueur de Cannes frappe encore... 5 cents' \
+                % (self.annee, self.semaine, self.numero)
 
     def adl(self):
         """ Ajoute les adq/ba de la semaine à l'Atelier de Lecture
         """
         # Infos
-        mag = pywikibot.Page(self.site, u'Wikipédia:Wikimag/%s/%s' % \
-                (self.lundi_pre.strftime("%Y"), self.semaine) )
         split = re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         params = { 'adq': u'',  'ba': u'' } # Les paramètres du mag
-        a = re.split(split, mag.text)
+        a = re.split(split, self.mag.text)
         for i in range(1, len(a), 2):
             params[a[i].lower()] = a[i+1].rstrip('\n').strip(' ')
 
@@ -36,6 +45,11 @@ class BotWikimag:
         label = re.compile("== BA ==([^={2}]*)", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         lumiere.text = label.sub(r'== BA ==\n%s\1' % params['ba'], lumiere.text)
         """
+        #Retrait des a-label
+        alabel = re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE)
+        params['adq'] = alabel.sub(r'[[\1]]', params['adq'])
+        params['ba']  = alabel.sub(r'[[\1]]', params['ba'])
+        #Ajout des icones
         icone = re.compile("^\* ", re.LOCALE|re.UNICODE|re.MULTILINE)
         params['adq'] = icone.sub(r'* {{AdQ|20px}} ', params['adq'])
         params['ba']  = icone.sub(r'* {{BA|20px}} ', params['ba'])
@@ -58,14 +72,14 @@ class BotWikimag:
         # Donne le mag au lecteur
         lecteur.text = lecteur.text + msg
         try:
-            lecteur.save(comment=u'Demandez Cannes Midi. Le tueur de Cannes frappe encore... 5 cents', minor=False, async=True)
+            lecteur.save(comment=self.resume, minor=False, async=True)
         except pywikibot.Error, e:
             pywikibot.warning(u"Impossible de refourger le mag à %s" % lecteur.title(withNamespace=True) )
 
     def run(self):
         # Message à distribuer
-        msg = u"\n== Wikimag - Semaine %s ==\n" % self.semaine
-        msg += u"{{Wiki magazine|%s|%s}} ~~~~" % (self.lundi_pre.strftime("%Y"), self.semaine)
+        msg = u"\n== Wikimag n°%s - Semaine %s ==\n" % (self.numero, self.semaine)
+        msg += u"{{Wiki magazine|%s|%s}} ~~~~" % (self.annee, self.semaine)
 
         r = re.compile(u"\*\* \{\{u\|(.+?)\}\}", re.LOCALE|re.UNICODE)
         liste = []
