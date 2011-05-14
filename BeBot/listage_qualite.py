@@ -60,7 +60,7 @@ class ListageQualite:
                 u'AdQ', u'BA', u'A', u'B', u'BD', u'ébauche', u'inconnue' ]
 
         #DB
-        self.db = MySQLdb.connect(db="u_romainhk", \
+        self.db = MySQLdb.connect(db="u_romainhk_transient", \
                                 read_default_file="/home/romainhk/.my.cnf", \
                                 use_unicode=True, charset='utf8')
         self.nom_base = u'contenu_de_qualite_%s' % self.langue
