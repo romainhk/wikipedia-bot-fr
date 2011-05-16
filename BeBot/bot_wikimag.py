@@ -54,7 +54,7 @@ class BotWikimag:
         params['adq'] = icone.sub(r'* {{AdQ|20px}} ', params['adq'])
         params['ba']  = icone.sub(r'* {{BA|20px}} ', params['ba'])
         lumiere.text = u'[[Fichier:HSutvald2.svg|left|60px]]\nLes articles labellisés durant la semaine dernière.{{Clr}}\n' \
-                + u'\n{{colonnes|nombre=3|\n' + params['adq'] + u'\n}}\n' \
+                + u'\n{{colonnes|nombre=3|\n' + params['adq'] + u'\n}}\n' + u'<hr />' \
                 + u'\n{{colonnes|nombre=3|\n' + params['ba'] + u'\n}}\n' \
                 + u'<noinclude>\n[[Catégorie:Wikipédia:Atelier de lecture|Lumière sur...]]\n</noinclude>'
         #print lumiere.text
