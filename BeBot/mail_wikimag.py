@@ -23,6 +23,7 @@ motdepasse=
 
         TODO    gérer les interwiki/interlangue
                 transclusion complète ?
+                images ?
     """
     def __init__(self, site, fichier_conf):
         self.site = site
@@ -58,6 +59,7 @@ motdepasse=
                 'liste'     : re.compile("\*\s?(.*)", re.LOCALE|re.UNICODE),
                 'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE),
                 'W_label'   : re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE),
+                'W_liste'   : re.compile("^\s*", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'W_trans'   : re.compile("\{\{([^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'W_noinc'   : re.compile("<noinclude>(.*?)</noinclude>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'sommaire'  : re.compile(self.sommaire_jocker, re.LOCALE|re.UNICODE)
@@ -68,7 +70,12 @@ motdepasse=
         return self.exps['http'].sub(r'\1:', urllib.quote(match.group(1).encode('utf8')))
 
     def transclusion(self, match):
-        return self.html_lien('http://fr.wikipedia.org/wiki/'+match.group(1), '[transclusion]')
+        page = match.group(1)
+        if page[0] == u'/':
+            #page = u'Wikipédia:Wikimag/%s/%s%s' % (self.annee, self.semaine, page)
+            page = self.mag.title() + page
+        pywikibot.output(page)
+        return self.html_lien('http://fr.wikipedia.org/wiki/'+page, '[transclusion]')
         #text = pywikibot.Page(self.site, match.group(1)).text
         #text = self.exps['W_noinc'].sub(r'', text)
         #return text
@@ -160,7 +167,11 @@ motdepasse=
         #image gauche / image droite ------
         if (len(params[u'actualités']) > 0):
             r += self.html_chapitre(u'Actualités')
-            r += self.html_liste(params[u'actualités'])
+            p = params[u'actualités']
+            if self.exps['W_liste'].search(p):
+                r += self.html_liste(p)
+            else:
+                r += self.html_paragraphe(p)
         if (len(params[u'médias']) > 0):
             r += self.html_chapitre(u'Wikipédia dans les médias')
             r += self.html_liste(params[u'médias'])
@@ -181,8 +192,10 @@ motdepasse=
             r += self.html_chapitre(u'Citation')
             r += self.html_liste(params[u'citation'])
         #astuce ----
+        r += self.html_chapitre(u'Planète Wikimédia')
+        r += self.html_paragraphe(u'Ce qui se dit dans ' \
+                + self.html_lien(u'http://fr.planet.wikimedia.org', u'la planète wikimédia') + u'.')
         if (len(params[u'planete']) > 0):
-            r += self.html_chapitre(u'Planète Wikimédia')
             r += self.html_liste(params[u'planete'].rstrip('}'))
         if (len(params[u'rédaction']) > 0):
             r += self.html_chapitre(u'Rédaction')

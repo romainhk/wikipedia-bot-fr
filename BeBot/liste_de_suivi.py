@@ -19,8 +19,8 @@ class ListeDeSuivi:
     def run(self):
         for d in range(self.debut, self.nbsemaine+1):
             p = self.page+str(d)
-            r = self.site.watchpage(pywikibot.Page(p))
-            if !r:
+            r = self.site.watchpage(pywikibot.Page(self.site, p))
+            if r:
                 pywikibot.warning(u"%s n'a pas été ajouté" % p)
 
 def main():
