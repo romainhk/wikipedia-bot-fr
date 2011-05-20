@@ -20,6 +20,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
 motdepasse=
 #utilisateur=   # (facultatif) nom du compte sur le serveur smtp si différent du from
 #mode=          # (facultatif) format d'envoi : text (*), html ou multi
+#semaine=       # (facultatif) forcer l'usage d'une semaine en particulier ; pratique pour le debug
 
         TODO    gérer les interwiki/interlangue
                 transclusion complète ?
@@ -28,12 +29,17 @@ motdepasse=
     def __init__(self, site, fichier_conf):
         self.site = site
         self.conf_mail = fichier_conf
+        self.conf = BeBot.fichier_conf(self.conf_mail)
         self.tmp = u'Utilisateur:BeBot/MailWikimag'
         self.modele_de_presentation = u'Wikimag_par_mail'
         date = datetime.date.today()
         self.lundi = date - datetime.timedelta(days=date.weekday())
         self.lundi_pre = self.lundi - datetime.timedelta(weeks=1)
-        self.semaine = self.lundi_pre.strftime("%W").lstrip('0')
+        if 'semaine' in self.conf:
+            self.semaine = self.conf['semaine']
+            self.debug = True
+        else:
+            self.semaine = self.lundi_pre.strftime("%W").lstrip('0')
         self.mag = pywikibot.Page(site, u'Wikipédia:Wikimag/%s/%s' % \
                 (self.lundi_pre.strftime("%Y"), self.semaine) )
         self.numero = 0
@@ -59,8 +65,9 @@ motdepasse=
                 'liste'     : re.compile("\*\s?(.*)", re.LOCALE|re.UNICODE),
                 'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE),
                 'W_label'   : re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE),
-                'W_liste'   : re.compile("^\s*", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
-                'W_trans'   : re.compile("\{\{([^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
+                'W_liste'   : re.compile("^\s*\*", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
+                'W_trans'   : re.compile("\{\{([^\/][^\|\}]{4,}})\}\}", re.LOCALE|re.UNICODE),
+                'W_setrans' : re.compile("\{\{(\/[^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'W_noinc'   : re.compile("<noinclude>(.*?)</noinclude>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'sommaire'  : re.compile(self.sommaire_jocker, re.LOCALE|re.UNICODE)
                 }
@@ -72,9 +79,7 @@ motdepasse=
     def transclusion(self, match):
         page = match.group(1)
         if page[0] == u'/':
-            #page = u'Wikipédia:Wikimag/%s/%s%s' % (self.annee, self.semaine, page)
             page = self.mag.title() + page
-        pywikibot.output(page)
         return self.html_lien('http://fr.wikipedia.org/wiki/'+page, '[transclusion]')
         #text = pywikibot.Page(self.site, match.group(1)).text
         #text = self.exps['W_noinc'].sub(r'', text)
@@ -99,8 +104,12 @@ motdepasse=
         # Liens externes
         text = self.exps['lien_ext'].sub(r'\2 [ %s\1%s ]' % ( self.jocker, self.ajocker), text)
         # Liens internes
-        text = self.exps['lien_int'].sub(r'\2 ( %shttp://fr.wikipedia.org/wiki/\1%s )' % ( self.jocker, self.ajocker), text)
-        text = self.exps['W_trans'].sub(r'Voir ( %shttp://fr.wikipedia.org/wiki/\1%s )' % ( self.jocker, self.ajocker), text)
+        text = self.exps['lien_int'].sub(r'\2 ( %shttp://fr.wikipedia.org/wiki/\1%s )' \
+                % ( self.jocker, self.ajocker), text)
+        text = self.exps['W_trans'].sub(r'Voir ( %shttp://fr.wikipedia.org/wiki/\1%s )' \
+                % ( self.jocker, self.ajocker), text)
+        text = self.exps['W_setrans'].sub(r'Voir ( %shttp://fr.wikipedia.org/wiki/%s\1%s )' \
+                % ( self.jocker, self.mag.title(), self.ajocker), text)
         text = self.exps['W_label'].sub(r'%shttp://fr.wikipedia.org/wiki/\1%s' % ( self.jocker, self.ajocker), text)
 
         text = self.exps['modele'].sub(r'\1', text)
@@ -116,6 +125,7 @@ motdepasse=
         """
         text = self.mag.text
         text = self.exps['W_trans'].sub(self.transclusion, text)
+        text = self.exps['W_setrans'].sub(self.transclusion, text)
         text = self.exps['W_uma'].sub(r'\1', text)
         text = self.exps['W_label'].sub(r'[[\1]]', text)
         text = self.exps['W_br'].sub(r'<br />\n', text)
@@ -248,7 +258,7 @@ motdepasse=
 
     def run(self):
         # Fichier de configuration
-        conf = BeBot.fichier_conf(self.conf_mail)
+        conf = self.conf
         if 'mailinglist' not in conf:
             pywikibot.output(u"# Mode debug ; pas de publication")
             self.debug = True
