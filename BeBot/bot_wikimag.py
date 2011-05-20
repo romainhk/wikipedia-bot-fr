@@ -57,7 +57,7 @@ class BotWikimag:
                 + u'\n{{colonnes|nombre=3|\n' + params['adq'] + u'\n}}\n' + u'<hr />' \
                 + u'\n{{colonnes|nombre=3|\n' + params['ba'] + u'\n}}\n' \
                 + u'<noinclude>\n[[Catégorie:Wikipédia:Atelier de lecture|Lumière sur...]]\n</noinclude>'
-        #print lumiere.text
+        #pywikibot.output(lumiere.text)
         try:
             lumiere.save(comment=u'Maj hebdomadaire de la liste', minor=False, async=True)
         except pywikibot.Error, e:

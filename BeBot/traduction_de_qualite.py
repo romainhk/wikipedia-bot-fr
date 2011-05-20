@@ -148,7 +148,7 @@ class TraductionDeQualite:
         for tq in self.tradQualite: #Tri par statut
             statut = 0
             for cat in tq.categories():
-#                print cat.title()
+#                pywikibot.output(cat.title())
                 if   cat.title() == u"Catégorie:Article à traduire":  #1
                     statut = 1
                     break
