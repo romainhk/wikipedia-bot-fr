@@ -270,20 +270,20 @@ motdepasse=
         # Génération du message
         if conf['mode'] == "text":
             text = self.gen_plaintext(pagetmp)
-            if self.debug : print text
+            if self.debug : pywikibot.output(text)
             msg = MIMEText(text.encode('utf-8'), 'plain', 'utf8')
         elif conf['mode'] == "html":
             text = self.gen_html().encode('utf-8')
-            if self.debug : print text
+            if self.debug : pywikibot.output(text)
             msg = MIMEText(text, 'html', 'utf8')
         elif conf['mode'] == "multi":
             msg = MIMEMultipart('alternative', '-==_Partie_57696B696D6167204265426F74')
             text = self.gen_plaintext(pagetmp)
-            if self.debug : print text
+            if self.debug : pywikibot.output(text)
             msg1 = MIMEText(text.encode('utf-8'), 'plain', 'utf8')
             msg.attach(msg1)
             text = self.gen_html().encode('utf-8')
-            if self.debug : print text
+            if self.debug : pywikibot.output(text)
             msg2 = MIMEText(text, 'html', 'utf8')
             msg.attach(msg2)
         else:
@@ -305,7 +305,7 @@ motdepasse=
                 smtp.sendmail(conf['from'], conf['mailinglist'], msg.as_string())
                 smtp.quit()
             except smtplib.SMTPException, esmtp:
-                print esmtp
+                pywikibot.error(esmtp)
 
 def main():
     if len(sys.argv) > 1:
