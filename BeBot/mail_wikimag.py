@@ -63,10 +63,11 @@ motdepasse=
                 'i'         : re.compile("(?P<quote>'{2})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
                 'comment'   : re.compile("<!--(.*?)-->", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'liste'     : re.compile("\*\s?(.*)", re.LOCALE|re.UNICODE),
+                'center'    : re.compile("<center>(.*?)</center>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE),
                 'W_label'   : re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'W_liste'   : re.compile("^\s*\*", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
-                'W_trans'   : re.compile("\{\{([^\/][^\|\}]{4,}})\}\}", re.LOCALE|re.UNICODE),
+                'W_trans'   : re.compile("\{\{([^\/][^\|\}]{4,})\}\}", re.LOCALE|re.UNICODE),
                 'W_setrans' : re.compile("\{\{(\/[^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'W_noinc'   : re.compile("<noinclude>(.*?)</noinclude>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'sommaire'  : re.compile(self.sommaire_jocker, re.LOCALE|re.UNICODE)
@@ -80,6 +81,7 @@ motdepasse=
         page = match.group(1)
         if page[0] == u'/':
             page = self.mag.title() + page
+        #if pywikibot.Page(self.site, page).exists():
         return self.html_lien('http://fr.wikipedia.org/wiki/'+page, '[transclusion]')
         #text = pywikibot.Page(self.site, match.group(1)).text
         #text = self.exps['W_noinc'].sub(r'', text)
@@ -113,6 +115,7 @@ motdepasse=
         text = self.exps['W_label'].sub(r'%shttp://fr.wikipedia.org/wiki/\1%s' % ( self.jocker, self.ajocker), text)
 
         text = self.exps['modele'].sub(r'\1', text)
+        text = self.exps['center'].sub(r'    \1', text)
         text = self.exps['html'].sub(r'\2', text)
         text = self.exps['quote'].sub(r'\2', text)
         # Modification des liens http ( -> url_() )
@@ -146,7 +149,11 @@ motdepasse=
             + '</style>\n'
         # BODY
         r += '</head>\n<body>\n'
-        r += u'<h1>Wikimag '+str(self.numero)+u' (semaine '+self.semaine+u')</h1>\n'
+        #r += u'<h1>Wikimag '+str(self.numero)+u' (semaine '+self.semaine+u')</h1>\n'
+        r += u'<h1>' + self.html_lien( \
+                u'http://fr.wikipedia.org/wiki/%s' % (self.mag.title()), \
+                'Wikimag '+str(self.numero)) \
+                + u' (semaine ' + self.semaine + u')</h1>\n'
         r += self.html_paragraphe(u'Du lundi ' + self.lundi.strftime("%e %b %Y").lstrip(' ') \
                 + ' au dimanche ' + (self.lundi + datetime.timedelta(days=6)).strftime("%e %b %Y").lstrip(' '))
         r += '<div style="float:right;"><img src="http://upload.wikimedia.org/wikipedia/commons/7/72/Wikimag-fr.svg" alt="Logo Wikimag" width="120px" /></div>\n'
