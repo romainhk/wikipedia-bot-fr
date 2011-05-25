@@ -56,7 +56,8 @@ motdepasse=
                 'image'     : re.compile("\[\[([iI]mage|[fF]ile|[fF]ichier):[^\]]+\]\]\s*", re.LOCALE|re.UNICODE),
                 'lien_ext'  : re.compile("\[(http:[^\] ]+) ?([^\]]*)\]", re.LOCALE|re.UNICODE),
                 'lien_int'  : re.compile("\[\[([^\]\|]+)\|?([^\]]*)\]\]", re.LOCALE|re.UNICODE),
-                'modele'    : re.compile("\{\{[^\|\}:]*[\|:]?([^\|\}:]*)\}\}", re.LOCALE|re.UNICODE),
+                'lien_intA' : re.compile("\[\[([^\]\|]+)\]\]", re.LOCALE|re.UNICODE),
+                'modele'    : re.compile("\{\{[^\|\}:]*[\|:]?([^\}:]*)\}\}", re.LOCALE|re.UNICODE),
                 'html'      : re.compile("<(?P<balise>\w+)[^<>]*>(.*?)</(?P=balise)>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'quote'     : re.compile("(?P<quote>'{2,5})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
                 'b'         : re.compile("(?P<quote>'{3})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
@@ -67,12 +68,13 @@ motdepasse=
                 'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE),
                 'W_label'   : re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'W_liste'   : re.compile("^\s*\*", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
-                'W_trans'   : re.compile("\{\{([^\/][^\|\}]{4,})\}\}", re.LOCALE|re.UNICODE),
-                'W_setrans' : re.compile("\{\{(\/[^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
-                'W_noinc'   : re.compile("<noinclude>(.*?)</noinclude>", re.LOCALE|re.UNICODE|re.DOTALL),
+                'W_trans'   : re.compile("\{\{([^\/\}][^\|\}]{3,})\}\}", re.LOCALE|re.UNICODE),
+                #'W_setrans' : re.compile("\{\{(\/[^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
+                #'W_noinc'   : re.compile("<noinclude>(.*?)</noinclude>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'sommaire'  : re.compile(self.sommaire_jocker, re.LOCALE|re.UNICODE)
                 }
         self.debug = False
+        self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version sur le wiki]]' % self.mag.title()
 
     def url_(self, match):
         return self.exps['http'].sub(r'\1:', urllib.quote(match.group(1).encode('utf8')))
@@ -99,19 +101,20 @@ motdepasse=
         except:
             pywikibot.error(u"Impossible d'effectuer la substitution")
             sys.exit(2)
-        text = pywikibot.Page(self.site, self.tmp).text
+        text = pywikibot.Page(self.site, self.tmp).text + self.disclaimer
         text = self.exps['br'].sub(r'', text)
         text = self.exps['annonces'].sub(r'* \1 : \2', text)
         text = self.exps['image'].sub(r'', text)
         # Liens externes
         text = self.exps['lien_ext'].sub(r'\2 [ %s\1%s ]' % ( self.jocker, self.ajocker), text)
         # Liens internes
+        text = self.exps['lien_intA'].sub(r'[[\1|\1]]', text)
         text = self.exps['lien_int'].sub(r'\2 ( %shttp://fr.wikipedia.org/wiki/\1%s )' \
                 % ( self.jocker, self.ajocker), text)
         text = self.exps['W_trans'].sub(r'Voir ( %shttp://fr.wikipedia.org/wiki/\1%s )' \
                 % ( self.jocker, self.ajocker), text)
-        text = self.exps['W_setrans'].sub(r'Voir ( %shttp://fr.wikipedia.org/wiki/%s\1%s )' \
-                % ( self.jocker, self.mag.title(), self.ajocker), text)
+        #text = self.exps['W_setrans'].sub(r'Voir ( %shttp://fr.wikipedia.org/wiki/%s\1%s )' \
+        #        % ( self.jocker, self.mag.title(), self.ajocker), text)
         text = self.exps['W_label'].sub(r'%shttp://fr.wikipedia.org/wiki/\1%s' % ( self.jocker, self.ajocker), text)
 
         text = self.exps['modele'].sub(r'\1', text)
@@ -128,7 +131,7 @@ motdepasse=
         """
         text = self.mag.text
         text = self.exps['W_trans'].sub(self.transclusion, text)
-        text = self.exps['W_setrans'].sub(self.transclusion, text)
+        #text = self.exps['W_setrans'].sub(self.transclusion, text)
         text = self.exps['W_uma'].sub(r'\1', text)
         text = self.exps['W_label'].sub(r'[[\1]]', text)
         text = self.exps['W_br'].sub(r'<br />\n', text)
@@ -217,11 +220,12 @@ motdepasse=
         if (len(params[u'rédaction']) > 0):
             r += self.html_chapitre(u'Rédaction')
             r += self.html_paragraphe(u'Les membres de la rédaction pour ce numéro : '+params[u'rédaction'])
+        r += self.html_paragraphe(self.disclaimer)
 
         # Remplacement des liens
         for lien in re.finditer(self.exps['lien_ext'], r):
             b = r.partition(lien.group(0))
-            r = b[0] +  self.html_lien(lien.group(1), lien.group(2)) + b[2]
+            r = b[0] + self.html_lien(lien.group(1), lien.group(2)) + b[2]
         for lien in re.finditer(self.exps['lien_int'], r):
             b = r.partition(lien.group(0))
             nom = lien.group(2)
