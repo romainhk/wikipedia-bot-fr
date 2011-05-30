@@ -32,7 +32,8 @@ class BotWikimag:
         """
         # Infos
         split = re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
-        params = { 'adq': u'',  'ba': u'' } # Les paramètres du mag
+        params = {  'adq': u'', u'propositions adq' : u'',
+                    'ba': u'',  u'propositions ba' : u'' } # Les paramètres du mag
         a = re.split(split, self.mag.text)
         for i in range(1, len(a), 2):
             params[a[i].lower()] = a[i+1].rstrip('\n').strip(' ')
@@ -48,14 +49,19 @@ class BotWikimag:
         #Retrait des a-label
         alabel = re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE)
         params['adq'] = alabel.sub(r'[[\1]]', params['adq'])
+        params['propositions adq'] = alabel.sub(r'[[\1]]', params['propositions adq'])
         params['ba']  = alabel.sub(r'[[\1]]', params['ba'])
+        params['propositions ba'] = alabel.sub(r'[[\1]]', params['propositions ba'])
+        propositions = params['propositions adq'] + params['propositions ba']
+        pywikibot.output(u"# Publication sur l'Atelier de lecture")
         #Ajout des icones
         icone = re.compile("^\* ", re.LOCALE|re.UNICODE|re.MULTILINE)
         params['adq'] = icone.sub(r'* {{AdQ|20px}} ', params['adq'])
         params['ba']  = icone.sub(r'* {{BA|20px}} ', params['ba'])
-        lumiere.text = u'[[Fichier:HSutvald2.svg|left|60px]]\nLes articles labellisés durant la semaine dernière.{{Clr}}\n' \
+        lumiere.text = u'[[Fichier:HSutvald2.svg|left|60px]]\nLes articles labellisés durant la semaine dernière et les nouvelles propositions au label.{{Clr}}\n' \
                 + u'\n{{colonnes|nombre=3|\n' + params['adq'] + u'\n}}\n' + u'<hr />' \
-                + u'\n{{colonnes|nombre=3|\n' + params['ba'] + u'\n}}\n' \
+                + u'\n{{colonnes|nombre=3|\n' + params['ba']  + u'\n}}\n' + u'<hr />' \
+                + u'\n{{colonnes|nombre=3|\n' + propositions  + u'\n}}\n' \
                 + u'<noinclude>\n[[Catégorie:Wikipédia:Atelier de lecture|Lumière sur...]]\n</noinclude>'
         #pywikibot.output(lumiere.text)
         try:

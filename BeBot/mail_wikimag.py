@@ -68,7 +68,7 @@ motdepasse=
                 'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE),
                 'W_label'   : re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'W_liste'   : re.compile("^\s*\*", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
-                'W_trans'   : re.compile("\{\{([^\/\}][^\|\}]{3,})\}\}", re.LOCALE|re.UNICODE),
+                'W_trans'   : re.compile("\{\{([^\/\}][^\|\}]{4,})\}\}", re.LOCALE|re.UNICODE),
                 #'W_setrans' : re.compile("\{\{(\/[^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
                 #'W_noinc'   : re.compile("<noinclude>(.*?)</noinclude>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'sommaire'  : re.compile(self.sommaire_jocker, re.LOCALE|re.UNICODE)
