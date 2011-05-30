@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
 import re, datetime, locale, sys, os, urllib
-#import re, datetime, locale, sys, smtplib, os, urllib
 from email.MIMEText import MIMEText
 from email.MIMEMultipart import MIMEMultipart
 from email.Utils import formatdate
@@ -15,11 +14,7 @@ class MailWikimag:
 
         Nécessite en argument l'adresse d'un fichier de configuration du type :
 mailinglist=    # sur laquel on va publier le mag (mode debug si omis)
-###serveur=        # smtp à utiliser, smtp.
-###port=
 from=           # adresse de l'expédieur, truc@toto.fr
-###motdepasse=
-###utilisateur=   # (facultatif) nom du compte sur le serveur smtp si différent du from
 #mode=          # (facultatif) format d'envoi : text (*), html ou multi
 #semaine=       # (facultatif) forcer l'usage d'une semaine en particulier ; pratique pour le debug
 
@@ -76,7 +71,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 }
         self.debug = False
         self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version sur le wiki]]' % self.mag.title()
-        self.fichier_tmp = u'./mail_bebot.tmp'
+        self.fichier_tmp = u'./wikimag_mail.tmp'
 
     def url_(self, match):
         return self.exps['http'].sub(r'\1:', urllib.quote(match.group(1).encode('utf8')))
@@ -154,7 +149,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
             + '</style>\n'
         # BODY
         r += '</head>\n<body>\n'
-        #r += u'<h1>Wikimag '+str(self.numero)+u' (semaine '+self.semaine+u')</h1>\n'
         r += u'<h1>' + self.html_lien( \
                 u'http://fr.wikipedia.org/wiki/%s' % (self.mag.title()), \
                 'Wikimag '+str(self.numero)) \
@@ -275,11 +269,9 @@ from=           # adresse de l'expédieur, truc@toto.fr
         if 'mailinglist' not in conf:
             pywikibot.output(u"# Mode debug ; pas de publication")
             self.debug = True
-        if 'from' not in conf or 'serveur' not in conf or 'port' not in conf:
-            pywikibot.error(u"fichier de configuration incomplet")
+        if 'from' not in conf:
+            pywikibot.error(u"fichier de configuration incomplet ; manque l'expéditeur d'origine")
             sys.exit(3)
-        if 'utilisateur' not in conf:
-            conf['utilisateur'] = conf['from'].split('@', 1)[0]
         if 'mode' not in conf:
             conf['mode'] = 'text'
 
@@ -297,7 +289,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
             msg = MIMEText(text.encode('utf-8'), 'plain', 'utf8')
         elif conf['mode'] == "html":
             text = self.gen_html().encode('utf-8')
-            #if self.debug : pywikibot.output(text)
+            if self.debug : pywikibot.output(text)
             msg = MIMEText(text, 'html', 'utf8')
         elif conf['mode'] == "multi":
             msg = MIMEMultipart('alternative', '-==_Partie_57696B696D6167204265426F74')
@@ -326,15 +318,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
             f.close()
             try:
                 cmd = u'cat %s | mail -s "%s" %s' % (self.fichier_tmp, msg['Subject'], conf['mailinglist'])
-                pywikibot.output(cmd)
                 os.system(cmd)
-                #smtp = smtplib.SMTP(conf['serveur'], conf['port'])
-                #smtp.starttls()
-                #smtp.login(conf['utilisateur'], conf['motdepasse'])
-                #smtp.sendmail(conf['from'], conf['mailinglist'], msg.as_string())
-                #smtp.quit()
-                #except smtplib.SMTPException, esmtp:
-                #pywikibot.error(esmtp)
             except:
                 pywikibot.error(u"Erreur l'ors de l'envoie du mail")
 
