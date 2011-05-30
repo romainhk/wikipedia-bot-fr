@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, locale, sys, smtplib, os, urllib
+import re, datetime, locale, sys, os, urllib
+#import re, datetime, locale, sys, smtplib, os, urllib
 from email.MIMEText import MIMEText
 from email.MIMEMultipart import MIMEMultipart
 from email.Utils import formatdate
@@ -14,11 +15,11 @@ class MailWikimag:
 
         Nécessite en argument l'adresse d'un fichier de configuration du type :
 mailinglist=    # sur laquel on va publier le mag (mode debug si omis)
-serveur=        # smtp à utiliser, smtp.
-port=
+###serveur=        # smtp à utiliser, smtp.
+###port=
 from=           # adresse de l'expédieur, truc@toto.fr
-motdepasse=
-#utilisateur=   # (facultatif) nom du compte sur le serveur smtp si différent du from
+###motdepasse=
+###utilisateur=   # (facultatif) nom du compte sur le serveur smtp si différent du from
 #mode=          # (facultatif) format d'envoi : text (*), html ou multi
 #semaine=       # (facultatif) forcer l'usage d'une semaine en particulier ; pratique pour le debug
 
@@ -75,6 +76,7 @@ motdepasse=
                 }
         self.debug = False
         self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version sur le wiki]]' % self.mag.title()
+        self.fichier_tmp = u'./mail_bebot.tmp'
 
     def url_(self, match):
         return self.exps['http'].sub(r'\1:', urllib.quote(match.group(1).encode('utf8')))
@@ -295,7 +297,7 @@ motdepasse=
             msg = MIMEText(text.encode('utf-8'), 'plain', 'utf8')
         elif conf['mode'] == "html":
             text = self.gen_html().encode('utf-8')
-            if self.debug : pywikibot.output(text)
+            #if self.debug : pywikibot.output(text)
             msg = MIMEText(text, 'html', 'utf8')
         elif conf['mode'] == "multi":
             msg = MIMEMultipart('alternative', '-==_Partie_57696B696D6167204265426F74')
@@ -319,14 +321,22 @@ motdepasse=
             msg['Subject'] = u'#%s, semaine %s - %s' % \
                     (self.numero, self.semaine, \
                      unicode(self.lundi_pre.strftime("%e %b %Y").lstrip(' '), 'utf-8') )
+            f = open(self.fichier_tmp, "w")
+            f.write(msg.as_string())
+            f.close()
             try:
-                smtp = smtplib.SMTP(conf['serveur'], conf['port'])
-                smtp.starttls()
-                smtp.login(conf['utilisateur'], conf['motdepasse'])
-                smtp.sendmail(conf['from'], conf['mailinglist'], msg.as_string())
-                smtp.quit()
-            except smtplib.SMTPException, esmtp:
-                pywikibot.error(esmtp)
+                cmd = u'cat %s | mail -s "%s" %s' % (self.fichier_tmp, msg['Subject'], conf['mailinglist'])
+                pywikibot.output(cmd)
+                os.system(cmd)
+                #smtp = smtplib.SMTP(conf['serveur'], conf['port'])
+                #smtp.starttls()
+                #smtp.login(conf['utilisateur'], conf['motdepasse'])
+                #smtp.sendmail(conf['from'], conf['mailinglist'], msg.as_string())
+                #smtp.quit()
+                #except smtplib.SMTPException, esmtp:
+                #pywikibot.error(esmtp)
+            except:
+                pywikibot.error(u"Erreur l'ors de l'envoie du mail")
 
 def main():
     if len(sys.argv) > 1:
