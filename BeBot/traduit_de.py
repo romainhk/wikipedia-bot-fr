@@ -35,9 +35,10 @@ class TraduitDe:
                     if len(a)>2:
                         if self.oldidRE.match(a[2]):
                             date = self.dateRev(a[0], a[1], a[2])
-                            date = datetime.date(int(date[0:4]),int(date[5:7]),int(date[8:10]))
-                            pywikibot.output(p.title() + u'\t: ' + str(a) + date)
-                            pywikibot.output(u'{{Traduit de|%s|%s|%s|%s}}' % (a[0], a[1], date.strftime("%d/%m/%Y"), a[2]))
+                            if not date == u'':
+                                date = datetime.date(int(date[0:4]),int(date[5:7]),int(date[8:10]))
+                                pywikibot.output(p.title() + u'\t: ' + str(a) + date)
+                                pywikibot.output(u'{{Traduit de|%s|%s|%s|%s}}' % (a[0], a[1], date.strftime("%d/%m/%Y"), a[2]))
                         else:
                             #pywikibot.output(u'## '+p.title() + u'\t: ' + str(a))
                             pass
