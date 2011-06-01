@@ -47,6 +47,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         self.exps = {
                 'split'     : re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'br'        : re.compile("<br[ /]*>", re.LOCALE|re.UNICODE),
+                'hr'        : re.compile("<hr[ /]*>", re.LOCALE|re.UNICODE),
                 'W_br'      : re.compile("\n\n", re.LOCALE|re.UNICODE|re.MULTILINE),
                 'http'      : re.compile("(http)%3A", re.LOCALE|re.UNICODE|re.MULTILINE),
                 'annonces'  : re.compile("\*? ?\{\{Annonce[ \w\xe9]*\|(\d+)\|(.+?)\}\}", re.LOCALE|re.UNICODE|re.IGNORECASE),
@@ -99,6 +100,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
             pywikibot.error(u"Impossible d'effectuer la substitution")
             sys.exit(2)
         text = pywikibot.Page(self.site, self.tmp).text + self.disclaimer
+        text = self.exps['hr'].sub(r'-----  -----  -----', text)
         text = self.exps['br'].sub(r'', text)
         text = self.exps['annonces'].sub(r'* \1 : \2', text)
         text = self.exps['image'].sub(r'', text)
