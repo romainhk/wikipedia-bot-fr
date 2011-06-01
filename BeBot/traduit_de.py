@@ -15,10 +15,12 @@ class TraduitDe:
         self.tdRE = re.compile("\{\{Traduit de\|([^\}]+)\}\}", re.LOCALE|re.IGNORECASE)
         #self.tdRE = re.compile("\{\{Traduit de\|\w{2,5}(\|[^\|\}]*)*\}\}", re.LOCALE|re.IGNORECASE)
         self.oldidRE = re.compile("^\d+$", re.LOCALE|re.UNICODE|re.MULTILINE)
+        self.sites = {}
 
     def dateRev(self, lang, page, oldid):
-        s = pywikibot.site.BaseSite(lang)
-        p = pywikibot.Page(s, page)
+        if lang not in self.sites.keys():
+            self.sites[lang] = pywikibot.Site(lang)
+        p = pywikibot.Page(self.sites[lang], page)
         r = u''
         for i in p.getVersionHistory():
             if i[0] == oldid:
@@ -26,14 +28,18 @@ class TraduitDe:
         return r
 
     def run(self):
-        for p in pywikibot.pagegenerators.DuplicateFilterPageGenerator(pywikibot.pagegenerators.ReferringPageGenerator(self.TD, followRedirects=False, withTemplateInclusion=True, onlyTemplateInclusion=False, step=100, total=200, content=True)):
+        founds = {  u'+2' : 0,  u'-2' : 0,  u'match' : 0 }
+        pg = pywikibot.pagegenerators.ReferringPageGenerator(self.TD, followRedirects=False, withTemplateInclusion=True, onlyTemplateInclusion=False, step=100, total=500, content=True)
+        for p in pywikibot.pagegenerators.DuplicateFilterPageGenerator(pg):
             if p.isTalkPage():
                 c = self.tdRE.search(p.text)
                 if c:
                     d = c.group(1)
                     a = d.split('|')
                     if len(a)>2:
+                        founds['+2'] += 1
                         if self.oldidRE.match(a[2]):
+                            founds['match'] += 1
                             date = self.dateRev(a[0], a[1], a[2])
                             if not date == u'':
                                 date = datetime.date(int(date[0:4]),int(date[5:7]),int(date[8:10]))
@@ -43,8 +49,8 @@ class TraduitDe:
                             #pywikibot.output(u'## '+p.title() + u'\t: ' + str(a))
                             pass
                     else:
-                        #pywikibot.output(u'** '+p.title() + u'\t: ' + str(a))
-                        pass
+                        founds['-2'] += 1
+            pywikibot.output(u"-2:%i, +2:%i, match:%i" % (founds['-2'], founds['+2'], founds['match']))
 
 def main():
     site = pywikibot.getSite()
