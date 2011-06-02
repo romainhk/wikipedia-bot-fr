@@ -22,21 +22,21 @@ class TraduitDe:
             self.sites[lang] = pywikibot.Site(lang)
         p = pywikibot.Page(self.sites[lang], title)
         r = u''
-        pywikibot.output(u'=== %s' % p.title())
         try:
             q = p.getVersionHistory()
         except:
             pywikibot.output(u'impossible de récupérer la page %s:%s' % (lang, title))
             # TODO : prendre la redirection , ou l'interwiki de page
             return r
+        pywikibot.output(u'=== %s - %s - %s' % (p.title(), oldid, str(q[0])))
         for i in q:
-            if i[0] == oldid:
+            if i[0] == unicode(oldid):
                 r = i[1]
         return r
 
     def run(self):
         founds = {  u'+2' : 0,  u'-2' : 0,  u'match' : 0 }
-        pg = pywikibot.pagegenerators.ReferringPageGenerator(self.TD, followRedirects=False, withTemplateInclusion=True, onlyTemplateInclusion=False, step=100, total=1000, content=False)
+        pg = pywikibot.pagegenerators.ReferringPageGenerator(self.TD, followRedirects=False, withTemplateInclusion=True, onlyTemplateInclusion=False, step=150, total=50000, content=False)
         for p in pywikibot.pagegenerators.DuplicateFilterPageGenerator(pg):
             if p.isTalkPage():
                 c = self.tdRE.search(p.text)
@@ -48,7 +48,7 @@ class TraduitDe:
                         if self.oldidRE.match(a[2]):
                             founds['match'] += 1
                             date = self.dateRev(p, a[0], a[1], a[2])
-                            pywikibot.output(p.title() + u'\t: ' + str(a) + date)
+                            pywikibot.output(p.title() + u'\t: ' + str(a) +u'__'+ date)
                             if not date == u'':
                                 date = datetime.date(int(date[0:4]),int(date[5:7]),int(date[8:10]))
                                 pywikibot.output(u'{{Traduit de|%s|%s|%s|%s}}' % (a[0], a[1], date.strftime("%d/%m/%Y"), a[2]))

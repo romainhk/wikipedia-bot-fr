@@ -112,16 +112,11 @@ def datecmp(x, y):
 
 def put_page(page, new):
     """
-        Prints diffs between orginal and new (text), puts new text for page
+        Puts new text for page
     """
-    #pywikibot.output(u"\n\n>>> \03{lightpurple}%s\03{default} <<<"
-    #                 % page.title())
-    #try:
-    #    pywikibot.showDiff(page.get(), new)
-    #except pywikibot.NoPage:
-    #    pywikibot.showDiff("", new)
     try:
-        page.put(new, minorEdit=False)
+        #page.put(new, minorEdit=False)
+        page.save(new, minor=False, async=True)
     except pywikibot.EditConflict:
         pywikibot.warning(u'Skipping %s because of edit conflict'
                           % (page,))
