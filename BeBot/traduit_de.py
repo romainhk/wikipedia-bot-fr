@@ -28,8 +28,7 @@ class TraduitDe:
             pywikibot.output(u'impossible de récupérer la page %s:%s' % (lang, title))
             # TODO : prendre la redirection , ou l'interwiki de page
             return r
-        #pywikibot.output(u'=== %s - %s - %s' % (p.title(), oldid, str(q[0])))
-        oldid = int(oldid):
+        oldid = int(oldid)
         for i in q:
             if i[0] == oldid:
                 r = i[1]
@@ -38,8 +37,8 @@ class TraduitDe:
 
     def run(self):
         founds = {}
-        #pg = pywikibot.pagegenerators.ReferringPageGenerator(self.TD, followRedirects=False, withTemplateInclusion=True, onlyTemplateInclusion=False, step=150, total=50000, content=False)
-        pg = pywikibot.pagegenerators.LinkedPageGenerator(pywikibot.Page(self.site, u'Utilisateur:BeBot/Test'), step=None, total=None, content=True)
+        pg = pywikibot.pagegenerators.ReferringPageGenerator(self.TD, followRedirects=False, withTemplateInclusion=True, onlyTemplateInclusion=False, step=150, total=50000, content=False)
+        #pg = pywikibot.pagegenerators.LinkedPageGenerator(pywikibot.Page(self.site, u'Utilisateur:BeBot/Test'), step=None, total=None, content=True)
         for p in pywikibot.pagegenerators.DuplicateFilterPageGenerator(pg):
             if p.isTalkPage():
                 c = self.tdRE.search(p.text)
@@ -48,19 +47,16 @@ class TraduitDe:
                     a = d.split('|')
                     if len(a) > 2:
                         if self.oldidRE.match(a[2]):
-                            founds.[p.title()] = u''
+                            #founds[p.title()] = u''
                             date = self.dateRev(p, a[0], a[1], a[2])
-                            #pywikibot.output(p.title() + u'\t: ' + str(a) +u'__'+ date)
                             if not date == u'':
-                                date = datetime.date(int(date[0:4]),int(date[5:7]),int(date[8:10]))
-                                td = u'{{Traduit de|%s|%s|%s|%s}}' % (a[0], a[1].strip(' '), date.strftime("%d/%m/%Y"), a[2])
-                                founds.[p.title()] = td
-                                #pywikibot.output(td)
+                                #date = datetime.date(int(date[0:4]),int(date[5:7]),int(date[8:10]))
+                                #td = u'{{Traduit de|%s|%s|%s|%s}}' % (a[0], a[1].strip(' '), date.strftime("%d/%m/%Y"), a[2])
+                                td=u''
+                                founds[p.title()] = td
                         else:
-                            #pywikibot.output(u'## '+p.title() + u'\t: ' + str(a))
                             pass
-                    else:
-        pywikibot.output(founds)
+        pywikibot.output(founds.keys())
         pywikibot.output(len(founds))
 
 def main():
