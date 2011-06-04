@@ -33,7 +33,7 @@ class BotWikimag:
         # Infos
         split = re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         params = {  'adq': u'', u'propositions adq' : u'',
-                    'ba': u'',  u'propositions ba' : u'' } # Les paramètres du mag
+                    'ba' : u'', u'propositions ba'  : u'' } # Les paramètres du mag
         a = re.split(split, self.mag.text)
         for i in range(1, len(a), 2):
             params[a[i].lower()] = a[i+1].rstrip('\n').strip(' ')
@@ -49,9 +49,9 @@ class BotWikimag:
         #Retrait des a-label
         alabel = re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE)
         params['adq'] = alabel.sub(r'[[\1]]', params['adq'])
-        params['propositions adq'] = alabel.sub(r'[[\1]]', params['propositions adq'])
+        params['propositions adq'] = alabel.sub(r'* [[\1]]', params['propositions adq'])
         params['ba']  = alabel.sub(r'[[\1]]', params['ba'])
-        params['propositions ba'] = alabel.sub(r'[[\1]]', params['propositions ba'])
+        params['propositions ba'] = alabel.sub(r'* [[\1]]', params['propositions ba'])
         propositions = params['propositions adq'] + params['propositions ba']
         pywikibot.output(u"# Publication sur l'Atelier de lecture")
         #Ajout des icones

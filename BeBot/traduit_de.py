@@ -38,8 +38,8 @@ class TraduitDe:
 
     def run(self):
         founds = {}
-        #pg = pywikibot.pagegenerators.ReferringPageGenerator(self.TD, followRedirects=False, withTemplateInclusion=True, onlyTemplateInclusion=False, step=150, total=50000, content=False)
-        pg = pywikibot.pagegenerators.LinkedPageGenerator(pywikibot.Page(self.site, u'Utilisateur:BeBot/Test'), step=None, total=None, content=True) # Page de test
+        pg = pywikibot.pagegenerators.ReferringPageGenerator(self.TD, followRedirects=False, withTemplateInclusion=True, onlyTemplateInclusion=False, step=150, total=50000, content=False)
+        #pg = pywikibot.pagegenerators.LinkedPageGenerator(pywikibot.Page(self.site, u'Utilisateur:BeBot/Test'), step=None, total=None, content=True) # Page de test
         for p in pywikibot.pagegenerators.DuplicateFilterPageGenerator(pg):
             if p.isTalkPage():
                 c = self.tdRE.search(p.text)
@@ -54,14 +54,14 @@ class TraduitDe:
                                 fr = u''
                                 if len(a) > 4:
                                     fr = u'|' + u'|'.join(a[3:5])
-                                td = u'{{Traduit de|%s|%s|%s|%s%s}}' % (a[0], a[1].strip(' '), date.strftime("%d/%m/%Y"), a[2], plus)
+                                td = u'{{Traduit de|%s|%s|%s|%s%s}}' % (a[0], a[1].strip(' '), date.strftime("%d/%m/%Y"), a[2], fr)
                                 founds[p.title()] = td
-                                pywikibot.showDiff(p.text, self.tdRE.sub(td, p.text))
-                                #p.text = self.tdRE.sub(td, p.text)
-                                #p.save(comment=u'Ajout du paramètre date au modèle "Traduit de" ([[Discussion modèle:Traduit de#Date de traduction sans oldid]])', minor=False)
+                                #pywikibot.showDiff(p.text, self.tdRE.sub(td, p.text))
+                                p.text = self.tdRE.sub(td, p.text)
+                                p.save(comment=u'Ajout automatique du paramètre 'date' au modèle "Traduit de" ([[Discussion modèle:Traduit de#Date de traduction sans oldid]])', minor=True, async=True)
         #for k in founds.iterkeys():
         #    pywikibot.output(k)
-        pywikibot.output(len(founds))
+        pywikibot.output(u'Total : %i' % len(founds))
 
 def main():
     site = pywikibot.getSite()
