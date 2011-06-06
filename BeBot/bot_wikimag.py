@@ -41,12 +41,6 @@ class BotWikimag:
 
         # Résultat
         lumiere = pywikibot.Page(self.site, u'Wikipédia:Atelier de lecture/Lumière sur...')
-        """ Par ajout
-        label = re.compile("== Adq ==([^={2}]*)", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
-        lumiere.text = label.sub(r'== Adq ==\n%s\1' % params['adq'], lumiere.text)
-        label = re.compile("== BA ==([^={2}]*)", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
-        lumiere.text = label.sub(r'== BA ==\n%s\1' % params['ba'], lumiere.text)
-        """
         #Retrait des a-label
         alabel = re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE)
         params['adq'] = alabel.sub(r'[[\1]]', params['adq'])

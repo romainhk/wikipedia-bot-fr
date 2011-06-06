@@ -18,20 +18,22 @@ from=           # adresse de l'expédieur, truc@toto.fr
 #mode=          # (facultatif) format d'envoi : text (*), html ou multi
 #semaine=       # (facultatif) forcer l'usage d'une semaine en particulier ; pratique pour le debug
 
-        TODO    gérer les interwiki/interlangue
-                transclusion complète ?
-                html : images ?
+        TODO
+        gérer les interwiki/interlangue
+        transclusion complète ?
+        html : inclure les images ?
+        problème avec les images contenant un lien : [[File:Welcome2WP French WEB.pdf|140px|thumb|right|[[:File:Welcome2WP French WEB.pdf|Feuilletez-moi !]] ahaha.]]
     """
     def __init__(self, site, fichier_conf):
         self.site = site
         self.conf_mail = fichier_conf
         self.conf = BeBot.fichier_conf(self.conf_mail)
-        self.tmp = u'Utilisateur:BeBot/MailWikimag'
-        self.modele_de_presentation = u'Wikimag_par_mail'
+        self.tmp = u'Utilisateur:BeBot/MailWikimag' # Pour le mode text
+        self.modele_de_presentation = u'Wikimag_par_mail' #aussi
         date = datetime.date.today()
         self.lundi = date - datetime.timedelta(days=date.weekday())
         self.lundi_pre = self.lundi - datetime.timedelta(weeks=1)
-        self.debug = False
+        self.debug = False # Mode de débugage actif ?
         if 'semaine' in self.conf:
             self.semaine = self.conf['semaine']
             self.debug = True
@@ -51,12 +53,13 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'W_br'      : re.compile("\n\n", re.LOCALE|re.UNICODE|re.MULTILINE),
                 'http'      : re.compile("(http)%3A", re.LOCALE|re.UNICODE|re.MULTILINE),
                 'annonces'  : re.compile("\*? ?\{\{Annonce[ \w\xe9]*\|(\d+)\|(.+?)\}\}", re.LOCALE|re.UNICODE|re.IGNORECASE),
-                'image'     : re.compile("\[\[(Image|File|Fichier):[^\]]+\]\]\s*", re.LOCALE|re.UNICODE|re.IGNORECASE),
-                #'image'     : re.compile("\[\[[Image|File|Fichier]:([^\|\]]+)(\|[^\|]+)*\]\]\s*", re.LOCALE|re.UNICODE|re.IGNORECASE),
+                #'image'     : re.compile("\[\[(?:Image|File|Fichier):.*?(\[{1,2})?.+?(?(1)\]).*?\]\]\s*", re.LOCALE|re.UNICODE|re.IGNORECASE|re.DOTALL),
+                'image'     : re.compile("\[\[(?:Image|File|Fichier):([^\]]+)\]\]\s*", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'lien_ext'  : re.compile("\[(http:[^\] ]+) ?([^\]]*)\]", re.LOCALE|re.UNICODE),
                 'lien_int'  : re.compile("\[\[([^\]\|]+)\|?([^\]]*)\]\]", re.LOCALE|re.UNICODE),
                 'lien_intA' : re.compile("\[\[([^\]\|]+)\]\]", re.LOCALE|re.UNICODE),
-                'modele'    : re.compile("\{\{[^\|\}:]*[\|:]?([^\}:]*)\}\}", re.LOCALE|re.UNICODE),
+                'formatnum' : re.compile("\{\{(formatnum):([^\}:]*)\}\}", re.LOCALE|re.UNICODE),
+                'modele'    : re.compile("\{\{[^\|\}:]*\|?([^\}:]*)\}\}", re.LOCALE|re.UNICODE),
                 'html'      : re.compile("<(?P<balise>\w+)[^<>]*>(.*?)</(?P=balise)>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'quote'     : re.compile("(?P<quote>'{2,5})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
                 'b'         : re.compile("(?P<quote>'{3})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
@@ -65,14 +68,16 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'liste'     : re.compile("\*\s?(.*)", re.LOCALE|re.UNICODE),
                 'center'    : re.compile("<center>(.*?)</center>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE),
+                'W___'      : re.compile("__[A-Z]+__", re.LOCALE),
                 'W_label'   : re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'W_liste'   : re.compile("^\s*\*", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
-                'W_trans'   : re.compile("\{\{([^\/\}][^\|\}]{4,})\}\}", re.LOCALE|re.UNICODE),
+                'W_trans'   : re.compile("\{\{([^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
                 #'W_noinc'   : re.compile("<noinclude>(.*?)</noinclude>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'sommaire'  : re.compile(self.sommaire_jocker, re.LOCALE|re.UNICODE)
-                }
-        self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version sur le wiki]]' % self.mag.title()
-        self.fichier_mail = u'./wikimag_mail.tmp'
+                } # Toute les expressions qui seront détectée
+        self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version sur le wiki]]' % self.mag.title() # Message de fin
+        self.fichier_mail = u'./wikimag_mail.tmp' # Fichier temporaire pour le mail
+        self.mode = u'' # Mode de génération en cours
 
     def url_(self, match):
         return self.exps['http'].sub(r'\1:', urllib.quote(match.group(1).encode('utf8')))
@@ -81,15 +86,28 @@ from=           # adresse de l'expédieur, truc@toto.fr
         page = match.group(1)
         if page[0] == u'/':
             page = self.mag.title() + page
-        #if pywikibot.Page(self.site, page).exists():
-        return self.html_lien('http://fr.wikipedia.org/wiki/'+page, u'[transclusion]')
+        elif not pywikibot.Page(self.site, page).exists():
+            return u'' #page
+        if self.mode == u'html':
+            return self.html_lien('http://fr.wikipedia.org/wiki/'+page, u'[transclusion]')
+        else:
+            return u'Voir ( %shttp://fr.wikipedia.org/wiki/%s%s )' % ( self.jocker, page, self.ajocker)
+        # Recopiage
         #text = pywikibot.Page(self.site, match.group(1)).text
         #text = self.exps['W_noinc'].sub(r'', text)
         #return text
 
+    def retirer(self, exprs, text):
+        """ retire les RE de exprs dans text
+        """
+        for a in exprs:
+            text = a.sub(r'', text)
+        return text
+
     def gen_plaintext(self, pagetmp):
         """ Génération du format texte brut
         """
+        self.mode = u'text'
         self.jocker = u'%$!' #Pour repérer les liens http
         self.ajocker = BeBot.reverse(self.jocker)
         modele = re.compile("\{\{[cC]omposition wikimag", re.LOCALE)
@@ -101,19 +119,18 @@ from=           # adresse de l'expédieur, truc@toto.fr
             sys.exit(2)
         text = pywikibot.Page(self.site, self.tmp).text + self.disclaimer
         text = self.exps['hr'].sub(r'-----  -----  -----', text)
-        text = self.exps['br'].sub(r'', text)
+        text = self.retirer((self.exps['br'],self.exps['image'],self.exps['W___']), text)
         text = self.exps['annonces'].sub(r'* \1 : \2', text)
-        text = self.exps['image'].sub(r'', text)
         # Liens externes
         text = self.exps['lien_ext'].sub(r'\2 [ %s\1%s ]' % ( self.jocker, self.ajocker), text)
         # Liens internes
         text = self.exps['lien_intA'].sub(r'[[\1|\1]]', text)
         text = self.exps['lien_int'].sub(r'\2 ( %shttp://fr.wikipedia.org/wiki/\1%s )' \
                 % ( self.jocker, self.ajocker), text)
-        text = self.exps['W_trans'].sub(r'Voir ( %shttp://fr.wikipedia.org/wiki/\1%s )' \
-                % ( self.jocker, self.ajocker), text)
+        text = self.exps['W_trans'].sub(self.transclusion, text)
         text = self.exps['W_label'].sub(r'%shttp://fr.wikipedia.org/wiki/\1%s' % ( self.jocker, self.ajocker), text)
 
+        text = self.exps['formatnum'].sub(r'\2', text)
         text = self.exps['modele'].sub(r'\1', text)
         text = self.exps['center'].sub(r'    \1', text)
         text = self.exps['html'].sub(r'\2', text)
@@ -126,15 +143,16 @@ from=           # adresse de l'expédieur, truc@toto.fr
     def gen_html(self):
         """ Génération au format Html
         """
+        self.mode = u'html'
         text = self.mag.text
-        text = self.exps['image'].sub(r'', text)
+        text = self.retirer((self.exps['comment'],self.exps['image'],self.exps['W___']), text)
+        text = self.exps['formatnum'].sub(r'\2', text)
         text = self.exps['W_trans'].sub(self.transclusion, text)
         text = self.exps['W_uma'].sub(r'\1', text)
         text = self.exps['W_label'].sub(r'[[\1]]', text)
         text = self.exps['W_br'].sub(r'<br />\n', text)
         text = self.exps['b'].sub(r'<b>\2</b>', text)
         text = self.exps['i'].sub(r'<i>\2</i>', text)
-        text = self.exps['comment'].sub(r'', text)
         self.sommaire = '<span style="padding-left:6ex; font-weight:bolder;">Sommaire</span>\n<ol class="sommaire">\n'
         self.sommaire_index = 0
 
@@ -177,9 +195,15 @@ from=           # adresse de l'expédieur, truc@toto.fr
         if (len(params[u'adq']) > 0):
             r += self.html_chapitre(u'Articles de qualité', 3)
             r += self.html_liste(params[u'adq'])
+        if (len(params[u'propositions adq']) > 0):
+            r += self.html_chapitre(u'Propositions', 4)
+            r += self.html_liste(params[u'propositions adq'])
         if (len(params[u'ba']) > 0):
             r += self.html_chapitre(u'Bon articles', 3)
             r += self.html_liste(params[u'ba'])
+        if (len(params[u'propositions ba']) > 0):
+            r += self.html_chapitre(u'Propositions', 4)
+            r += self.html_liste(params[u'propositions ba'])
         #image gauche / image droite ------
         if (len(params[u'actualités']) > 0):
             r += self.html_chapitre(u'Actualités')
@@ -193,9 +217,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
             r += self.html_liste(params[u'médias'])
         if (len(params[u'entretien'])>0 and (len(params[u'entretien avec'])>0) ):
             r += self.html_chapitre(u'Entretien')
-            r += self.html_paragraphe(u'Entretien proposé par ' \
-                    + self.exps['html'].sub(r'', params[u'entretien avec']), 'text-align:right;')
             r += self.html_paragraphe(params[u'entretien'])
+            r += self.html_paragraphe(self.exps['html'].sub(r'', params[u'entretien avec']), 'text-align:right;')
         if (len(params[u'tribune'])>0 and (len(params[u'signature'])>0) ):
             r += self.html_chapitre(u'Tribune')
             r += self.html_paragraphe(params[u'tribune'])
@@ -205,8 +228,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
             r += self.html_chapitre(u'Histoire')
             r += self.html_paragraphe(params[u'histoire'])
         if (len(params[u'citation']) > 0):
-            r += self.html_chapitre(u'Citation')
-            r += self.html_liste(params[u'citation'])
+            r += self.html_chapitre(u'Citation de la semaine')
+            r += self.html_paragraphe(params[u'citation'])
         #astuce ----
         r += self.html_chapitre(u'Planète Wikimédia')
         r += self.html_paragraphe(u'Ce qui se dit dans ' \
@@ -267,13 +290,15 @@ from=           # adresse de l'expédieur, truc@toto.fr
         # Fichier de configuration
         conf = self.conf
         if 'mailinglist' not in conf:
-            pywikibot.output(u"# Mode debug ; pas de publication")
+            conf['mailinglist'] = u'a@a.com'
             self.debug = True
         if 'from' not in conf:
             pywikibot.error(u"fichier de configuration incomplet ; manque l'expéditeur d'origine")
             sys.exit(3)
         if 'mode' not in conf:
             conf['mode'] = 'text'
+        if self.debug:
+            pywikibot.output(u"# Mode debug ; pas de publication")
 
         pagetmp = pywikibot.Page(self.site, self.tmp)
         # Numéro du mag
@@ -305,17 +330,17 @@ from=           # adresse de l'expédieur, truc@toto.fr
             pywikibot.error(u"mode d'envoi du mail inconnu (text, html ou multi)")
             sys.exit(4)
 
+        msg['From'] = conf['from']
+        msg['To'] = conf['mailinglist']
+        msg['Date'] = formatdate(localtime=True)
+        msg['Subject'] = u'#%s, semaine %s - %s' % \
+                (self.numero, self.semaine, \
+                 unicode(self.lundi_pre.strftime("%e %b %Y").lstrip(' '), 'utf-8') )
+        f = open(self.fichier_mail, "w")
+        f.write(msg.as_string())
+        f.close()
         if not self.debug:
             pywikibot.output(u"# Publication sur la mailing liste")
-            msg['From'] = conf['from']
-            msg['To'] = conf['mailinglist']
-            msg['Date'] = formatdate(localtime=True)
-            msg['Subject'] = u'#%s, semaine %s - %s' % \
-                    (self.numero, self.semaine, \
-                     unicode(self.lundi_pre.strftime("%e %b %Y").lstrip(' '), 'utf-8') )
-            f = open(self.fichier_mail, "w")
-            f.write(msg.as_string())
-            f.close()
             try:
                 cmd = u'cat %s | mail -s "%s" %s' % (self.fichier_mail, msg['Subject'], conf['mailinglist'])
                 os.system(cmd)
