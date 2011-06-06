@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
 import re, datetime, locale
-import BeBot
+#import BeBot
 import pywikibot
 locale.setlocale(locale.LC_ALL, '')
 
@@ -58,7 +58,7 @@ class TraduitDe:
                                 founds[p.title()] = td
                                 #pywikibot.showDiff(p.text, self.tdRE.sub(td, p.text))
                                 p.text = self.tdRE.sub(td, p.text)
-                                p.save(comment=u'Ajout automatique du paramètre 'date' au modèle "Traduit de" ([[Discussion modèle:Traduit de#Date de traduction sans oldid]])', minor=True, async=True)
+                                p.save(comment=u'Ajout automatique du paramètre "date" au modèle "Traduit de" ([[Discussion modèle:Traduit de#Date de traduction sans oldid]])', minor=True, async=True)
         #for k in founds.iterkeys():
         #    pywikibot.output(k)
         pywikibot.output(u'Total : %i' % len(founds))

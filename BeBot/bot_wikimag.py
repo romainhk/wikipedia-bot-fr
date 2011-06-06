@@ -30,6 +30,7 @@ class BotWikimag:
     def adl(self):
         """ Ajoute les adq/ba de la semaine à l'Atelier de Lecture
         """
+        separation = u'<hr width="50%" />'
         # Infos
         split = re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         params = {  'adq': u'', u'propositions adq' : u'',
@@ -49,20 +50,20 @@ class BotWikimag:
         #Retrait des a-label
         alabel = re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE)
         params['adq'] = alabel.sub(r'[[\1]]', params['adq'])
-        params['propositions adq'] = alabel.sub(r'* [[\1]]', params['propositions adq'])
+        params['propositions adq'] = alabel.sub(r'[[\1]]', params['propositions adq'])
         params['ba']  = alabel.sub(r'[[\1]]', params['ba'])
-        params['propositions ba'] = alabel.sub(r'* [[\1]]', params['propositions ba'])
+        params['propositions ba'] = alabel.sub(r'[[\1]]', params['propositions ba'])
         propositions = params['propositions adq'] + params['propositions ba']
-        pywikibot.output(u"# Publication sur l'Atelier de lecture")
         #Ajout des icones
         icone = re.compile("^\* ", re.LOCALE|re.UNICODE|re.MULTILINE)
         params['adq'] = icone.sub(r'* {{AdQ|20px}} ', params['adq'])
         params['ba']  = icone.sub(r'* {{BA|20px}} ', params['ba'])
         lumiere.text = u'[[Fichier:HSutvald2.svg|left|60px]]\nLes articles labellisés durant la semaine dernière et les nouvelles propositions au label.{{Clr}}\n' \
-                + u'\n{{colonnes|nombre=3|\n' + params['adq'] + u'\n}}\n' + u'<hr />' \
-                + u'\n{{colonnes|nombre=3|\n' + params['ba']  + u'\n}}\n' + u'<hr />' \
+                + u'\n{{colonnes|nombre=3|\n' + params['adq'] + u'\n}}\n' + separation \
+                + u'\n{{colonnes|nombre=3|\n' + params['ba']  + u'\n}}\n' + separation \
                 + u'\n{{colonnes|nombre=3|\n' + propositions  + u'\n}}\n' \
                 + u'<noinclude>\n[[Catégorie:Wikipédia:Atelier de lecture|Lumière sur...]]\n</noinclude>'
+        pywikibot.output(u"# Publication sur l'Atelier de lecture")
         #pywikibot.output(lumiere.text)
         try:
             lumiere.save(comment=u'Maj hebdomadaire de la liste', minor=False, async=True)
@@ -72,10 +73,8 @@ class BotWikimag:
     def newsboy(self, lecteur, msg):
         """ Distribut un magasine
         """
-        lecteur = pywikibot.Page(self.site, u"Utilisateur:"+lecteur).toggleTalkPage()
         if lecteur.isRedirectPage():
             lecteur = lecteur.getRedirectTarget()
-        # Donne le mag au lecteur
         lecteur.text = lecteur.text + msg
         try:
             lecteur.save(comment=self.resume, minor=False, async=True)
@@ -95,7 +94,10 @@ class BotWikimag:
                 liste.append(m.group(1))
         # Pour chaque abonné
         for l in liste:
-            self.newsboy(l, msg)
+            self.newsboy(pywikibot.Page(self.site, u"Utilisateur:"+lecteur).toggleTalkPage(), msg)
+        # Message sur le bistro
+        bistro = pywikibot.Page(self.site, u'Wikipédia:Le_Bistro/%s' % strftime("%d %B %Y").lstrip('0'))
+        self.newsboy(bistro, msg)
 
         # Travail pour l'atelier de lecture
         self.adl()
