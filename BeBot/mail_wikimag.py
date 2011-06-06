@@ -59,7 +59,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'lien_int'  : re.compile("\[\[([^\]\|]+)\|?([^\]]*)\]\]", re.LOCALE|re.UNICODE),
                 'lien_intA' : re.compile("\[\[([^\]\|]+)\]\]", re.LOCALE|re.UNICODE),
                 'formatnum' : re.compile("\{\{(formatnum):([^\}:]*)\}\}", re.LOCALE|re.UNICODE),
-                'modele'    : re.compile("\{\{[^\|\}:]*\|?([^\}:]*)\}\}", re.LOCALE|re.UNICODE),
+                'modele'    : re.compile("\{\{([^\|\}:]*)\|?([^\}:]*)\}\}", re.LOCALE|re.UNICODE),
                 'html'      : re.compile("<(?P<balise>\w+)[^<>]*>(.*?)</(?P=balise)>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'quote'     : re.compile("(?P<quote>'{2,5})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
                 'b'         : re.compile("(?P<quote>'{3})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
@@ -67,7 +67,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'comment'   : re.compile("<!--(.*?)-->", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'liste'     : re.compile("\*\s?(.*)", re.LOCALE|re.UNICODE),
                 'center'    : re.compile("<center>(.*?)</center>", re.LOCALE|re.UNICODE|re.DOTALL),
-                'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE),
+                #'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE),
+                'W_uma'     : re.compile("[uma][']*", re.LOCALE|re.UNICODE),
                 'W___'      : re.compile("__[A-Z]+__", re.LOCALE),
                 'W_label'   : re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'W_liste'   : re.compile("^\s*\*", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
@@ -96,6 +97,22 @@ from=           # adresse de l'expédieur, truc@toto.fr
         #text = pywikibot.Page(self.site, match.group(1)).text
         #text = self.exps['W_noinc'].sub(r'', text)
         #return text
+
+    def modele(self, match):
+        """ Traitement spécifiques pour les modèles à paramètres
+        """
+        nom = match.group(1).lower()
+        params = match.group(2).split('|')
+        if self.exps['W_uma'].search(nom):
+            return params[0] #  users
+        elif nom in ('er'):
+            return params[0]  # tel-quel
+        elif nom in ('clin', 'pdf', 'sourire'):
+            return u''  # rien
+        elif nom == u'unité':
+            return params[0] + u' ' + params[1]
+        else:
+            return u''
 
     def retirer(self, exprs, text):
         """ retire les RE de exprs dans text
@@ -131,7 +148,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         text = self.exps['W_label'].sub(r'%shttp://fr.wikipedia.org/wiki/\1%s' % ( self.jocker, self.ajocker), text)
 
         text = self.exps['formatnum'].sub(r'\2', text)
-        text = self.exps['modele'].sub(r'\1', text)
+        text = self.exps['modele'].sub(self.modele, text)
         text = self.exps['center'].sub(r'    \1', text)
         text = self.exps['html'].sub(r'\2', text)
         text = self.exps['quote'].sub(r'\2', text)
@@ -148,7 +165,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
         text = self.retirer((self.exps['comment'],self.exps['image'],self.exps['W___']), text)
         text = self.exps['formatnum'].sub(r'\2', text)
         text = self.exps['W_trans'].sub(self.transclusion, text)
-        text = self.exps['W_uma'].sub(r'\1', text)
         text = self.exps['W_label'].sub(r'[[\1]]', text)
         text = self.exps['W_br'].sub(r'<br />\n', text)
         text = self.exps['b'].sub(r'<b>\2</b>', text)
@@ -251,7 +267,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
             if (len(nom) == 0):
                 nom = lien.group(1)
             r = b[0] +  self.html_lien(u'http://fr.wikipedia.org/wiki/'+lien.group(1), nom) + b[2]
-        r = self.exps['modele'].sub(r'\1', r)
+        r = self.exps['modele'].sub(self.modele, r)
         # Sommaire
         r = self.exps['sommaire'].sub(self.sommaire+'</ol>\n', r)
         return r + u'</body>\n</html>'
