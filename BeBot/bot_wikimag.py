@@ -88,9 +88,9 @@ class BotWikimag:
                 liste.append(m.group(1))
         # Pour chaque abonné
         for l in liste:
-            self.newsboy(pywikibot.Page(self.site, u"Utilisateur:"+lecteur).toggleTalkPage(), msg)
+            self.newsboy(pywikibot.Page(self.site, u"Utilisateur:"+l).toggleTalkPage(), msg)
         # Message sur le bistro
-        bistro = pywikibot.Page(self.site, u'Wikipédia:Le_Bistro/%s' % strftime("%d %B %Y").lstrip('0'))
+        bistro = pywikibot.Page(self.site, u'Wikipédia:Le_Bistro/%s' % self.lundi.strftime("%d %B %Y").lstrip('0'))
         self.newsboy(bistro, msg)
 
         # Travail pour l'atelier de lecture
