@@ -72,9 +72,9 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 #'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE),
                 'User'      : re.compile("\[\[Utilisateur:(\w+)(\|\w+)?\]\]", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'User talk' : re.compile("\[\[Discussion utilisateur:(\w+)(\|\w+)?\]\]", re.LOCALE|re.UNICODE|re.IGNORECASE),
-                'W___'      : re.compile("__[A-Z]+__", re.LOCALE),
+                'W___'      : re.compile("__[A-Z]+__\s*", re.LOCALE),
                 'transclu'  : re.compile("\{\{([^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
-                'noinclude' : re.compile("<noinclude>(.*?)</noinclude>", re.LOCALE|re.UNICODE|re.DOTALL)
+                'noinclude' : re.compile("<noinclude>(.*?)</noinclude>\s*", re.LOCALE|re.UNICODE|re.DOTALL)
                 } # Toute les expressions qui seront détectée
         self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version sur le wiki]]' % self.mag.title() # Message de fin
         self.fichier_mail = u'./wikimag_mail.tmp' # Fichier temporaire pour le mail
@@ -91,16 +91,18 @@ from=           # adresse de l'expédieur, truc@toto.fr
             page = self.mag.title() + page
         elif not pywikibot.Page(self.site, page).exists():
             return u'' #page
-        intitule = u'Retrouvez la page « %s » sur le wiki'%page.split('/').pop()
-        if self.mode == u'html':
-            return self.html_lien('http://fr.wikipedia.org/wiki/'+page, u'[ '+intitule+u' ]')
-        else:
-            return u'[ %s : %shttp://fr.wikipedia.org/wiki/%s%s ]' % \
-                    (intitule, page.split('/').pop(), self.jocker, page, self.ajocker)
+        # Lien
+        #intitule = u'Retrouvez la page « %s » sur le wiki'%page.split('/').pop()
+        #if self.mode == u'html':
+        #    return self.html_lien('http://fr.wikipedia.org/wiki/'+page, u'[ '+intitule+u' ]')
+        #else:
+        #    return u'[ %s : %shttp://fr.wikipedia.org/wiki/%s%s ]' % \
+        #            (intitule, page.split('/').pop(), self.jocker, page, self.ajocker)
+
         # Recopiage
-        #text = pywikibot.Page(self.site, match.group(1)).text
-        #text = self.exps['noinclude'].sub(r'', text)
-        #return text
+        text = pywikibot.Page(self.site, page).text
+        text = self.exps['noinclude'].sub(r'', text)
+        return text
 
     def modele(self, match):
         """ Traitement spécifiques pour les modèles à paramètres
@@ -138,6 +140,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
             pywikibot.error(u"Impossible d'effectuer la substitution")
             sys.exit(2)
         text = pywikibot.Page(self.site, self.tmp).text + self.disclaimer
+        text = self.exps['transclu'].sub(self.transclusion, text)
         text = self.retirer( [self.exps['br'],self.exps['image'],self.exps['W___'], \
                 self.exps['noinclude']], text)
         text = self.exps['User'].sub(r'{{u|\1}}', text)
@@ -148,7 +151,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
         text = self.exps['lien_intA'].sub(r'[[\1|\1]]', text)
         text = self.exps['lien_int'].sub(r'\2 ( %shttp://fr.wikipedia.org/wiki/\1%s )' \
                 % ( self.jocker, self.ajocker), text)
-        text = self.exps['transclu'].sub(self.transclusion, text)
         text = self.exps['label'].sub(r'%shttp://fr.wikipedia.org/wiki/\1%s' % ( self.jocker, self.ajocker), text)
 
         text = self.exps['hr'].sub(r'-----  -----  -----', text)
@@ -168,11 +170,11 @@ from=           # adresse de l'expédieur, truc@toto.fr
         self.mode = u'html'
         text = self.mag.text
 
+        text = self.exps['transclu'].sub(self.transclusion, text)
         text = self.retirer( [self.exps['comment'],self.exps['image'],self.exps['W___'], \
                 self.exps['noinclude']], text)
         text = self.exps['User'].sub(r'{{u|\1}}', text)
         text = self.exps['formatnum'].sub(r'\2', text)
-        text = self.exps['transclu'].sub(self.transclusion, text)
         text = self.exps['label'].sub(r'[[\1]]', text)
         text = self.exps['W_br'].sub(r'<br />\n', text)
         text = self.exps['b'].sub(r'<b>\2</b>', text)
@@ -276,7 +278,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
             nom = lien.group(2)
             if (len(nom) == 0):
                 nom = lien.group(1)
-            r = b[0] +  self.html_lien(u'http://fr.wikipedia.org/wiki/'+lien.group(1), nom) + b[2]
+            r = b[0] + self.html_lien(u'http://fr.wikipedia.org/wiki/'+lien.group(1), nom) + b[2]
         r = self.exps['modele'].sub(self.modele, r)
         # Sommaire
         r = self.exps['sommaire'].sub(self.sommaire+'</ol>\n', r)
