@@ -14,9 +14,11 @@ class MailWikimag:
 
         Nécessite en argument l'adresse d'un fichier de configuration du type :
 mailinglist=    # sur laquel on va publier le mag (mode debug si omis)
+epreuve=        # adresse mail des relecteurs
 from=           # adresse de l'expédieur, truc@toto.fr
 #mode=          # (facultatif) format d'envoi : text (*), html ou multi
 #semaine=       # (facultatif) forcer l'usage d'une semaine en particulier ; pratique pour le debug
+        L'option finale -e permet de faire une épreuve (tirage limité aux relecteurs)
 
         TODO
         gérer les interwiki/interlangue
@@ -24,10 +26,11 @@ from=           # adresse de l'expédieur, truc@toto.fr
         html : inclure les images ?
         problème avec les descriptions d'images contenant un lien : [[File:Welcome2WP French WEB.pdf|140px|thumb|right|[[:File:Welcome2WP French WEB.pdf|Feuilletez-moi !]] ahaha.]]
     """
-    def __init__(self, site, fichier_conf):
+    def __init__(self, site, fichier_conf, epreuve):
         self.site = site
         self.conf_mail = fichier_conf
         self.conf = BeBot.fichier_conf(self.conf_mail)
+        self.epreuve = epreuve
         self.tmp = u'Utilisateur:BeBot/MailWikimag' # Pour le mode text
         date = datetime.date.today()
         self.lundi = date - datetime.timedelta(days=date.weekday())
@@ -139,6 +142,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         except:
             pywikibot.error(u"Impossible d'effectuer la substitution")
             sys.exit(2)
+        if self.epreuve: text = u'CE MAIL EST UNE ÉPREUVE DU PROCHAIN MAG.\n' + text
         text = pywikibot.Page(self.site, self.tmp).text + self.disclaimer
         text = self.exps['transclu'].sub(self.transclusion, text)
         text = self.retirer( [self.exps['br'],self.exps['image'],self.exps['W___'], \
@@ -169,6 +173,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         """
         self.mode = u'html'
         text = self.mag.text
+        if self.epreuve: text = u'<b style="font-color:red;">Ce mail est une épreuve du prochain mag.</b>\n' + text
 
         text = self.exps['transclu'].sub(self.transclusion, text)
         text = self.retirer( [self.exps['comment'],self.exps['image'],self.exps['W___'], \
@@ -358,12 +363,17 @@ from=           # adresse de l'expédieur, truc@toto.fr
             pywikibot.error(u"mode d'envoi du mail inconnu (text, html ou multi)")
             sys.exit(4)
 
+        # Publication
         msg['From'] = conf['from']
-        msg['To'] = conf['mailinglist']
+        if self.epreuve:
+            msg['To'] = conf['epreuve']
+        else:
+            msg['To'] = conf['mailinglist']
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = u'#%s, semaine %s - %s' % \
                 (self.numero, self.semaine, \
                  unicode(self.lundi_pre.strftime("%e %b %Y").lstrip(' '), 'utf-8') )
+        if self.epreuve: msg['Subject'] += u' // ÉPREUVE'
         f = open(self.fichier_mail, "w")
         f.write(msg.as_string())
         f.close()
@@ -376,16 +386,19 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 pywikibot.error(u"Erreur l'ors de l'envoie du mail")
 
 def main():
-    if len(sys.argv) > 1:
+    epreuve = False
+    if len(sys.argv) in (2, 3):
         fichier_conf = sys.argv[1]
+        if len(sys.argv) == 3 and sys.argv[2] == u'-e':
+            epreuve = True
     else:
         fichier_conf = u''
     if os.path.exists(fichier_conf):
         site = pywikibot.getSite()
-        mw = MailWikimag(site, fichier_conf)
+        mw = MailWikimag(site, fichier_conf, epreuve)
         mw.run()
     else:
-        pywikibot.output(u"Argument invalide: Ce script attend un fichier de configuration comme unique argument (voir doc).")
+        pywikibot.output(u"Argument invalide: Ce script attend un fichier de configuration comme premier argument (voir doc).")
 
 if __name__ == "__main__":
     try:
