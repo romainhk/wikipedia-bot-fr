@@ -93,7 +93,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         if page[0] == u'/':
             page = self.mag.title() + page
         elif not pywikibot.Page(self.site, page).exists():
-            return u'' #page
+            return u''
         # Lien
         #intitule = u'Retrouvez la page « %s » sur le wiki'%page.split('/').pop()
         #if self.mode == u'html':
@@ -118,6 +118,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
             return params[0]  # tel-quel
         elif nom == u'unité':
             return params[0] + u' ' + params[1]
+        elif nom == u'heure':
+            return params[0] + u'h' + params[1]
         else:
             return u''
 
@@ -173,7 +175,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
         """
         self.mode = u'html'
         text = self.mag.text
-        if self.epreuve: text = u'<b style="font-color:red;">Ce mail est une épreuve du prochain mag.</b>\n' + text
 
         text = self.exps['transclu'].sub(self.transclusion, text)
         text = self.retirer( [self.exps['comment'],self.exps['image'],self.exps['W___'], \
@@ -205,6 +206,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         r += self.html_paragraphe(u'Du lundi ' + self.lundi.strftime("%e %b %Y").lstrip(' ') \
                 + ' au dimanche ' + (self.lundi + datetime.timedelta(days=6)).strftime("%e %b %Y").lstrip(' '))
         r += '<div style="float:right;"><img src="http://upload.wikimedia.org/wikipedia/commons/7/72/Wikimag-fr.svg" alt="Logo Wikimag" width="120px" /></div>\n'
+        if self.epreuve: self.html_paragraphe(u'<b style="font-color:red;">Ce mail est une épreuve du prochain mag.</b>')
         r += self.sommaire_jocker
 
         params = {} # Les paramètres du mag
