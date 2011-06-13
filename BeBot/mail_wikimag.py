@@ -142,8 +142,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
         except:
             pywikibot.error(u"Impossible d'effectuer la substitution")
             sys.exit(2)
-        if self.epreuve: text = u'CE MAIL EST UNE ÉPREUVE DU PROCHAIN MAG.\n' + text
         text = pywikibot.Page(self.site, self.tmp).text + self.disclaimer
+        if self.epreuve: text = u'CE MAIL EST UNE ÉPREUVE DU PROCHAIN MAG.\n' + text
         text = self.exps['transclu'].sub(self.transclusion, text)
         text = self.retirer( [self.exps['br'],self.exps['image'],self.exps['W___'], \
                 self.exps['noinclude']], text)
@@ -378,9 +378,9 @@ from=           # adresse de l'expédieur, truc@toto.fr
         f.write(msg.as_string())
         f.close()
         if not self.debug:
-            pywikibot.output(u"# Publication sur la mailing liste")
+            pywikibot.output(u"# Publication sur la mailing list")
             try:
-                cmd = u'cat %s | mail -s "%s" %s' % (self.fichier_mail, msg['Subject'], conf['mailinglist'])
+                cmd = u'cat %s | mail -s "%s" %s' % (self.fichier_mail, msg['Subject'], msg['To'])
                 os.system(cmd)
             except:
                 pywikibot.error(u"Erreur l'ors de l'envoie du mail")

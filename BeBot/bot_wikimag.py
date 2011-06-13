@@ -30,7 +30,7 @@ class BotWikimag:
     def adl(self):
         """ Ajoute les adq/ba de la semaine à l'Atelier de Lecture
         """
-        separation = u'<hr width="50%" />'
+        separation = u'<hr style="width:45%; text-align:center;" />'
         # Infos
         split = re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         params = {  'adq': u'', u'propositions adq' : u'',
