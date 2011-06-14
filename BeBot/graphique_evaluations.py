@@ -16,7 +16,7 @@ class GraphiqueEvaluations:
     def __init__(self, site):
         self.site = site
         self.date = datetime.date.today()
-        self.resume = u'Mise à jour du graphique des évaluations'
+        self.resume = u'Mise à jour mensuelle du graphique des évaluations'
         #DB
         self.db = MySQLdb.connect(db="u_romainhk_transient", \
                                 read_default_file="/home/romainhk/.my.cnf", \
@@ -24,6 +24,9 @@ class GraphiqueEvaluations:
         self.nom_base = u'historique_des_evaluations'
     def __del__(self):
         self.db.close()
+
+    def BotSectionEdit(self, match):
+        return u'%s\n%s\n%s' % (BeBot.BeginBotSection, self.msg, BeBot.EndBotSection)
 
     def run(self):
         # Dénombrement
@@ -63,7 +66,7 @@ class GraphiqueEvaluations:
                 maxi = res[r-1][6]
         maxi = math.floor(maxi*1.02)
         #maxi = math.floor(total/10000)*10000
-        msg = dedent("""
+        self.msg = dedent(u"""
 <timeline>
 Colors=
   id:lightgrey value:gray(0.9)
@@ -74,6 +77,7 @@ Colors=
   id:gris value:rgb(0.95,0.95,0.95)
 
 ImageSize  = width:%d height:300
+Define $width = %d
 PlotArea   = left:50 bottom:50 top:30 right:30
 DateFormat = x.y
 Period     = from:0 till:%d
@@ -83,35 +87,41 @@ ScaleMajor = gridcolor:darkgrey increment:10000 start:0
 ScaleMinor = gridcolor:lightgrey increment:5000 start:0
 BackgroundColors = canvas:sfondo
 
-Legend = left:60 top:270"""[1:] % (largeur, maxi) )
+Legend = left:60 top:270"""[1:] % (largeur, width, maxi) )
         #Nom des bars
-        msg += '\nBarData=\n'
+        self.msg += '\nBarData=\n'
         for r in range(1, nb_enregistrement):
             p = ''
             if r % 4 == 0:
                 p = res[r-1][0].strftime("%m/%y")
-            msg += '  bar:%d text:%s\n' % (r, p)
+            self.msg += '  bar:%d text:%s\n' % (r, p)
         #Valeurs : total
-        msg += '\nPlotData=\n  color:barra width:%d align:left\n\n' % width
+        self.msg += '\nPlotData=\n  color:barra width:$width align:left\n\n'
         for r in range(1, nb_enregistrement):
             p = res[r-1][6]
-            msg += '  bar:%d from:0 till: %d\n' % (r, p)
+            self.msg += '  bar:%d from:0 till: %d\n' % (r, p)
         #Valeurs : importants
-        msg += '\nPlotData=\n  color:rouge width:%d align:left\n\n' % width
+        self.msg += '\nPlotData=\n  color:rouge width:$width align:left\n\n'
         for r in range(1, nb_enregistrement):
             p = res[r-1][1] + res[r-1][2]
-            msg += '  bar:%d from:0 till: %d\n' % (r, p)
+            self.msg += '  bar:%d from:0 till: %d\n' % (r, p)
         # Labels
-        msg += '\nPlotData=\n'
+        self.msg += '\nPlotData=\n'
         for r in range(1, nb_enregistrement):
-            if r % 3 == 0:
+            if r % 3 == 1:
                 p = res[r-1][6]
-                msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r, p, p)
+                self.msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r, p, p)
                 q = res[r-1][1] + res[r-1][2]
-                msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r, q, q)
-        msg += '</timeline>'
+                self.msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r, q, q)
+        self.msg += '</timeline>'
 
-        print msg
+        # Publication
+        page = pywikibot.Page(self.site, u'Projet:Wikipédia_1.0/Évolution')
+        page.text = BeBot.ER_BotSection.sub(self.BotSectionEdit, page.text)
+        try:
+            page.save(comment=self.resume, minor=False)
+        except:
+            pywikibot.error(u"Impossible de faire la mise à jour")
 
 def main():
     site = pywikibot.getSite()

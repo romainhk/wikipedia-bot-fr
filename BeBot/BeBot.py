@@ -19,6 +19,10 @@ Rassemble plusieurs fonctions génériques :
 * retourner une chaine de caractère...
 """
 
+BeginBotSection = u'<!-- BEGIN BOT SECTION -->'
+EndBotSection   = u'<!-- END BOT SECTION -->'
+ER_BotSection = re.compile("%s(.*)%s" % (BeginBotSection, EndBotSection), re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
+
 def moistoint(mois):
     """
     Convertit un mois sous forme de chaîne de caractères, en son entier i associé (1≤i≤12).
