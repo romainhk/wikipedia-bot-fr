@@ -69,7 +69,7 @@ class BotWikimag:
         """
         if lecteur.isRedirectPage():
             lecteur = lecteur.getRedirectTarget()
-        lecteur.text = lecteur.text + msg
+        lecteur.text += msg
         try:
             lecteur.save(comment=self.resume, minor=False, async=True)
         except pywikibot.Error, e:
@@ -87,8 +87,8 @@ class BotWikimag:
             if m is not None:
                 liste.append(m.group(1))
         # Pour chaque abonné
-        #for l in liste:
-        #    self.newsboy(pywikibot.Page(self.site, u"Utilisateur:"+l).toggleTalkPage(), msg)
+        for l in liste:
+            self.newsboy(pywikibot.Page(self.site, u"Utilisateur:"+l).toggleTalkPage(), msg)
         # Message sur le bistro
         bistro = pywikibot.Page(self.site, u'Wikipédia:Le_Bistro/%s' % self.lundi.strftime("%d %B %Y").lstrip('0'))
         dimanche = self.lundi - datetime.timedelta(days=1)
@@ -108,10 +108,10 @@ class BotWikimag:
         if annee1 == annee2:
             annee1 = u''
         else:
-            image = u'250px-Wikimag-fr-santa.png'
+            image = u'250px-Wikimag-fr-firework.svg.png'
         a = self.lundi_pre - datetime.date(int(self.annee), 12, 25)
         if a.days < 6:
-            image = u'250px-Wikimag-fr-firework.svg.png'
+            image = u'250px-Wikimag-fr-santa.png'
         msg2 += u'<table class="messagebox" style="width:100%%;border:1px solid #a9a7f0; background-color:#FFFFFF;" title="Parution du wikimag de la semaine">\n<tr><td style="background-color:#FFFFFF; padding:0 0 0 0px;" width="100%%">[[Fichier:%s|left|75px]]\n' % image
         msg2 += u'<div style="float:right;margin:2px 2px 0px 2px; text-align:center; font-size:120%%"> [[Wikipédia:Wikimag/%s/%s|Lire le]]<br /> [[Image:Wikimag horizontal text-fr-3.svg|100px|link=Wikipédia:Wikimag]]</div>' % (self.annee, self.semaine)
         msg2 += u'<div style="width:90%%;margin:0.5em 0 0 0; text-align:center;font-size:120%%"> Le [[Wikipédia:Wikimag|Wikimag]] {{numéro}}%s vient de paraître pour la semaine<br />du lundi %s%s%s au dimanche %s%s%s</div></td></tr></table> ~~~~' % (self.numero, jour1, mois1, annee1, jour2, mois2, annee2)
