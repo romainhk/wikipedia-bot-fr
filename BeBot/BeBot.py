@@ -114,7 +114,7 @@ def hasWikiprojet(langue):
     else:
         return False
 
-def charger_bdd(db, nom_base, champs="*", cond=None, lim=None):
+def charger_bdd(db, nom_base, champs="*", cond=None, lim=None, ordre=None):
     """
     Charger une table depuis une base de données
     """
@@ -122,6 +122,8 @@ def charger_bdd(db, nom_base, champs="*", cond=None, lim=None):
     req = "SELECT %s FROM %s" % (champs, nom_base)
     if cond is not None:
         req += " WHERE %s" % cond
+    if ordre is not None:
+        req += " ORDER BY %s" % ordre
     if lim is not None:
         req += " LIMIT 0,%i" % lim
     try:
