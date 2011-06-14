@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, locale, MySQLdb, sqlite3
-#import BeBot
-#from MySQLdb.constants import ER
+import re, datetime, locale, MySQLdb, math
+import BeBot
+from MySQLdb.constants import ER
 import pywikibot
 from pywikibot import catlib
 from textwrap import dedent
@@ -17,13 +17,13 @@ class GraphiqueEvaluations:
         self.site = site
         self.date = datetime.date.today()
         self.resume = u'Mise à jour du graphique des évaluations'
-        """
         #DB
         self.db = MySQLdb.connect(db="u_romainhk_transient", \
                                 read_default_file="/home/romainhk/.my.cnf", \
                                 use_unicode=True, charset='utf8')
-        self.nom_base = u''
-        """
+        self.nom_base = u'historique_des_evaluations'
+    def __del__(self):
+        self.db.close()
 
     def run(self):
         # Dénombrement
@@ -34,14 +34,35 @@ class GraphiqueEvaluations:
             for d in c.subcategories():
                 pages = self.site.categoryinfo(d)['pages']
                 l[nom] += pages
-        pywikibot.output(l)
-        pywikibot.output('Max + Eleve : %d' % (l[u'élevée'] + l[u'maximum']))
-        b = 0
+        #pywikibot.output(l)
+        total = 0
         for a in l.values():
-            b += a
-        pywikibot.output('Total : %d' % b)
-
+            total += a
+        #pywikibot.output('Total : %d' % total)
+        # Sauvegarde
+        curseur = self.db.cursor()
+        req = u'INSERT INTO %s' % self.nom_base \
+            + u'(date, maximum, élevée, moyenne, faible, inconnue, total) ' \
+            + u'VALUES ("%s", %d, %d, %d, %d, %d, %d)' \
+            % (self.date.strftime("%Y-%m-%d"), l['maximum'], l[u'élevée'], \
+                    l['moyenne'], l['faible'], l['inconnue'], total)
+        try:
+            curseur.execute(req)
+        except MySQLdb.Error, e:
+            pywikibot.error(u"INSERT error %d: %s.\nRequête : %s" % (e.args[0], e.args[1], req))
+        
         # Dessin
+        limite = 30 #nombre de colonnes
+        largeur = 600 #largeur du graphique
+        maxi = 0 #valeur max en hauteur
+        res = BeBot.charger_bdd(self.db, self.nom_base, lim=limite, ordre='"date" ASC')
+        nb_enregistrement = len(res)+1
+        width = math.ceil(largeur/nb_enregistrement) #largeur d'une bande
+        for r in range(1, nb_enregistrement):
+            if maxi < res[r-1][6]:
+                maxi = res[r-1][6]
+        maxi = math.floor(maxi*1.02)
+        #maxi = math.floor(total/10000)*10000
         msg = dedent("""
 <timeline>
 Colors=
@@ -52,19 +73,44 @@ Colors=
   id:rouge value:rgb(1,0,0) legend:Max+Élevée
   id:gris value:rgb(0.95,0.95,0.95)
 
-ImageSize  = width:600 height:300
+ImageSize  = width:%d height:300
 PlotArea   = left:50 bottom:50 top:30 right:30
 DateFormat = x.y
-Period     = from:0 till:15000
+Period     = from:0 till:%d
 TimeAxis   = orientation:vertical
 AlignBars  = justify
-ScaleMajor = gridcolor:darkgrey increment:1000 start:0
-ScaleMinor = gridcolor:lightgrey increment:500 start:0
+ScaleMajor = gridcolor:darkgrey increment:10000 start:0
+ScaleMinor = gridcolor:lightgrey increment:5000 start:0
 BackgroundColors = canvas:sfondo
 
-Legend = left:60 top:270
+Legend = left:60 top:270"""[1:] % (largeur, maxi) )
+        #Nom des bars
+        msg += '\nBarData=\n'
+        for r in range(1, nb_enregistrement):
+            p = ''
+            if r % 4 == 0:
+                p = res[r-1][0].strftime("%m/%y")
+            msg += '  bar:%d text:%s\n' % (r, p)
+        #Valeurs : total
+        msg += '\nPlotData=\n  color:barra width:%d align:left\n\n' % width
+        for r in range(1, nb_enregistrement):
+            p = res[r-1][6]
+            msg += '  bar:%d from:0 till: %d\n' % (r, p)
+        #Valeurs : importants
+        msg += '\nPlotData=\n  color:rouge width:%d align:left\n\n' % width
+        for r in range(1, nb_enregistrement):
+            p = res[r-1][1] + res[r-1][2]
+            msg += '  bar:%d from:0 till: %d\n' % (r, p)
+        # Labels
+        msg += '\nPlotData=\n'
+        for r in range(1, nb_enregistrement):
+            if r % 3 == 0:
+                p = res[r-1][6]
+                msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r, p, p)
+                q = res[r-1][1] + res[r-1][2]
+                msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r, q, q)
+        msg += '</timeline>'
 
-BarData="""[1:] )
         print msg
 
 def main():
