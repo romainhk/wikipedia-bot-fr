@@ -63,9 +63,17 @@ class GraphiqueEvaluations:
         width = math.ceil(largeur/nb_enregistrement) #largeur d'une bande
         for r in range(1, nb_enregistrement):
             if maxi < res[r-1][6]:
-                maxi = res[r-1][6]
-        maxi = math.floor(maxi*1.02)
-        #maxi = math.floor(total/10000)*10000
+                maxi = res[r-1][6] # point le plus haut
+        #Majoration du maximum
+        #maxi = math.floor(maxi*1.02)
+        t = maxi
+        rang = 0
+        while t > 1:
+            t = math.ceil(t/10)
+            rang +=1
+        graduation = pow(10, rang-2)
+        maxi = maxi + math.floor(graduation/2)
+        maxi = int(math.floor(maxi*pow(10,3-rang))*pow(10,rang-3)) # 3 premiers chiffre significatifs
         self.msg = dedent(u"""
 <timeline>
 Colors=
@@ -83,11 +91,11 @@ DateFormat = x.y
 Period     = from:0 till:%d
 TimeAxis   = orientation:vertical
 AlignBars  = justify
-ScaleMajor = gridcolor:darkgrey increment:10000 start:0
-ScaleMinor = gridcolor:lightgrey increment:5000 start:0
+ScaleMajor = gridcolor:darkgrey increment:%d start:0
+ScaleMinor = gridcolor:lightgrey increment:%d start:0
 BackgroundColors = canvas:sfondo
 
-Legend = left:60 top:270"""[1:] % (largeur, width, maxi) )
+Legend = left:60 top:270"""[1:] % (largeur, width, maxi, graduation, graduation/2) )
         #Nom des bars
         self.msg += '\nBarData=\n'
         for r in range(1, nb_enregistrement):
