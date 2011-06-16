@@ -10,7 +10,7 @@ locale.setlocale(locale.LC_ALL, '')
 
 class GraphiqueEvaluations:
     """ GraphiqueEvaluations
-        Génère un graphique à barres (mensuelles) sur l'évolution des évaluations :
+        Génère un graphique à barres sur l'évolution du nombre des évaluations :
         nombre d'articles d'importance maximum ou élevée et total
     """
     def __init__(self, site):
@@ -37,11 +37,9 @@ class GraphiqueEvaluations:
             for d in c.subcategories():
                 pages = self.site.categoryinfo(d)['pages']
                 l[nom] += pages
-        #pywikibot.output(l)
         total = 0
         for a in l.values():
             total += a
-        #pywikibot.output('Total : %d' % total)
         # Sauvegarde
         curseur = self.db.cursor()
         req = u'INSERT INTO %s' % self.nom_base \
@@ -65,7 +63,6 @@ class GraphiqueEvaluations:
             if maxi < res[r-1][6]:
                 maxi = res[r-1][6] # point le plus haut
         #Majoration du maximum
-        #maxi = math.floor(maxi*1.02)
         t = maxi
         rang = 0
         while t > 1:
@@ -100,7 +97,7 @@ Legend = left:60 top:270"""[1:] % (largeur, width, maxi, graduation, graduation/
         self.msg += '\nBarData=\n'
         for r in range(1, nb_enregistrement):
             p = ''
-            if r % 4 == 0:
+            if r % 4 == 1:
                 p = res[r-1][0].strftime("%m/%y")
             self.msg += '  bar:%d text:%s\n' % (r, p)
         #Valeurs : total
@@ -113,7 +110,7 @@ Legend = left:60 top:270"""[1:] % (largeur, width, maxi, graduation, graduation/
         for r in range(1, nb_enregistrement):
             p = res[r-1][1] + res[r-1][2]
             self.msg += '  bar:%d from:0 till: %d\n' % (r, p)
-        # Labels
+        #Labels
         self.msg += '\nPlotData=\n'
         for r in range(1, nb_enregistrement):
             if r % 3 == 1:

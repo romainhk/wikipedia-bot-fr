@@ -116,7 +116,7 @@ def put_page(page, new):
     """
     try:
         #page.put(new, minorEdit=False)
-        page.save(new, minor=False, async=True)
+        page.save(new, minor=False, async=False)
     except pywikibot.EditConflict:
         pywikibot.warning(u'Skipping %s because of edit conflict'
                           % (page,))
