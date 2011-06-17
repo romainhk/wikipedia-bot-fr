@@ -30,7 +30,7 @@ class BotWikimag:
     def adl(self):
         """ Ajoute les adq/ba de la semaine à l'Atelier de Lecture
         """
-        separation = u'<hr style="width:45%; text-align:center;" />'
+        separation = u'<hr style="width:42%; text-align:center;" />'
         # Infos
         split = re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         params = {  'adq': u'', u'propositions adq' : u'',
@@ -47,7 +47,7 @@ class BotWikimag:
         params['propositions adq'] = alabel.sub(r'[[\1]]', params['propositions adq'])
         params['ba']  = alabel.sub(r'[[\1]]', params['ba'])
         params['propositions ba'] = alabel.sub(r'[[\1]]', params['propositions ba'])
-        propositions = params['propositions adq'] + params['propositions ba']
+        propositions = params['propositions adq'] + u'\n' + params['propositions ba']
         #Ajout des icones
         icone = re.compile("^\* ", re.LOCALE|re.UNICODE|re.MULTILINE)
         params['adq'] = icone.sub(r'* {{AdQ|20px}} ', params['adq'])
