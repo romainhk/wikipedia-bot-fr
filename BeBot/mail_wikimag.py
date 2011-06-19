@@ -34,6 +34,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
         self.tmp = u'Utilisateur:BeBot/MailWikimag' # Pour le mode text
         date = datetime.date.today()
         self.lundi = date - datetime.timedelta(days=date.weekday())
+        if self.epreuve:
+            self.lundi = self.lundi - datetime.timedelta(weeks=1)
         self.lundi_pre = self.lundi - datetime.timedelta(weeks=1)
         self.debug = False # Mode de débugage actif ?
         if 'semaine' in self.conf:

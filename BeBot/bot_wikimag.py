@@ -79,7 +79,8 @@ class BotWikimag:
     def run(self):
         # Message à distribuer
         msg = msg2 = u"\n== Wikimag n°%s - Semaine %s ==\n" % (self.numero, self.semaine)
-        msg += u"{{Wiki magazine|%s|%s}} ~~~~" % (self.annee, self.semaine)
+        #msg += u"{{Wiki magazine|%s|%s}} ~~~~" % (self.annee, self.semaine)
+        msg += u"{{Wiki magazine|%s|%s}}\nInterview exceptionnelle de Popo le Chien ! ~~~~" % (self.annee, self.semaine)
 
         r = re.compile(u"\*\* \{\{u\|(.+?)\}\}", re.LOCALE|re.UNICODE)
         liste = []
