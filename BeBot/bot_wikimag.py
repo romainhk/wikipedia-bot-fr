@@ -24,7 +24,8 @@ class BotWikimag:
         if m is not None:
             self.numero = m.group(1)
 
-        self.resume = u'Demandez [[Wikipédia:Wikimag/%s/%s|Cannes Midi (n°%s)]]. Le tueur de Cannes frappe encore... 5 cents' \
+        #self.resume = u'Demandez [[Wikipédia:Wikimag/%s/%s|Cannes Midi (n°%s)]]. Le tueur de Cannes frappe encore... 5 cents' \
+        self.resume = u'Demandez [[Wikipédia:Wikimag/%s/%s|Cannes Midi (n°%s)]]. Interview exceptionnelle de Popo le Chien !' \
                 % (self.annee, self.semaine, self.numero)
 
     def adl(self):
