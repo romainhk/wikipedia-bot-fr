@@ -34,9 +34,11 @@ from=           # adresse de l'expédieur, truc@toto.fr
         self.tmp = u'Utilisateur:BeBot/MailWikimag' # Pour le mode text
         date = datetime.date.today()
         self.lundi = date - datetime.timedelta(days=date.weekday())
-        if self.epreuve:
-            self.lundi = self.lundi - datetime.timedelta(weeks=1)
         self.lundi_pre = self.lundi - datetime.timedelta(weeks=1)
+        if self.epreuve:
+            pywikibot.output(u"# Mode épreuve ; publication limitée")
+            self.lundi_pre = self.lundi
+            self.lundi = self.lundi_pre + datetime.timedelta(weeks=1)
         self.debug = False # Mode de débugage actif ?
         if 'semaine' in self.conf:
             self.semaine = self.conf['semaine']
