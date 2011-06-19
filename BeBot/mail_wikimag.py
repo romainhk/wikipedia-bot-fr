@@ -63,7 +63,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'hr'        : re.compile("<hr[ /]*>", re.LOCALE|re.UNICODE),
                 'br'        : re.compile("<br[ /]*>", re.LOCALE|re.UNICODE),
                 'W_br'      : re.compile("\n\n", re.LOCALE|re.UNICODE|re.MULTILINE),
-                'annonces'  : re.compile("\*? ?\{\{Annonce[ \w\xe9]*\|(\d+)\|(.+?)\}\}", re.LOCALE|re.UNICODE|re.IGNORECASE),
+                'annonces'  : re.compile("\*? ?\{\{Annonce[ \w\xe9]*\|(\d+)\|(.+)\}\}", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 #'image'     : re.compile("\[\[(?:Image|File|Fichier):.*?(\[{1,2})?.+?(?(1)\]).*?\]\]\s*", re.LOCALE|re.UNICODE|re.IGNORECASE|re.DOTALL),
                 'image'     : re.compile("\[\[(?:Image|File|Fichier):([^\]]+)\]\]\s*", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'lien_ext'  : re.compile("\[(http:[^\] ]+) ?([^\]]*)\]", re.LOCALE|re.UNICODE),
@@ -83,6 +83,12 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'transclu'  : re.compile("\{\{([^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'noinclude' : re.compile("<noinclude>(.*?)</noinclude>\s*", re.LOCALE|re.UNICODE|re.DOTALL)
                 } # Toute les expressions qui seront détectée
+        self.mods = {
+                'u' : 'tel', 'm' : 'tel', 'u\'' : 'tel', 'a' : 'tel', 'l' : 'tel',
+                'citation' : 'tel',
+                'clin' : 'rien', 'pdf' : 'rien', 'sourire' : 'rien',
+                u'unité' : u'unité', 'heure' : 'heure'
+                } # Ce qu'il faut faire avec chaque modele
         self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version sur le wiki]]' % self.mag.title() # Message de fin
         self.fichier_mail = u'./wikimag_mail.tmp' # Fichier temporaire pour le mail
         self.mode = u'' # Mode de génération en cours
@@ -94,6 +100,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
         """ Traitement spécifique pour les transclusions
         """
         page = match.group(1)
+        if page in self.mods.keys():
+            return u'{{%s}}' % page # Modèle qui sera traité
         if page[0] == u'/':
             page = self.mag.title() + page
         elif not pywikibot.Page(self.site, page).exists():
@@ -116,16 +124,17 @@ from=           # adresse de l'expédieur, truc@toto.fr
         """
         nom = match.group(1).lower()
         params = match.group(2).split('|')
-        if nom in ('clin', 'pdf', 'sourire'):
-            return u''  # rien
-        elif nom in ('er', 'u', "u'", 'm', 'a', 'l', 'citation'):
-            return params[0]  # tel-quel
-        elif nom == u'unité':
-            return params[0] + u' ' + params[1]
-        elif nom == u'heure':
-            return params[0] + u'h' + params[1]
-        else:
+        if nom not in self.mods.keys():
             return u''
+        action = self.mods[nom]
+        if action == 'rien':
+            return u''  # rien
+        elif action == 'tel':
+            return params[0]  # tel-quel
+        elif action == u'unité':
+            return params[0] + u' ' + params[1]
+        elif action == u'heure':
+            return params[0] + u'h' + params[1]
 
     def retirer(self, exprs, text):
         """ Retire les ER de exprs dans text """
