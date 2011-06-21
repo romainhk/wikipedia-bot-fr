@@ -24,14 +24,13 @@ class BotWikimag:
         if m is not None:
             self.numero = m.group(1)
 
-        #self.resume = u'Demandez [[Wikipédia:Wikimag/%s/%s|Cannes Midi (n°%s)]]. Le tueur de Cannes frappe encore... 5 cents' \
-        self.resume = u'Demandez [[Wikipédia:Wikimag/%s/%s|Cannes Midi (n°%s)]]. Interview exceptionnelle de Popo le Chien !' \
+        self.resume = u'Demandez [[Wikipédia:Wikimag/%s/%s|Cannes Midi (n°%s)]]. Le tueur de Cannes frappe encore... 5 cents' \
                 % (self.annee, self.semaine, self.numero)
 
     def adl(self):
         """ Ajoute les adq/ba de la semaine à l'Atelier de Lecture
         """
-        separation = u'<hr style="width:42%; text-align:center;" />'
+        separation = u'<center><hr style="width:42%;" /></center>'
         # Infos
         split = re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         params = {  'adq': u'', u'propositions adq' : u'',
@@ -79,8 +78,7 @@ class BotWikimag:
     def run(self):
         # Message à distribuer
         msg = msg2 = u"\n== Wikimag n°%s - Semaine %s ==\n" % (self.numero, self.semaine)
-        #msg += u"{{Wiki magazine|%s|%s}} ~~~~" % (self.annee, self.semaine)
-        msg += u"{{Wiki magazine|%s|%s}}\nInterview exceptionnelle de Popo le Chien ! ~~~~" % (self.annee, self.semaine)
+        msg += u"{{Wiki magazine|%s|%s}} ~~~~" % (self.annee, self.semaine)
 
         r = re.compile(u"\*\* \{\{u\|(.+?)\}\}", re.LOCALE|re.UNICODE)
         liste = []
