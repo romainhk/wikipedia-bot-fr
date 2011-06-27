@@ -75,7 +75,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'quote'     : re.compile("(?P<quote>'{2,5})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
                 'b'         : re.compile("(?P<quote>'{3})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
                 'i'         : re.compile("(?P<quote>'{2})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
-                'liste'     : re.compile("\*\s?(.*)", re.LOCALE|re.UNICODE),
+                'liste'     : re.compile("\*+\s?([^\*])", re.LOCALE|re.UNICODE),
                 #'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE),
                 'User'      : re.compile("\[\[Utilisateur:(\w+)(\|\w+)?\]\]", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'User talk' : re.compile("\[\[Discussion utilisateur:(\w+)(\|\w+)?\]\]", re.LOCALE|re.UNICODE|re.IGNORECASE),
@@ -87,6 +87,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'u' : 'tel', 'm' : 'tel', 'u\'' : 'tel', 'a' : 'tel', 'l' : 'tel',
                 'citation' : 'tel',
                 'clin' : 'rien', 'pdf' : 'rien', 'sourire' : 'rien',
+                'guil' : 'guil', 'citation' : 'guil',
                 u'unité' : u'unité', 'heure' : 'heure'
                 } # Ce qu'il faut faire avec chaque modele
         self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version sur le wiki]]' % self.mag.title() # Message de fin
@@ -131,13 +132,15 @@ from=           # adresse de l'expédieur, truc@toto.fr
             return u''  # rien
         elif action == 'tel':
             return params[0]  # tel-quel
+        elif action == u'guil':
+            return u'« ' + params[0] + u' »'
         elif action == u'unité':
             return params[0] + u' ' + params[1]
         elif action == u'heure':
             return params[0] + u'h' + params[1]
 
     def retirer(self, exprs, text):
-        """ Retire les ER de exprs dans text """
+        """ Retire les ER de exprs dans le text """
         for a in exprs:
             text = a.sub(r'', text)
         return text
@@ -160,7 +163,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
         text = pywikibot.Page(self.site, self.tmp).text + self.disclaimer
         if self.epreuve: text = u'CE MAIL EST UNE ÉPREUVE DU PROCHAIN MAG.\n' + text
         text = self.exps['transclu'].sub(self.transclusion, text)
-        text = self.retirer( [self.exps['br'],self.exps['image'],self.exps['W___'], \
+        text = self.retirer( [self.exps['comment'], self.exps['br'], \
+                self.exps['image'], self.exps['W___'], \
                 self.exps['noinclude']], text)
         text = self.exps['User'].sub(r'{{u|\1}}', text)
         text = self.exps['annonces'].sub(r'* \1 : \2', text)
@@ -217,9 +221,9 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'Wikimag '+str(self.numero)) \
                 + u' (semaine ' + self.semaine + u')</h1>\n'
         r += self.html_paragraphe(u'Du lundi ' + self.lundi.strftime("%e %b %Y").lstrip(' ') \
-                + ' au dimanche ' + (self.lundi + datetime.timedelta(days=6)).strftime("%e %b %Y").lstrip(' '))
+                + ' au dimanche ' + (self.lundi + datetime.timedelta(days=6)).strftime("%e %B %Y").lstrip(' '))
         r += '<div style="float:right;"><img src="http://upload.wikimedia.org/wikipedia/commons/7/72/Wikimag-fr.svg" alt="Logo Wikimag" width="120px" /></div>\n'
-        if self.epreuve: self.html_paragraphe(u'<b style="font-color:red;">Ce mail est une épreuve du prochain mag.</b>')
+        if self.epreuve: r += self.html_paragraphe(u'<b style="font-color:red;">Ce mail est une épreuve du prochain mag.</b>')
         r += self.sommaire_jocker
 
         params = {} # Les paramètres du mag

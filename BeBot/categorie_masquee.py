@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import BeBot
 import pywikibot
 
 class CategorieMasquee:
@@ -10,7 +9,7 @@ class CategorieMasquee:
     def __init__(self, site, categorie):
         self.site = site
         self.categorie = u'<noinclude>\n[[%s]]\n</noinclude>' % categorie
-        self.resume = u'Ajout de la [[:Categorie:%s]]' % (self.categorie)
+        self.resume = u'Ajout de la [[:Categorie:%s]]' % (categorie)
 
     def run(self):
         for a in [2007, 2008, 2009, 2010, 2011]:
