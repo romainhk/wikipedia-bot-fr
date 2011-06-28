@@ -90,6 +90,7 @@ class BotWikimag:
         for l in liste:
             self.newsboy(pywikibot.Page(self.site, u"Utilisateur:"+l).toggleTalkPage(), msg)
         # Message sur le bistro
+        """
         bistro = pywikibot.Page(self.site, u'Wikipédia:Le_Bistro/%s' % self.lundi.strftime("%d %B %Y").lstrip('0'))
         dimanche = self.lundi - datetime.timedelta(days=1)
         jour1 = unicode(self.lundi_pre.day)
@@ -116,6 +117,7 @@ class BotWikimag:
         msg2 += u'<div style="float:right;margin:2px 2px 0px 2px; text-align:center; font-size:120%%"> [[Wikipédia:Wikimag/%s/%s|Lire le]]<br /> [[Image:Wikimag horizontal text-fr-3.svg|100px|link=Wikipédia:Wikimag]]</div>' % (self.annee, self.semaine)
         msg2 += u'<div style="width:90%%;margin:0.5em 0 0 0; text-align:center;font-size:120%%"> Le [[Wikipédia:Wikimag|Wikimag]] {{numéro}}%s vient de paraître pour la semaine<br />du lundi %s%s%s au dimanche %s%s%s</div></td></tr></table> ~~~~' % (self.numero, jour1, mois1, annee1, jour2, mois2, annee2)
         self.newsboy(bistro, msg2)
+        """
 
         # Travail pour l'atelier de lecture
         self.adl()
