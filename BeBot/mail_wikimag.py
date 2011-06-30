@@ -155,6 +155,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         modele = re.compile("\{\{[cC]omposition wikimag", re.LOCALE)
 
         pagetmp.text = modele.sub(u'{{subst:%s|' % modele_de_presentation, self.mag.text)
+        pagetmp.text = self.retirer( [self.exps['noinclude']], pagetmp.text) # retrait de la catégorie
         try:
             pagetmp.save(comment=u'Préparation pour le mail du Wikimag', minor=False)
         except:
