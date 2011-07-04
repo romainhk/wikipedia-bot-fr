@@ -53,7 +53,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
 
         self.sommaire_jocker = '###141### SOMMAIRE ###592###'
         self.exps = {
-                'split'     : re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
+                'split'     : re.compile("^\|([\w \xe9]+?)\s*=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'sommaire'  : re.compile(self.sommaire_jocker, re.LOCALE|re.UNICODE),
                 'W_liste'   : re.compile("^\s*\*", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'http'      : re.compile("(http)%3A", re.LOCALE|re.UNICODE|re.MULTILINE),
@@ -70,12 +70,13 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'lien_int'  : re.compile("\[\[([^\]\|]+)\|?([^\]]*)\]\]", re.LOCALE|re.UNICODE),
                 'lien_intA' : re.compile("\[\[([^\]\|]+)\]\]", re.LOCALE|re.UNICODE),
                 'label'     : re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE),
-                'modele'    : re.compile("\{\{([^\|\}:]*)\|?([^\}:]*)\}\}", re.LOCALE|re.UNICODE),
+                'modele'    : re.compile("\{\{(.+?)\}\}", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
+                #'modele'    : re.compile("\{\{([^\|\}:=]*?)\|?([^\}:]*)\}\}", re.LOCALE|re.UNICODE),
                 'formatnum' : re.compile("\{\{(formatnum):([^\}:]*)\}\}", re.LOCALE|re.UNICODE),
                 'quote'     : re.compile("(?P<quote>'{2,5})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
                 'b'         : re.compile("(?P<quote>'{3})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
                 'i'         : re.compile("(?P<quote>'{2})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
-                'liste'     : re.compile("\*+\s?([^\*])", re.LOCALE|re.UNICODE),
+                'liste'     : re.compile("\*+\s?([^\*]*)", re.LOCALE|re.UNICODE),
                 #'W_uma'     : re.compile("\{\{[uma][']*\|(\w+)\}\}", re.LOCALE|re.UNICODE),
                 'User'      : re.compile("\[\[Utilisateur:(\w+)(\|\w+)?\]\]", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'User talk' : re.compile("\[\[Discussion utilisateur:(\w+)(\|\w+)?\]\]", re.LOCALE|re.UNICODE|re.IGNORECASE),
@@ -86,8 +87,9 @@ from=           # adresse de l'expédieur, truc@toto.fr
         self.mods = {
                 'u' : 'tel', 'm' : 'tel', 'u\'' : 'tel', 'a' : 'tel', 'l' : 'tel',
                 'citation' : 'tel',
+                'lang' : 'tel2',
                 'clin' : 'rien', 'pdf' : 'rien', 'sourire' : 'rien',
-                'guil' : 'guil', 'citation' : 'guil',
+                'guil' : 'guil', 'citation' : 'guil', u'citation étrangère' : 'guil',
                 u'unité' : u'unité', 'heure' : 'heure'
                 } # Ce qu'il faut faire avec chaque modele
         self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version sur le wiki]]' % self.mag.title() # Message de fin
@@ -123,8 +125,20 @@ from=           # adresse de l'expédieur, truc@toto.fr
     def modele(self, match):
         """ Traitement spécifiques pour les modèles à paramètres
         """
-        nom = match.group(1).lower()
-        params = match.group(2).split('|')
+        params = {} # Les paramètres du modèle
+        i = -1
+        pipe = match.group(1).split('|')
+        for p in pipe:
+            a = p.split('=')
+            b = a[0]
+            if len(a) < 2:
+                c = b
+                b = i
+                i += 1
+            else:
+                c = a[1]
+            params[b] = c
+        nom = params[-1].lower()
         if nom not in self.mods.keys():
             return u''
         action = self.mods[nom]
@@ -132,6 +146,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
             return u''  # rien
         elif action == 'tel':
             return params[0]  # tel-quel
+        elif action == u'tel2':
+            return params[1]
         elif action == u'guil':
             return u'« ' + params[0] + u' »'
         elif action == u'unité':
