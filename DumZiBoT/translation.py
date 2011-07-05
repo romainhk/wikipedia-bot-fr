@@ -115,8 +115,8 @@ def put_page(page, new):
         Puts new text for page
     """
     try:
-        #page.put(new, minorEdit=False)
-        page.save(new, minor=False, async=False)
+        page.put(new, minorEdit=False)
+        #page.save(new, minor=False, async=False)
     except pywikibot.EditConflict:
         pywikibot.warning(u'Skipping %s because of edit conflict'
                           % (page,))
