@@ -104,7 +104,7 @@ def hasDateLabel(langue):
     """ Dit si un wiki précise la date de labellisation
     """
     #if langue in "fr de":
-    if langue in "fr": # Trop peu de labels avec une date sur DE
+    if langue in "fr": # Trop peu de labels ont une date sur DE
         return True
     else:
         return False

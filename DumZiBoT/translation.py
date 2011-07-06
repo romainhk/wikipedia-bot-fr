@@ -15,6 +15,7 @@ logging.getLogger().setLevel(logging.INFO)
 
 import re
 from datetime import datetime
+from textwrap import dedent
 
 languages = [
         [ 'en', 'anglais',  "l'" ],
@@ -246,28 +247,28 @@ date_now = datetime.now().date()
 before = u"<noinclude>{{Projet:Traduction/Entete/ListeMensuelle|%s}}</noinclude>\n"
 pattern = u'Projet:Traduction/*/%s/%s %s'
 LIMITE_INCLUDE = 7
+month = date_now.month
+year = date_now.year
 
 for item in cats:
     cat = item[0]
     text = ""
-    month = date_now.month
-    year = date_now.year
     ttype = item[2]
     page = pywikibot.Page(site, pattern  % (ttype, int2month[month], year))
     i = 0
     for elem in bystatus[cat]:
         edate = elem[0].date()
         if edate.month != month:
-            month = edate.month
-            year = edate.year
+            #month = edate.month
+            #year = edate.year
             if text or page.exists():
                 text = before % ttype + text
                 put_page(page, text)
             text = ""
             i = 0
             page = pywikibot.Page(site, pattern % (ttype,
-                                                   int2month[month],
-                                                   year))
+                                                   int2month[edate.month],
+                                                   edate.year))
         text += u'{{%s}}' % elem[1].title()
         i += 1
         if i == LIMITE_INCLUDE:
@@ -276,3 +277,27 @@ for item in cats:
     if text or page.exists():
         text = before % ttype + text
         put_page(page, text)
+
+# Pages "Tout"
+page = pywikibot.Page(site, pattern  % ('Tout', int2month[month], year))
+if not page.exists():
+    text = dedent(u"""
+{{Projet:Traduction/Entete/ListeMensuelle|Tout}}
+
+== [[Projet:Traduction/*/Terminée/MONTH YEAR|/Terminée]] ==
+{{Projet:Traduction/*/Terminée/MONTH YEAR| paragraphe=Terminée}}
+
+== [[Projet:Traduction/*/En relecture/MONTH YEAR|/En relecture]] ==
+{{Projet:Traduction/*/En relecture/MONTH YEAR| paragraphe=En relecture}}
+
+== [[Projet:Traduction/*/A relire/MONTH YEAR|/A relire]] ==
+{{Projet:Traduction/*/A relire/MONTH YEAR| paragraphe=A relire}}
+
+== [[Projet:Traduction/*/En cours/MONTH YEAR|/En cours]] ==
+{{Projet:Traduction/*/En cours/MONTH YEAR| paragraphe=En cours}}
+
+== [[Projet:Traduction/*/Demandes/MONTH YEAR|/Demandes]] ==
+{{Projet:Traduction/*/Demandes/MONTH YEAR| paragraphe=Demandes}}"""[1:])
+    text.replace('MONTH', int2month[month])    
+    text.replace('YEAR', year)    
+    put_page(page, text)

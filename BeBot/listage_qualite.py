@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-#$ -m ae
 import re, datetime, MySQLdb, getopt, sys, locale
 from MySQLdb.constants import ER
 import BeBot
