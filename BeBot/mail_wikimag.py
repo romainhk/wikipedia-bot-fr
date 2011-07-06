@@ -22,7 +22,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
 
         TODO
         gérer les interwiki/interlangue
-        transclusion complète ?
         html : inclure les images ?
         problème avec les descriptions d'images contenant un lien : [[File:Welcome2WP French WEB.pdf|140px|thumb|right|[[:File:Welcome2WP French WEB.pdf|Feuilletez-moi !]] ahaha.]]
     """
@@ -237,7 +236,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 u'http://fr.wikipedia.org/wiki/%s' % (self.mag.title()), \
                 'Wikimag '+str(self.numero)) \
                 + u' (semaine ' + self.semaine + u')</h1>\n'
-        r += self.html_paragraphe(u'Du lundi ' + self.lundi.strftime("%e %b %Y").lstrip(' ') \
+        r += self.html_paragraphe(u'Du lundi ' + self.lundi.strftime("%e %B %Y").lstrip(' ') \
                 + ' au dimanche ' + (self.lundi + datetime.timedelta(days=6)).strftime("%e %B %Y").lstrip(' '))
         r += '<div style="float:right;"><img src="http://upload.wikimedia.org/wikipedia/commons/7/72/Wikimag-fr.svg" alt="Logo Wikimag" width="120px" /></div>\n'
         if self.epreuve: r += self.html_paragraphe(u'<b style="font-color:red;">Ce mail est une épreuve du prochain mag.</b>')

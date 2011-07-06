@@ -83,7 +83,7 @@ Colors=
 
 ImageSize  = width:%d height:300
 Define $width = %d
-PlotArea   = left:50 bottom:50 top:30 right:30
+PlotArea   = left:60 bottom:20 top:20 right:10
 DateFormat = x.y
 Period     = from:0 till:%d
 TimeAxis   = orientation:vertical
@@ -92,12 +92,12 @@ ScaleMajor = gridcolor:darkgrey increment:%d start:0
 ScaleMinor = gridcolor:lightgrey increment:%d start:0
 BackgroundColors = canvas:sfondo
 
-Legend = left:60 top:270"""[1:] % (largeur, width, maxi, graduation, graduation/2) )
+Legend = left:70 top:295"""[1:] % (largeur, width, maxi, graduation, graduation/2) )
         #Nom des bars
         self.msg += '\nBarData=\n'
         for r in range(1, nb_enregistrement):
             p = ''
-            if r % 4 == 1:
+            if r % 2 == 0:
                 p = res[r-1][0].strftime("%m/%y")
             self.msg += '  bar:%d text:%s\n' % (r, p)
         #Valeurs : total
