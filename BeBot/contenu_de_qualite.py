@@ -359,11 +359,11 @@ class ContenuDeQualite:
 
         # On retire ceux qui ont disparus
         pywikibot.output(connus)
-        #for c in connus:
-        #    self.req_bdd(c, 'delete')
+        for c in connus:
+            self.req_bdd(c, 'delete')
 
-        pywikibot.log( u"Total: %i ajouts ; %i déjà connus ; %i sans date." \
-                % (len(self.nouveau), len(self.connaitdeja), len(self.pasdedate)) )
+        pywikibot.log( u"Total: %i ajouts ; %i déjà connus ; %i retraits ; %i sans date." \
+                % (len(self.nouveau), len(self.connaitdeja), len(connus), len(self.pasdedate)) )
 
 def main():
     mode = u'nouveaux-seulement'
