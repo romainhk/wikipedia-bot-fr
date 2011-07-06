@@ -89,7 +89,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'lang' : 'tel2',
                 'clin' : 'rien', 'pdf' : 'rien', 'sourire' : 'rien',
                 'guil' : 'guil', 'citation' : 'guil', u'citation étrangère' : 'guil',
-                u'unité' : u'unité', 'heure' : 'heure'
+                u'unité' : u'unité', 'heure' : 'heure', 'wikimag bistro' : 'wb'
                 } # Ce qu'il faut faire avec chaque modele
         self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version sur le wiki]]' % self.mag.title() # Message de fin
         self.fichier_mail = u'./wikimag_mail.tmp' # Fichier temporaire pour le mail
@@ -153,6 +153,13 @@ from=           # adresse de l'expédieur, truc@toto.fr
             return params[0] + u' ' + params[1]
         elif action == u'heure':
             return params[0] + u'h' + params[1]
+        elif action == u'wb':
+            b = params[1]
+            if len(params) != 4:
+                a = params[1]
+            else:
+                a = params[2]
+            return '[http://fr.wikipedia.org/wiki/Wikipédia:Le Bistro/'+params[0]+'#'+a+' '+b+']'
 
     def retirer(self, exprs, text):
         """ Retire les ER de exprs dans le text """
