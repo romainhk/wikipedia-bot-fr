@@ -97,6 +97,7 @@ class ContenuDeQualite:
         self.db = MySQLdb.connect(db="u_romainhk_transient", \
                                 read_default_file="/home/romainhk/.my.cnf", \
                                 use_unicode=True, charset='utf8')
+        self.curseur = self.db.cursor()
         self.nom_base = u'contenu_de_qualite_%s' % self.langue
 
     def __del__(self):
@@ -165,16 +166,15 @@ class ContenuDeQualite:
         Sauvegarder dans une base de données
         """
         pywikibot.log(u'# Sauvegarde dans la base pour la langue "%s".' % self.langue)
-        curseur = self.db.cursor()
         if self.maj_stricte:
-            self.vider_base(curseur)
+            self.vider_base()
             for q in self.connaitdeja:
-                self.req_bdd(curseur, q, 'insert')
+                self.req_bdd(q, 'insert')
 
         for q in self.nouveau:
-            self.req_bdd(curseur, q, 'insert')
+            self.req_bdd(q, 'insert')
 
-    def req_bdd(self, curseur, q, mode):
+    def req_bdd(self, q, mode):
         """
         Ajout ou Mise à jour d'un champ de la base de données
         * "mode" est dans ( 'insert', 'update', 'delete' )
@@ -209,10 +209,10 @@ class ContenuDeQualite:
             pywikibot.warning(u'mode de sauvegarde "%s" non reconnu.' % mode)
             return
         try:
-            curseur.execute(req)
+            self.curseur.execute(req)
         except MySQLdb.Error, e:
             if e.args[0] == ER.DUP_ENTRY:
-                self.req_bdd(curseur, q, 'update')
+                self.req_bdd(q, 'update')
             else:
                 pywikibot.warning(u"%s error %d: %s.\nReq : %s" \
                         % (mode.capitalize(), e.args[0], e.args[1], req) )
@@ -223,14 +223,14 @@ class ContenuDeQualite:
         else:
             return u'NULL'
 
-    def vider_base(self, curseur):
+    def vider_base(self):
         """
         Vide la base de donnée associée (pour retirer les déchus)
         """
         pywikibot.log(u"## Vidage de l'ancienne base")
         req = u'TRUNCATE TABLE %s' % self.nom_base
         try:
-            curseur.execute(req)
+            self.curseur.execute(req)
         except MySQLdb.Error, e:
             pywikibot.warning(u"Truncate error %d: %s" % (e.args[0], e.args[1]))
     
@@ -332,27 +332,35 @@ class ContenuDeQualite:
                 i = 2
             cattoa = ordre_cats[i]
 
-            for p in cpg:
+            for p in pagegenerators.DuplicateFilterPageGenerator(cpg):
                 if p.namespace() == 0:
                     page = p
                 elif p.namespace() == 1: # Pour EN:GA et IT:FA
                     page = p.toggleTalkPage()
                 else:
                     continue
-                if page.title() not in connus: #Comparaison avec le contenu de la bdd
+                title = page.title()
+                if title not in connus: #Comparaison avec le contenu de la bdd
                     infos = self.get_infos(page, cattoa)
                     if infos is not None:
                         self.nouveau.append(infos)
                 elif self.maj_stricte:
+                    connus.remove(title)
                     infos = self.get_infos(page, cattoa)
                     if infos is not None:
                         self.connaitdeja.append(infos)
                 else:
+                    connus.remove(title)
                     self.connaitdeja.append( \
-                           { 'page': page.title(), \
+                           { 'page': title, \
                           'espacedenom': page.namespace(), \
                           'label': cattoa, \
                           'importance': None } ) # Ils ne seront pas ajoutés
+
+        # On retire ceux qui ont disparus
+        pywikibot.output(connus)
+        #for c in connus:
+        #    self.req_bdd(c, 'delete')
 
         pywikibot.log( u"Total: %i ajouts ; %i déjà connus ; %i sans date." \
                 % (len(self.nouveau), len(self.connaitdeja), len(self.pasdedate)) )

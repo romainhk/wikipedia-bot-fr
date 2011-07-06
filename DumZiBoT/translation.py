@@ -247,28 +247,28 @@ date_now = datetime.now().date()
 before = u"<noinclude>{{Projet:Traduction/Entete/ListeMensuelle|%s}}</noinclude>\n"
 pattern = u'Projet:Traduction/*/%s/%s %s'
 LIMITE_INCLUDE = 7
-month = date_now.month
-year = date_now.year
 
 for item in cats:
     cat = item[0]
     text = ""
+    month = date_now.month
+    year = date_now.year
     ttype = item[2]
     page = pywikibot.Page(site, pattern  % (ttype, int2month[month], year))
     i = 0
     for elem in bystatus[cat]:
         edate = elem[0].date()
         if edate.month != month:
-            #month = edate.month
-            #year = edate.year
+            month = edate.month
+            year = edate.year
             if text or page.exists():
                 text = before % ttype + text
                 put_page(page, text)
             text = ""
             i = 0
             page = pywikibot.Page(site, pattern % (ttype,
-                                                   int2month[edate.month],
-                                                   edate.year))
+                                                   int2month[month],
+                                                   year))
         text += u'{{%s}}' % elem[1].title()
         i += 1
         if i == LIMITE_INCLUDE:
@@ -279,6 +279,8 @@ for item in cats:
         put_page(page, text)
 
 # Pages "Tout"
+month = date_now.month
+year = date_now.year
 page = pywikibot.Page(site, pattern  % ('Tout', int2month[month], year))
 if not page.exists():
     text = dedent(u"""
