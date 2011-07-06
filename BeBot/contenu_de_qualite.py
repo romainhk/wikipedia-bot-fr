@@ -119,8 +119,8 @@ class ContenuDeQualite:
                 self.nb_label(u"AdQ", [self.nouveau, self.connaitdeja]) )
         if len(self.cat_qualite) > 1:
             resu += u' et %i BA' % self.nb_label( u"BA", [self.nouveau, self.connaitdeja])
-        resu += u")\n\nAu reste, il y a %i articles sans date précisée, et %i déjà connus." \
-                % ( len(self.pasdedate), len(self.connaitdeja) )
+        resu += u")\n\nAu reste, il y a %i articles sans date précisée, %i déjà connus, et %i retraits." \
+                % ( len(self.pasdedate), len(self.connaitdeja), self.connus )
         if len(self.nouveau) > 0 and not self.maj_stricte and len(self.nouveau) < 12:
             resu += u"\n=== Nouveau contenu de qualité ===\n"
             resu += self.lister_article(self.nouveau)
@@ -358,9 +358,10 @@ class ContenuDeQualite:
                           'importance': None } ) # Ils ne seront pas ajoutés
 
         # On retire ceux qui ont disparus
-        pywikibot.output(connus)
+        pywikibot.output('Retraits : '+connus)
         for c in connus:
             self.req_bdd(c, 'delete')
+        self.connus = len(connus)
 
         pywikibot.log( u"Total: %i ajouts ; %i déjà connus ; %i retraits ; %i sans date." \
                 % (len(self.nouveau), len(self.connaitdeja), len(connus), len(self.pasdedate)) )
