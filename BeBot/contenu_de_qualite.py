@@ -262,7 +262,9 @@ class ContenuDeQualite:
         """
         if self.langue == 'fr':
             pt = BeBot.togglePageTrad(page)
-            if pt.exists():
+            if pt.isRedirectPage():
+                return page.getRedirectTarget().title()
+            elif pt.exists():
                 return pt.title()
             else:
                 return None
@@ -358,7 +360,7 @@ class ContenuDeQualite:
                           'importance': None } ) # Ils ne seront pas ajoutés
 
         # On retire ceux qui ont disparus
-        pywikibot.output('Retraits : '+connus)
+        pywikibot.output('Retraits : '+str(connus))
         for c in connus:
             self.req_bdd(c, 'delete')
         self.connus = len(connus)
