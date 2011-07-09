@@ -74,6 +74,8 @@ def togglePageTrad(page):
     if not site.language() == 'fr':
         raise pywikibot.exceptions.NoPage(pywikibot.Page(page.site, \
                 page.toggleTalkPage().title()+"/Traduction"))
+    if page.isRedirectPage():
+        page = page.getRedirectTarget()
     trad = re.compile(u"/Traduction$", re.LOCALE)
     if trad.search(page.title()):
         #Déjà une

@@ -33,6 +33,5 @@ CREATE TABLE IF NOT EXISTS `contenu_de_qualite` (
   `taille` int(7) unsigned NOT NULL DEFAULT '0' COMMENT 'en millier de caractères',
   `consultations` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'du mois précédant',
   `traduction` varchar(255) COLLATE utf8_bin DEFAULT NULL COMMENT 'Interwiki ou page de suivi',
-  `importance` varchar(20) COLLATE utf8_bin DEFAULT NULL COMMENT 'Cat:Article par importance',
   PRIMARY KEY (`page`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='Liste des articles labelisés';

@@ -43,11 +43,11 @@ class ContenuDeQualite:
     def __init__(self, site, mode_maj):
         self.site = site
         self.langue = self.site.language()
-        if mode_maj == "strict":
-            self.maj_stricte = True
-            pywikibot.log(u'# Mode "strict" actif (toutes les updates seront effectuées et la base vidée)')
-        else:
-            self.maj_stricte = False
+        #if mode_maj == "strict":
+        #    self.maj_stricte = True
+        #    pywikibot.log(u'# Mode "strict" actif (toutes les updates seront effectuées et la base vidée)')
+        #else:
+        #    self.maj_stricte = False
         self.total_avant = 0
 
         self.categories_de_qualite = {
@@ -71,18 +71,6 @@ class ContenuDeQualite:
         else:
             self.dateRE = None
         self.interwikifrRE = re.compile(u"\[\[fr:(?P<iw>[^\]]+)\]\]", re.LOCALE)
-        #Wikiprojet _-_ par langue : regexp des cat wikiprojet, ordre de suppression si plusieurs
-        importance_wikiprojet = {
-                'fr': [ u'Article.*importance (?P<importance>[\wé]+)$',
-                        [ u'inconnue', u'faible', u'moyenne', u'élevée' ] ], # maximum
-                'en': [ u'(?P<importance>[\w]+)-importance',
-                        [ 'NA', 'No', 'Bottom', 'Unknown', 'Low', 'Mid', 'High' ] ] # Top
-                }
-        self.importanceER = None
-        self.retrait_importance = []
-        if importance_wikiprojet.has_key(self.langue):
-            self.importanceER = re.compile(importance_wikiprojet[self.langue][0], re.LOCALE)
-            self.retrait_importance = importance_wikiprojet[self.langue][1]
 
         # Principaux conteneurs
         self.nouveau = []       # Nouveaux articles promus
@@ -90,7 +78,7 @@ class ContenuDeQualite:
         """ Structure des éléments de "nouveau" et "connaitdeja" :
         { 'page': html'',   'espacedenom': int,     'date': date,
           'label': u'',     'taille': int,          'consultations': int,
-          'traduction': html'',     'importance': u'' }
+          'traduction': html'' }
         """
         self.pasdedate = []     # Articles de qualité dont la date est inconnue
         # DB
@@ -121,7 +109,7 @@ class ContenuDeQualite:
             resu += u' et %i BA' % self.nb_label( u"BA", [self.nouveau, self.connaitdeja])
         resu += u")\n\nAu reste, il y a %i articles sans date précisée, %i déjà connus, et %i retraits." \
                 % ( len(self.pasdedate), len(self.connaitdeja), self.connus )
-        if len(self.nouveau) > 0 and not self.maj_stricte and len(self.nouveau) < 12:
+        if len(self.nouveau) > 0 and len(self.nouveau) < 12:
             resu += u"\n=== Nouveau contenu de qualité ===\n"
             resu += self.lister_article(self.nouveau)
         if BeBot.hasDateLabel(self.langue) and len(self.pasdedate) > 0:
@@ -166,10 +154,10 @@ class ContenuDeQualite:
         Sauvegarder dans une base de données
         """
         pywikibot.log(u'# Sauvegarde dans la base pour la langue "%s".' % self.langue)
-        if self.maj_stricte:
-            self.vider_base()
-            for q in self.connaitdeja:
-                self.req_bdd(q, 'insert')
+        #if self.maj_stricte:
+        #    self.vider_base()
+        #    for q in self.connaitdeja:
+        #        self.req_bdd(q, 'insert')
 
         for q in self.nouveau:
             self.req_bdd(q, 'insert')
@@ -181,26 +169,24 @@ class ContenuDeQualite:
         """
         if mode == 'insert':
             req = u'INSERT INTO %s' % self.nom_base \
-                + '(page, espacedenom, date, label, taille, consultations, traduction, importance) ' \
-                + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s, %s)' \
+                + '(page, espacedenom, date, label, taille, consultations, traduction) ' \
+                + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s)' \
                 % ( q['page'].replace('"', '\\"'), \
                     str(q['espacedenom']), \
                     q['date'].strftime("%Y-%m-%d"), \
                     q['label'], \
                     str(q['taille']), \
                     str(q['consultations']), \
-                    self._put_null(q['traduction']), \
-                    self._put_null(q['importance']) )
+                    self._put_null(q['traduction']) )
         elif mode == 'update':
             req = u'UPDATE %s SET' % self.nom_base \
-                + u' espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s, importance=%s' \
+                + u' espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s' \
                 % ( str(q['espacedenom']), \
                     q['date'].strftime("%Y-%m-%d"), \
                     q['label'], \
                     str(q['taille']), \
                     str(q['consultations']), \
-                    self._put_null(q['traduction']), \
-                    self._put_null(q['importance']) ) \
+                    self._put_null(q['traduction']) ) \
                 + u' WHERE page="%s"' % q['page'].replace('"', '\\"')
         elif mode == 'delete':
             req = u'DELETE FROM %s WHERE page="%s"' \
@@ -262,9 +248,7 @@ class ContenuDeQualite:
         """
         if self.langue == 'fr':
             pt = BeBot.togglePageTrad(page)
-            if pt.isRedirectPage():
-                return page.getRedirectTarget().title()
-            elif pt.exists():
+            if pt.exists():
                 return pt.title()
             else:
                 return None
@@ -307,12 +291,10 @@ class ContenuDeQualite:
             'date': date, \
             'label': cattoa, \
             'taille': BeBot.taille_page(page), \
-            'consultations':BeBot.stat_consultations(page, \
-                codelangue=self.langue), \
+            #'consultations':BeBot.stat_consultations(page, \
+            #    codelangue=self.langue), \
+            'consultations': 0, \
             'traduction': self.traduction(page), \
-            'importance': u''
-            #'importance': BeBot.info_wikiprojet(page, self.importanceER, \
-            #    'importance', self.retrait_importance)
             }
         return infos
 
@@ -320,6 +302,7 @@ class ContenuDeQualite:
         return unicode(con[0], 'UTF-8')
 
     def run(self):
+        NB_AJOUTS = 0
         connus = BeBot.charger_bdd(self.db, self.nom_base, champs=u'page')
         connus = map(self.normaliser_page, connus)
         self.total_avant = len(connus)
@@ -335,29 +318,33 @@ class ContenuDeQualite:
             cattoa = ordre_cats[i]
 
             for p in pagegenerators.DuplicateFilterPageGenerator(cpg):
-                if p.namespace() == 0:
-                    page = p
-                elif p.namespace() == 1: # Pour EN:GA et IT:FA
-                    page = p.toggleTalkPage()
-                else:
-                    continue
-                title = page.title()
-                if title not in connus: #Comparaison avec le contenu de la bdd
-                    infos = self.get_infos(page, cattoa)
-                    if infos is not None:
-                        self.nouveau.append(infos)
-                elif self.maj_stricte:
-                    connus.remove(title)
-                    infos = self.get_infos(page, cattoa)
-                    if infos is not None:
-                        self.connaitdeja.append(infos)
-                else:
-                    connus.remove(title)
-                    self.connaitdeja.append( \
-                           { 'page': title, \
-                          'espacedenom': page.namespace(), \
-                          'label': cattoa, \
-                          'importance': None } ) # Ils ne seront pas ajoutés
+                if NB_AJOUTS < 1000:
+                    if p.namespace() == 0:
+                        page = p
+                    elif p.namespace() == 1: # Pour EN:GA et IT:FA
+                        page = p.toggleTalkPage()
+                    else:
+                        continue
+                    if page.isRedirectPage():
+                        page = page.getRedirectTarget()
+                    title = page.title()
+                    if title not in connus: #Comparaison avec le contenu de la bdd
+                        infos = self.get_infos(page, cattoa)
+                        NB_AJOUTS += 1
+                        if infos is not None:
+                            self.nouveau.append(infos)
+                    #elif self.maj_stricte:
+                    #    connus.remove(title)
+                    #    infos = self.get_infos(page, cattoa)
+                    #    NB_AJOUTS += 1
+                    #    if infos is not None:
+                    #        self.connaitdeja.append(infos)
+                    else:
+                        connus.remove(title)
+                        self.connaitdeja.append( \
+                               { 'page': title, \
+                              'espacedenom': page.namespace(), \
+                              'label': cattoa } ) # Ils ne seront pas ajoutés
 
         # On retire ceux qui ont disparus
         pywikibot.output('Retraits : '+str(connus))

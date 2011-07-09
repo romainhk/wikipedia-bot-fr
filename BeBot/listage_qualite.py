@@ -207,7 +207,7 @@ class ListageQualite:
             à certaines conditions
         """
         rep = {}
-        champs = [ 'page', 'taille', 'traduction', 'importance', 'label' ]
+        champs = [ 'page', 'taille', 'traduction', 'label' ]
         articles = BeBot.charger_bdd(self.db, nom_base, \
                 champs=", ".join(champs), cond=conditions)
         #articles = sorted(articles.items())
