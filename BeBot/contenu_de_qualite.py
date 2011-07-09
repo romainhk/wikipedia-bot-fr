@@ -20,8 +20,7 @@ class PasDeDate(Exception):
 class ContenuDeQualite:
     """ Contenu de Qualité
         Tri et sauvegarde les AdQ/BA existants par date.
-        (Persistance du nom de l'article, de son espace de nom, de la date
-        de labellisation, de son label, du nombre de visites...)
+        (Persistance du nom de l'article, de la date de labellisation, de son label...)
         Comparer avec http://fr.wikipedia.org/wiki/Utilisateur:Maloq/Stats
 
     Paramètres :
@@ -76,9 +75,8 @@ class ContenuDeQualite:
         self.nouveau = []       # Nouveaux articles promus
         self.connaitdeja = []   # Articles déjà listés
         """ Structure des éléments de "nouveau" et "connaitdeja" :
-        { 'page': html'',   'espacedenom': int,     'date': date,
-          'label': u'',     'taille': int,          'consultations': int,
-          'traduction': html'' }
+        { 'page': html'',   'date': date,
+          'label': u'',     'taille': int,          'traduction': html'' }
         """
         self.pasdedate = []     # Articles de qualité dont la date est inconnue
         # DB
@@ -169,23 +167,19 @@ class ContenuDeQualite:
         """
         if mode == 'insert':
             req = u'INSERT INTO %s' % self.nom_base \
-                + '(page, espacedenom, date, label, taille, consultations, traduction) ' \
-                + u'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", %s)' \
+                + '(page, date, label, taille, traduction) ' \
+                + u'VALUES ("%s", "%s", "%s", "%s", "%s", %s)' \
                 % ( q['page'].replace('"', '\\"'), \
-                    str(q['espacedenom']), \
                     q['date'].strftime("%Y-%m-%d"), \
                     q['label'], \
                     str(q['taille']), \
-                    str(q['consultations']), \
                     self._put_null(q['traduction']) )
         elif mode == 'update':
             req = u'UPDATE %s SET' % self.nom_base \
-                + u' espacedenom="%s", date="%s", label="%s", taille="%s", consultations="%s", traduction=%s' \
-                % ( str(q['espacedenom']), \
-                    q['date'].strftime("%Y-%m-%d"), \
+                + u' date="%s", label="%s", taille="%s", traduction=%s' \
+                % ( q['date'].strftime("%Y-%m-%d"), \
                     q['label'], \
                     str(q['taille']), \
-                    str(q['consultations']), \
                     self._put_null(q['traduction']) ) \
                 + u' WHERE page="%s"' % q['page'].replace('"', '\\"')
         elif mode == 'delete':
@@ -287,13 +281,9 @@ class ContenuDeQualite:
             return None
         infos = {
             'page': page.title(), \
-            'espacedenom': page.namespace(), \
             'date': date, \
             'label': cattoa, \
             'taille': BeBot.taille_page(page), \
-            #'consultations':BeBot.stat_consultations(page, \
-            #    codelangue=self.langue), \
-            'consultations': 0, \
             'traduction': self.traduction(page), \
             }
         return infos
@@ -310,7 +300,6 @@ class ContenuDeQualite:
         for cat in self.cat_qualite:
             categorie = catlib.Category(self.site, cat)
             cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
-            #cpg = pagegenerators.PreloadingGenerator(cpg, step=125)
             try:
                 i = self.categories_de_qualite[self.langue].index(cat)
             except:
@@ -343,8 +332,10 @@ class ContenuDeQualite:
                         connus.remove(title)
                         self.connaitdeja.append( \
                                { 'page': title, \
-                              'espacedenom': page.namespace(), \
                               'label': cattoa } ) # Ils ne seront pas ajoutés
+                else:
+                    pywikibot.output("Limite d'ajouts atteinte avec "+p.title())
+                    break
 
         # On retire ceux qui ont disparus
         pywikibot.output('Retraits : '+str(connus))
