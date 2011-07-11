@@ -168,7 +168,7 @@ class ContenuDeQualite:
         if mode == 'insert':
             req = u'INSERT INTO %s' % self.nom_base \
                 + '(page, date, label, taille, traduction) ' \
-                + u'VALUES ("%s", "%s", "%s", "%s", "%s", %s)' \
+                + u'VALUES ("%s", "%s", "%s", "%s", %s)' \
                 % ( q['page'].replace('"', '\\"'), \
                     q['date'].strftime("%Y-%m-%d"), \
                     q['label'], \
