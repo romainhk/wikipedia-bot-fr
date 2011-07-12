@@ -10,7 +10,7 @@ locale.setlocale(locale.LC_ALL, '')
 
 class MailWikimag:
     """ Mail Wikimag
-        Publie une version mail du wikimag
+        Publie le wikimag par mail
 
         Nécessite en argument l'adresse d'un fichier de configuration du type :
 mailinglist=    # sur laquel on va publier le mag (mode debug si omis)
@@ -23,7 +23,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
         TODO
         gérer les interlangues
         html : inclure les images ?
-        trouver une solution pour les a-label en mode text
         problème avec les descriptions d'images contenant un lien : [[File:Welcome2WP French WEB.pdf|140px|thumb|right|[[:File:Welcome2WP French WEB.pdf|Feuilletez-moi !]] ahaha.]]
     """
     def __init__(self, site, fichier_conf, epreuve):
@@ -51,6 +50,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
         if self.mag.isRedirectPage():
             self.mag = self.mag.getRedirectTarget()
 
+        self.fichier_mail = u'./wikimag_mail.tmp' # Fichier temporaire pour le mail
+        self.mode = u'' # Mode de génération en cours
         self.sommaire_jocker = '###141### SOMMAIRE ###592###'
         self.exps = {
                 'split'     : re.compile("^\|([\w \xe9]+?)\s*=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
@@ -67,9 +68,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'annonces'  : re.compile("\*? ?\{\{Annonce[ \w\xe9]*\|(\d+)\|(.+)\}\}", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 #'image'     : re.compile("\[\[(?:Image|File|Fichier):.*?(\[{1,2})?.+?(?(1)\]).*?\]\]\s*", re.LOCALE|re.UNICODE|re.IGNORECASE|re.DOTALL),
                 'image'     : re.compile("\[\[(?:Image|File|Fichier):([^\]]+)\]\]\s*", re.LOCALE|re.UNICODE|re.IGNORECASE),
-                #'lien_ext'  : re.compile("\[(http:[^\] ]+) ?([^\]]*)\]", re.LOCALE|re.UNICODE),
-                #'lien_int'  : re.compile("\[\[([^\]\|]+)\|?([^\]]*)\]\]", re.LOCALE|re.UNICODE),
-                #'lien_intA' : re.compile("\[\[([^\]\|]+)\]\]", re.LOCALE|re.UNICODE),
                 'lien_ext'  : re.compile("(\[http:[^\] ]+ +[^\]]*\])", re.LOCALE|re.UNICODE),
                 'lien_int'  : re.compile("(\[\[.+?\]\])", re.LOCALE|re.UNICODE),
                 'label'     : re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE),
@@ -125,8 +123,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
         self.aProjetLocal = [ 'wikipedia', 'wiktionary', 'wikinews', 'wikibooks', 
                 'wikiquote', 'wikisource', 'v' ] # Projets pour lesquels il existe une version localisée
         self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version sur le wiki]]' % self.mag.title() # Message de fin
-        self.fichier_mail = u'./wikimag_mail.tmp' # Fichier temporaire pour le mail
-        self.mode = u'' # Mode de génération en cours
 
     def transclusion(self, match):
         """ Traitement spécifique pour les transclusions
@@ -138,13 +134,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
             page = self.mag.title() + page
         elif not pywikibot.Page(self.site, page).exists():
             return u''
-        # Lien
-        #intitule = u'Retrouvez la page « %s » sur le wiki'%page.split('/').pop()
-        #if self.mode == u'html':
-        #    return self.html_lien('http://fr.wikipedia.org/wiki/'+page, u'[ '+intitule+u' ]')
-        #else:
-        #    return u'[ %s : %shttp://fr.wikipedia.org/wiki/%s%s ]' % \
-        #            (intitule, page.split('/').pop(), self.jocker, page, self.ajocker)
+        # Lien seul
+        #return u'Retrouvez la page « %s » sur le wiki' % self.lien_interne(%page.split('/').pop())
 
         # Recopiage
         text = pywikibot.Page(self.site, page).text
@@ -195,10 +186,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 sub = params[2]
             sub = sub.replace(' ', '_')
             return self.lien_externe(u'[http://fr.wikipedia.org/wiki/Wikipédia:Le_Bistro/%s#%s %s]' % (jour, sub, titre))
-            #if self.mode == 'text':
-            #    return b + u' ( [http://fr.wikipedia.org/wiki/Wikipédia:Le Bistro/'+params[0]+'#'+a+' )'
-            #else:
-            #    return self.html_lien(u'http://fr.wikipedia.org/wiki/Wikipédia:Le Bistro/'+params[0]+'#'+a, b)
 
     def tableau(self, match):
         """ Transcrit un tableau
@@ -236,12 +223,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
             ret = '<table>\n%s</table>' % tr
         #pywikibot.output(ret)
         return ret
-
-    def retirer(self, exprs, text):
-        """ Retire les ER de la liste 'exprs' dans le text """
-        for a in exprs:
-            text = a.sub(r'', text)
-        return text
 
     def lien_externe(self, lien):
         esp = lien.strip('[]').split(' ')
@@ -286,13 +267,11 @@ from=           # adresse de l'expédieur, truc@toto.fr
         """ Génération du format texte brut
         """
         self.mode = u'text'
-        self.jocker = u'%$+!' #Pour repérer les liens http
-        self.ajocker = BeBot.reverse(self.jocker)
         modele_de_presentation = u'Wikimag_par_mail'
         modele = re.compile("\{\{[cC]omposition wikimag", re.LOCALE)
 
         pagetmp.text = modele.sub(u'{{subst:%s|' % modele_de_presentation, self.mag.text)
-        pagetmp.text = self.retirer( [self.exps['noinclude']], pagetmp.text) # retrait de la catégorie
+        pagetmp.text = BeBot.retirer( [self.exps['noinclude']], pagetmp.text) # retrait de la catégorie
         try:
             pagetmp.save(comment=u'Préparation pour le mail du Wikimag', minor=False)
         except:
@@ -302,14 +281,12 @@ from=           # adresse de l'expédieur, truc@toto.fr
         if self.epreuve: text = u'CE MAIL EST UNE ÉPREUVE DU PROCHAIN MAG.\n' + text
         text = self.exps['transclu'].sub(self.transclusion, text)
         text = self.exps['ref'].sub(r' (\1)', text)
-        text = self.retirer( [self.exps['comment'], self.exps['br'], \
+        text = BeBot.retirer( [self.exps['comment'], self.exps['br'], \
                 self.exps['image'], self.exps['W___'], \
                 self.exps['noinclude']], text)
         text = self.exps['User'].sub(r'{{u|\1}}', text)
         text = self.exps['annonces'].sub(r'* \1 : \2', text)
-        text = self.exps['label'].sub(r'%shttp://fr.wikipedia.org/wiki/\1%s' % ( self.jocker, self.ajocker), text)
-        r = re.compile("%s(.*?)%s" % ( re.escape(self.jocker), re.escape(self.ajocker)), re.LOCALE|re.UNICODE)
-        text = r.sub(self.url_, text)
+        text = self.exps['label'].sub(r'[[\1]]', text)
 
         # Remplacement des liens
         for lien in re.finditer(self.exps['lien_ext'], text):
@@ -335,7 +312,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
 
         text = self.exps['transclu'].sub(self.transclusion, text)
         text = self.exps['ref'].sub(r' (\1)', text)
-        text = self.retirer( [self.exps['comment'],self.exps['image'],self.exps['W___'], \
+        text = BeBot.retirer( [self.exps['comment'],self.exps['image'],self.exps['W___'], \
                 self.exps['noinclude']], text)
         text = self.exps['User'].sub(r'{{u|\1}}', text)
         text = self.exps['formatnum'].sub(r'\2', text)
@@ -432,7 +409,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
             r += self.html_chapitre(u'Rédaction')
             p = self.exps['html'].sub(r'\2', params[u'rédaction'])
             r += self.html_paragraphe(u'Les membres de la rédaction pour ce numéro : '+ \
-                    self.retirer([self.exps['User talk']], p) )
+                    BeBot.retirer([self.exps['User talk']], p) )
         r += self.html_paragraphe(self.disclaimer)
 
         r = self.exps['modele'].sub(self.modele, r)
@@ -443,17 +420,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
         for lien in re.finditer(self.exps['lien_int'], r):
             b = r.partition(lien.group(0))
             r = b[0] + self.lien_interne(lien.group(0)) + b[2]
-        """
-        for lien in re.finditer(self.exps['lien_ext'], r):
-            b = r.partition(lien.group(0))
-            r = b[0] + self.html_lien(lien.group(1), lien.group(2)) + b[2]
-        for lien in re.finditer(self.exps['lien_int'], r):
-            b = r.partition(lien.group(0))
-            nom = lien.group(2)
-            if (len(nom) == 0):
-                nom = lien.group(1)
-            r = b[0] + self.html_lien(u'http://fr.wikipedia.org/wiki/'+lien.group(1), nom) + b[2]
-        """
         # Sommaire
         r = self.exps['sommaire'].sub(self.sommaire+'</ol>\n', r)
         return r + u'</body>\n</html>'
@@ -465,9 +431,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
             r += u'<li>' + l.group(1) + u'</li>\n'
         r += u'</ul>\n'
         return r
-
-    def url_(self, match):
-        return self.exps['http'].sub(r'\1:', urllib.quote(match.group(1).encode('utf8')))
 
     def html_lien(self, cible, nom, url=True):
         """ Créer un lien au format html """

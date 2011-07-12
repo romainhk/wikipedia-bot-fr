@@ -93,14 +93,14 @@ def stat_consultations(page, codelangue=u'fr', date=False):
             date = datetime.date(date.year, date.month-1, date.day)
         else:
             date = datetime.date(date.year-1, 12, date.day)
-    url = "http://stats.grok.se/json/%s/%s/%s" \
-            % ( codelangue, date.strftime("%Y%m"), urllib2.quote(page.title().encode('utf-8')) )
+    url = 'http://stats.grok.se/json/%s/%s/%s' \
+            % ( codelangue, date.strftime('%Y%m'), urllib2.quote(page.title().encode('utf-8')) )
     try:
         res = simplejson.load(urllib2.urlopen(url))
     except urllib2.URLError, urllib2.HTTPError:
         pywikibot.warning(u"impossible de récupérer les stats à l'adresse %s" % url)
         return 0
-    return res["total_views"]
+    return res['total_views']
 
 def hasDateLabel(langue):
     """ Dit si un wiki précise la date de labellisation
@@ -197,3 +197,11 @@ def reverse(chaine):
         i -= 1
         rep += chaine[i]
     return rep
+
+def retirer(exprs, text):
+    """ Retire les ER de la liste 'exprs' du text
+    """
+    for a in exprs:
+        text = a.sub(r'', text)
+    return text
+
