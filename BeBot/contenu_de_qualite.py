@@ -69,7 +69,7 @@ class ContenuDeQualite:
             self.dateRE = re.compile(RE_date[self.langue], re.LOCALE)
         else:
             self.dateRE = None
-        self.interwikifrRE = re.compile(u"\[\[fr:(?P<iw>[^\]]+)\]\]", re.LOCALE)
+        self.interwikifrRE = re.compile(u"\[\[fr:(?P<iw>[^\]]+)\]\]", re.LOCALE|re.UNICODE)
 
         # Principaux conteneurs
         self.nouveau = []       # Nouveaux articles promus
@@ -247,6 +247,8 @@ class ContenuDeQualite:
             else:
                 return None
         else:
+            interlangues = page.iterlanglinks(step=20)
+            """
             try:
                 interlangues = page.langlinks()
             except pywikibot.exceptions.NoUsername as nun :
@@ -254,11 +256,16 @@ class ContenuDeQualite:
                 #        % (self.langue, page.title(), nun) )
                 return None
             except pywikibot.exceptions.NoSuchSite as nss:
-                pywikibot.warning('site inexistant pour "http://%s.wikipedia.org/wiki/%s".\n%s' \
-                    % (self.langue, page.title(), nss) )
+                pywikibot.warning('site %s inexistant pour "http://%s.wikipedia.org/wiki/%s".' \
+                    % (page.site, self.langue, page.title()) )
                 return None
+            """
 
             for p in interlangues:
+                linkedPage = pywikibot.Page(p)
+                if linkedPage.site == "fr":
+                    return linkedPage.title()
+                """
                 try:
                     text = p.astext()
                 except KeyError as ke:
@@ -268,7 +275,15 @@ class ContenuDeQualite:
                 res = self.interwikifrRE.search(text)
                 if res is not None:
                     return res.group('iw')
+                """
             return None
+            """
+            res = self.interwikifrRE.search(page.text)
+            if res is not None:
+                return res.group('iw')
+            else:
+                return None
+            """
 
     def get_infos(self, page, cattoa):
         """
