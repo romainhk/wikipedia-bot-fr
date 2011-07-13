@@ -48,8 +48,7 @@ class ContenuDeQualite:
         self.nouveau = []       # Nouveaux articles promus
         self.connaitdeja = []   # Articles déjà listés
         """ Structure des éléments de "nouveau" et "connaitdeja" :
-        { 'page': html'',   'date': date,
-          'label': u'',     'taille': int,          'traduction': html'' }
+        { 'page': html'',   'label': u'',   'taille': int,    'traduction': html'' }
         """
         # DB
         self.db = MySQLdb.connect(db="u_romainhk_transient", \

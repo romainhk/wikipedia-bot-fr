@@ -120,6 +120,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'foundation'  : 'wikimedia',
                 'm'     : 'meta'
                 }
+
         self.aProjetLocal = [ 'wikipedia', 'wiktionary', 'wikinews', 'wikibooks', 
                 'wikiquote', 'wikisource', 'v' ] # Projets pour lesquels il existe une version localisée
         self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version sur le wiki]]' % self.mag.title() # Message de fin
@@ -309,6 +310,26 @@ from=           # adresse de l'expédieur, truc@toto.fr
         """
         self.mode = u'html'
         text = self.mag.text
+        parametres = {
+                u'édito'        : ['paragraphe',    u'Éditorial'],
+                'annonces'      : ['annonces',      'Annonces'],
+                'bistro'        : ['liste',         u'Échos du bistro',     2],
+                'adq'           : ['liste',         u'Articles de qualité', 3],
+                'propositions adq'  : ['liste',     'Propositions',         4],
+                'ba'            : ['liste',         'Bons articles',        3],
+                'propositions ba'   : ['liste',     'Propositions',         4],
+                u'actualités'       : ['actualites', u'Actualités'],
+                u'médias'       : ['liste',         'Revue de presse',      2],
+                'entretien'     : ['signe',         'Interview',            'entretien avec'],
+                'tribune'       : ['signe',         'Tribune',              'signature'],
+                'histoire'      : ['paragraphe',    'Histoire'],
+                'citation'      : ['paragraphe',    'Citation'],
+                'planete'       : ['planete',       u'Planète Wikimédia'],
+                u'rédaction'    : ['redaction',     u'Rédaction']
+                } # Les paramètres reconnus: ce qu'il faut en faire, titre de la section, option
+        ordre_parametres = [ u'édito', 'annonces', 'bistro', 'adq', 'propositions adq', \
+                'ba', 'propositions ba', u'actualités', u'médias', 'entretien', \
+                'tribune', 'histoire', 'citation', 'planete', u'rédaction' ] # Ordre de placement des paramètres
 
         text = self.exps['transclu'].sub(self.transclusion, text)
         text = self.exps['ref'].sub(r' (\1)', text)
@@ -346,70 +367,47 @@ from=           # adresse de l'expédieur, truc@toto.fr
         r += self.sommaire_jocker
 
         params = {} # Les paramètres du mag
+        params['planete'] = '&nbsp;' # Paramètre ajouté même s'il est vide
         a = re.split(self.exps['split'], text)
         for i in range(1, len(a), 2):
             params[a[i].lower()] = a[i+1].rstrip('\n').strip(' ')
 
-        if (len(params[u'édito']) > 0):
-            r += self.html_chapitre(u'Édito')
-            r += self.html_paragraphe(params[u'édito'])
-        if (len(params[u'annonces']) > 0):
-            r += self.html_chapitre(u'Annonces')
-            tmp = self.html_liste(self.exps['html'].sub(r'', params[u'annonces']))
-            r  += self.exps['annonces'].sub(r'\1 : \2', tmp)
-        if (len(params[u'bistro']) > 0):
-            r += self.html_chapitre(u'Échos du bistro')
-            r += self.html_liste(params[u'bistro'])
-        r += self.html_chapitre(u'Articles labellisés cette semaine')
-        if (len(params[u'adq']) > 0):
-            r += self.html_chapitre(u'Articles de qualité', 3)
-            r += self.html_liste(params[u'adq'])
-        if (len(params[u'propositions adq']) > 0):
-            r += self.html_chapitre(u'Propositions', 4)
-            r += self.html_liste(params[u'propositions adq'])
-        if (len(params[u'ba']) > 0):
-            r += self.html_chapitre(u'Bon articles', 3)
-            r += self.html_liste(params[u'ba'])
-        if (len(params[u'propositions ba']) > 0):
-            r += self.html_chapitre(u'Propositions', 4)
-            r += self.html_liste(params[u'propositions ba'])
-        #image gauche / image droite ------
-        if (len(params[u'actualités']) > 0):
-            r += self.html_chapitre(u'Actualités')
-            p = params[u'actualités']
-            if self.exps['W_liste'].search(p):
-                r += self.html_liste(p)
-            else:
-                r += self.html_paragraphe(p)
-        if (len(params[u'médias']) > 0):
-            r += self.html_chapitre(u'Wikipédia dans les médias')
-            r += self.html_liste(params[u'médias'])
-        if (len(params[u'entretien'])>0 and (len(params[u'entretien avec'])>0) ):
-            r += self.html_chapitre(u'Entretien')
-            r += self.html_paragraphe(params[u'entretien'])
-            r += self.html_paragraphe(self.exps['html'].sub(r'', params[u'entretien avec']), 'text-align:right;')
-        if (len(params[u'tribune'])>0 and (len(params[u'signature'])>0) ):
-            r += self.html_chapitre(u'Tribune')
-            r += self.html_paragraphe(params[u'tribune'])
-            r += self.html_paragraphe(self.exps['html'].sub(r'', params[u'signature']), 'text-align:right;')
-        #BROIN -----
-        if (len(params[u'histoire']) > 0):
-            r += self.html_chapitre(u'Histoire')
-            r += self.html_paragraphe(params[u'histoire'])
-        if (len(params[u'citation']) > 0):
-            r += self.html_chapitre(u'Citation de la semaine')
-            r += self.html_paragraphe(params[u'citation'])
-        #astuce ----
-        r += self.html_chapitre(u'Planète Wikimédia')
-        r += self.html_paragraphe(u'Ce qui se dit dans ' \
-                + self.html_lien(u'http://fr.planet.wikimedia.org', u'la planète wikimédia') + u'.')
-        if (len(params[u'planete']) > 0):
-            r += self.html_liste(params[u'planete'].rstrip('}'))
-        if (len(params[u'rédaction']) > 0):
-            r += self.html_chapitre(u'Rédaction')
-            p = self.exps['html'].sub(r'\2', params[u'rédaction'])
-            r += self.html_paragraphe(u'Les membres de la rédaction pour ce numéro : '+ \
-                    BeBot.retirer([self.exps['User talk']], p) )
+        for p in ordre_parametres:
+            if (len(params[p]) > 0):
+                action = parametres[p][0]
+                titre = parametres[p][1]
+                if   action == 'paragraphe':
+                    r += self.html_chapitre(titre)
+                    r += self.html_paragraphe(params[p])
+                elif action == 'liste':
+                    r += self.html_chapitre(titre, parametres[p][2])
+                    r += self.html_liste(params[p])
+                elif action == 'signe' and len(params[parametres[p][2]]) > 0: # Signé : Entretien, Tribune
+                    r += self.html_chapitre(titre)
+                    r += self.html_paragraphe(params[p])
+                    r += self.html_paragraphe(self.exps['html'].sub(r'', params[parametres[p][2]]), 'text-align:right;')
+                elif action == 'annonces':
+                    r += self.html_chapitre(titre)
+                    tmp = self.html_liste(self.exps['html'].sub(r'', params[p]))
+                    r += self.exps[p].sub(r'\1 : \2', tmp)
+                    r += self.html_chapitre(u'Articles labellisés cette semaine')
+                elif action == 'actualites':
+                    r += self.html_chapitre(titre)
+                    q = params[p]
+                    if self.exps['W_liste'].search(q):
+                        r += self.html_liste(q)
+                    else:
+                        r += self.html_paragraphe(q)
+                elif action == 'planete':
+                    r += self.html_chapitre(titre)
+                    r += self.html_paragraphe(u'Ce qui se dit dans ' \
+                            + self.html_lien(u'http://fr.planet.wikimedia.org', u'la planète wikimédia') + u'.')
+                    r += self.html_liste(params[p].rstrip('}'))
+                elif action == 'redaction':
+                    r += self.html_chapitre(titre)
+                    p = self.exps['html'].sub(r'\2', params[p])
+                    r += self.html_paragraphe(u'Les membres de la rédaction pour ce numéro : '+ \
+                            BeBot.retirer([self.exps['User talk']], p) )
         r += self.html_paragraphe(self.disclaimer)
 
         r = self.exps['modele'].sub(self.modele, r)
@@ -430,7 +428,10 @@ from=           # adresse de l'expédieur, truc@toto.fr
         for l in re.finditer(self.exps['liste'], param):
             r += u'<li>' + l.group(1) + u'</li>\n'
         r += u'</ul>\n'
-        return r
+        if len(r) > 11:
+            return r
+        else:
+            return '' # Rien de plus que la paire <ul>
 
     def html_lien(self, cible, nom, url=True):
         """ Créer un lien au format html """
@@ -442,6 +443,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
 
     def html_chapitre(self, nom, niveau=2):
         """ Créer un chapitre au format html """
+        #nom = self.exps['html'].sub(r'\2', nom)
         if niveau == 2:
             self.sommaire_index += 1
             self.sommaire += '\t<li>'+self.html_lien(u'#chap'+str(self.sommaire_index), nom, url=False)+'</li>\n'
