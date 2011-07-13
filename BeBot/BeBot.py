@@ -102,15 +102,6 @@ def stat_consultations(page, codelangue=u'fr', date=False):
         return 0
     return res['total_views']
 
-def hasDateLabel(langue):
-    """ Dit si un wiki précise la date de labellisation
-    """
-    #if langue in "fr de":
-    if langue in "fr": # Trop peu de labels ont une date sur DE
-        return True
-    else:
-        return False
-
 def hasWikiprojet(langue):
     """ Dit si un wiki possède un wikiprojet
     """

@@ -27,7 +27,6 @@ SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 
 CREATE TABLE IF NOT EXISTS `contenu_de_qualite` (
   `page` varchar(255) COLLATE utf8_bin NOT NULL COMMENT 'Nom complet',
-  `date` date NOT NULL COMMENT 'de labellisation',
   `label` varchar(50) COLLATE utf8_bin NOT NULL COMMENT 'adq ou ba',
   `taille` int(7) unsigned NOT NULL DEFAULT '0' COMMENT 'en millier de caractères',
   `traduction` varchar(255) COLLATE utf8_bin DEFAULT NULL COMMENT 'Interwiki ou page de suivi',

@@ -8,19 +8,10 @@ from pywikibot import pagegenerators, catlib
 import BeBot
 locale.setlocale(locale.LC_ALL, '')
 
-class PasDeDate(Exception):
-    """
-    Impossible de trouver de date valide dans la page
-    """
-    def __init__(self, page):
-        self.page = page
-    def __str__(self):
-        return repr(self.page)
-
 class ContenuDeQualite:
     """ Contenu de Qualité
-        Tri et sauvegarde les AdQ/BA existants par date.
-        (Persistance du nom de l'article, de la date de labellisation, de son label...)
+        Recherche et sauvegarde les AdQ/BA existants.
+        (Persistance du nom de l'article, de son label...)
         Comparer avec http://fr.wikipedia.org/wiki/Utilisateur:Maloq/Stats
 
     Paramètres :
@@ -60,15 +51,6 @@ class ContenuDeQualite:
         self.cat_qualite = self.categories_de_qualite[self.langue]
             # Nom des catégories correspondant aux deux labels
 
-        # REs
-        RE_date = {
-            'fr': u"\{\{([aA]rticle[ _]de[ _]qualit|[bB]on[ _]article|[aA]dQ[ _]dat)[^\}]*\| *date *= *\{{0,2}(?P<jour>\d{1,2})[^ 0-9]*\}{0,2} (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" ,
-            'de': u"\{\{([eE]xzellent|[lL]esenswert)[^\}]*\|(?P<jour>\d{1,2})[^ 0-9]*\.? (?P<mois>[^\| \{\}0-9]{3,9}) (?P<annee>\d{2,4})" 
-            }
-        if RE_date.has_key(self.langue):
-            self.dateRE = re.compile(RE_date[self.langue], re.LOCALE)
-        else:
-            self.dateRE = None
         self.interwikifrRE = re.compile(u"\[\[fr:(?P<iw>[^\]]+)\]\]", re.LOCALE|re.UNICODE)
 
         # Principaux conteneurs
@@ -78,7 +60,6 @@ class ContenuDeQualite:
         { 'page': html'',   'date': date,
           'label': u'',     'taille': int,          'traduction': html'' }
         """
-        self.pasdedate = []     # Articles de qualité dont la date est inconnue
         # DB
         self.db = MySQLdb.connect(db="u_romainhk_transient", \
                                 read_default_file="/home/romainhk/.my.cnf", \
@@ -105,15 +86,11 @@ class ContenuDeQualite:
                 self.nb_label(u"AdQ", [self.nouveau, self.connaitdeja]) )
         if len(self.cat_qualite) > 1:
             resu += u' et %i BA' % self.nb_label( u"BA", [self.nouveau, self.connaitdeja])
-        resu += u")\n\nAu reste, il y a %i articles sans date précisée, %i déjà connus, et %i retraits." \
-                % ( len(self.pasdedate), len(self.connaitdeja), self.connus )
+        resu += u")\n\nAu reste, il y a %i déjà connus, et %i retraits." \
+                % ( len(self.connaitdeja), self.connus )
         if len(self.nouveau) > 0 and len(self.nouveau) < 12:
             resu += u"\n=== Nouveau contenu de qualité ===\n"
             resu += self.lister_article(self.nouveau)
-        if BeBot.hasDateLabel(self.langue) and len(self.pasdedate) > 0:
-            resu += u"\n=== Articles sans date de labellisation ===\n"
-            resu += u"{{Boîte déroulante début |titre=%i articles}}" % len(self.pasdedate)
-            resu += u"%s\n{{Boîte déroulante fin}}" % self.lister_article(self.pasdedate)
         return resu + u'\n'
 
     def nb_label(self, label, tab):
@@ -136,12 +113,8 @@ class ContenuDeQualite:
             if not self.langue == 'fr':
                 plus = u':%s:' % self.langue
             r = []
-            if BeBot.hasDateLabel(self.langue):
-                for p in table:
-                    r.append(u"[[%s%s]] %s" % ( plus, pywikibot.page.html2unicode(p['page']), unicode(p['date']) ) )
-            else:
-                for p in table:
-                    r.append(u"[[%s%s]]" % ( plus, pywikibot.page.html2unicode(p['page'])) )
+            for p in table:
+                r.append(u"[[%s%s]]" % ( plus, pywikibot.page.html2unicode(p['page'])) )
             return u'* ' + '\n* '.join(r) + u'\n'
         return u''
 
@@ -167,18 +140,16 @@ class ContenuDeQualite:
         """
         if mode == 'insert':
             req = u'INSERT INTO %s' % self.nom_base \
-                + '(page, date, label, taille, traduction) ' \
+                + '(page, label, taille, traduction) ' \
                 + u'VALUES ("%s", "%s", "%s", "%s", %s)' \
                 % ( q['page'].replace('"', '\\"'), \
-                    q['date'].strftime("%Y-%m-%d"), \
                     q['label'], \
                     str(q['taille']), \
                     self._put_null(q['traduction']) )
         elif mode == 'update':
             req = u'UPDATE %s SET' % self.nom_base \
-                + u' date="%s", label="%s", taille="%s", traduction=%s' \
-                % ( q['date'].strftime("%Y-%m-%d"), \
-                    q['label'], \
+                + u' label="%s", taille="%s", traduction=%s' \
+                % ( q['label'], \
                     str(q['taille']), \
                     self._put_null(q['traduction']) ) \
                 + u' WHERE page="%s"' % q['page'].replace('"', '\\"')
@@ -216,26 +187,6 @@ class ContenuDeQualite:
     
     #######################################
     ### recherche d'infos
-    def date_labellisation(self, titre):
-        """
-        Donne la date de labellisation d'un article
-        """
-        if BeBot.hasDateLabel(self.langue):
-            try:
-                page = pywikibot.Page(self.site, titre).get()
-            except pywikibot.exceptions.NoPage:
-                raise PasDeDate(titre)
-            if self.dateRE is not None:
-                d = self.dateRE.search(page)
-                if d is not None:
-                    mti = BeBot.moistoint(d.group('mois'))
-                    if mti > 0:
-                        return datetime.date(int(d.group('annee')), \
-                            BeBot.moistoint(d.group('mois')), int(d.group('jour')))
-            raise PasDeDate(titre)
-        else:
-            return datetime.date(1970, 1, 1) #Epoch
-
     def traduction(self, page):
         """
         Donne la page de suivi ou l'interwiki vers fr
@@ -289,14 +240,8 @@ class ContenuDeQualite:
         """
         Recherche toutes les informations nécessaires associées à une page
         """
-        try:
-            date = self.date_labellisation(page.title())
-        except PasDeDate as pdd:
-            self.pasdedate.append( {'page': pdd.page, 'date': u''} )
-            return None
         infos = {
             'page': page.title(), \
-            'date': date, \
             'label': cattoa, \
             'taille': BeBot.taille_page(page), \
             'traduction': self.traduction(page), \
@@ -358,8 +303,8 @@ class ContenuDeQualite:
             self.req_bdd(c, 'delete')
         self.connus = len(connus)
 
-        pywikibot.log( u"Total: %i ajouts ; %i déjà connus ; %i retraits ; %i sans date." \
-                % (len(self.nouveau), len(self.connaitdeja), len(connus), len(self.pasdedate)) )
+        pywikibot.log( u"Total: %i ajouts ; %i déjà connus ; %i retraits." \
+                % (len(self.nouveau), len(self.connaitdeja), len(connus)) )
 
 def main():
     mode = u'nouveaux-seulement'
