@@ -11,7 +11,6 @@ class ListageQualite:
     """ Listage Qualité
         Liste les AdQ/BA existants par avancement sur le P:SAdQaW
         
-        TODO : lister les adq/ba par theme ?
         TODO : supporter l'italien
         TODO : propositions d'apposition de Lien AdQ|Lien BA => à part
     """
@@ -38,7 +37,7 @@ class ListageQualite:
                 'en': u'Anglais',
                 'de': u'Allemand',
                 'es': u'Espagnol',
-                'it': u'Italien',
+                #'it': u'Italien',
                 'nl': u'Néerlandais'
                 }
         if self.sous_page.has_key(self.langue):

@@ -16,28 +16,19 @@ class ContenuDeQualite:
 
     Paramètres :
     * pywikibot.Site où travailler
-    * Mode de mise à jour (optionnel) : en mode strict, les informations des 
-    articles déjà connus seront systématiquement mises à jour (UPDATE) et
-    les articles déchus retirés. 
-    Pour l'activer, utiliser l'option "-s".
     Arguments :
     * "Wikis" : une liste de code langue des wiki à analyser (fr par défaut)
 
     Exemple:
-    python contenu_de_qualite.py -s fr de nl 
-    >  mise à jour complète pour les wiki francophone, germanophone et néerlandophone.
+    python contenu_de_qualite.py fr de nl 
+    >  mise à jour pour les wiki francophone, germanophone et néerlandophone.
 
         TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
     """
-    def __init__(self, site, mode_maj):
+    def __init__(self, site):
         self.site = site
         self.langue = self.site.language()
-        #if mode_maj == "strict":
-        #    self.maj_stricte = True
-        #    pywikibot.log(u'# Mode "strict" actif (toutes les updates seront effectuées et la base vidée)')
-        #else:
-        #    self.maj_stricte = False
         self.total_avant = 0
 
         self.categories_de_qualite = {
@@ -125,10 +116,6 @@ class ContenuDeQualite:
         Sauvegarder dans une base de données
         """
         pywikibot.log(u'# Sauvegarde dans la base pour la langue "%s".' % self.langue)
-        #if self.maj_stricte:
-        #    self.vider_base()
-        #    for q in self.connaitdeja:
-        #        self.req_bdd(q, 'insert')
 
         for q in self.nouveau:
             self.req_bdd(q, 'insert')
@@ -141,7 +128,7 @@ class ContenuDeQualite:
         if mode == 'insert':
             req = u'INSERT INTO %s' % self.nom_base \
                 + '(page, label, taille, traduction) ' \
-                + u'VALUES ("%s", "%s", "%s", "%s", %s)' \
+                + u'VALUES ("%s", "%s", "%s", %s)' \
                 % ( q['page'].replace('"', '\\"'), \
                     q['label'], \
                     str(q['taille']), \
@@ -198,33 +185,6 @@ class ContenuDeQualite:
             else:
                 return None
         else:
-            """
-            try:
-                interlangues = page.langlinks()
-            except pywikibot.exceptions.NoUsername as nun :
-                #pywikibot.warning(nun)
-                #return None
-                pass
-            except pywikibot.exceptions.NoSuchSite as nss:
-                pywikibot.warning('site %s inexistant pour "http://%s.wikipedia.org/wiki/%s".' \
-                    % (page.site, self.langue, page.title()) )
-                return None
-
-            for p in interlangues:
-                linkedPage = pywikibot.Page(p)
-                if linkedPage.site == "fr":
-                    return linkedPage.title()
-                try:
-                    text = p.astext()
-                except KeyError as ke:
-                    pywikibot.warning('interlangue en KeyError %s pour "%s:%s".' \
-                        % (ke.args[0], self.langue, page.title()) )
-                    continue
-                res = self.interwikifrRE.search(text)
-                if res is not None:
-                    return res.group('iw')
-            return None
-            """
             res = self.interwikifrRE.search(page.text)
             if res is not None:
                 return res.group('iw')
@@ -277,12 +237,6 @@ class ContenuDeQualite:
                         NB_AJOUTS += 1
                         if infos is not None:
                             self.nouveau.append(infos)
-                    #elif self.maj_stricte:
-                    #    connus.remove(title)
-                    #    infos = self.get_infos(page, cattoa)
-                    #    NB_AJOUTS += 1
-                    #    if infos is not None:
-                    #        self.connaitdeja.append(infos)
                     else:
                         connus.remove(title)
                         self.connaitdeja.append( \
@@ -302,16 +256,12 @@ class ContenuDeQualite:
                 % (len(self.nouveau), len(self.connaitdeja), len(connus)) )
 
 def main():
-    mode = u'nouveaux-seulement'
     try:
         opts, args = getopt.getopt(sys.argv[1:], "s")
     except getopt.GetoptError, err:
         print str(err)
         usage()
         sys.exit(2)
-    for o, a in opts:
-        if o == '-s':
-            mode = "strict"
     if len(args) > 0:
         wikis = args
     else:
@@ -323,7 +273,7 @@ def main():
 
     for cl in wikis:
         pywikibot.log( u"== WP:%s ..." % cl )
-        cdq = ContenuDeQualite(pywikibot.Site(cl), mode)
+        cdq = ContenuDeQualite(pywikibot.Site(cl))
         cdq.run()
         log += unicode(cdq)
         cdq.sauvegarder()
