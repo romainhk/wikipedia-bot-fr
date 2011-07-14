@@ -70,12 +70,12 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'image'     : re.compile("\[\[(?:Image|File|Fichier):([^\]]+)\]\]\s*", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'lien_ext'  : re.compile("(\[http:[^\] ]+ +[^\]]*\])", re.LOCALE|re.UNICODE),
                 'lien_int'  : re.compile("(\[\[.+?\]\])", re.LOCALE|re.UNICODE),
-                'label'     : re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'modele'    : re.compile("\{\{(.+?)\}\}", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 #'modele'    : re.compile("\{\{([^\|\}:=]*?)\|?([^\}:]*)\}\}", re.LOCALE|re.UNICODE),
                 'ref'       : re.compile("<ref>(.*?)</ref>", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'tableau'   : re.compile("\{\|(.+)\|\}", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'formatnum' : re.compile("\{\{(formatnum):([^\}:]*)\}\}", re.LOCALE|re.UNICODE),
+                '='         : re.compile("\{\{=\}\}", re.LOCALE|re.UNICODE),
                 'quote'     : re.compile("(?P<quote>'{2,5})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
                 'b'         : re.compile("(?P<quote>'{3})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
                 'i'         : re.compile("(?P<quote>'{2})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
@@ -86,12 +86,12 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'transclu'  : re.compile("\{\{([^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'noinclude' : re.compile("<noinclude>(.*?)</noinclude>\s*", re.LOCALE|re.UNICODE|re.DOTALL)
                 } # Toute les expressions qui seront détectée
-        self.mods = {
-                'u' : 'tel', 'm' : 'tel', 'u\'' : 'tel', 'a' : 'tel', 'l' : 'tel', 'citation' : 'tel',
-                'lang' : 'tel2',
-                'clin' : 'rien', 'pdf' : 'rien', 'sourire' : 'rien', ',' : 'rien',
-                'guil' : 'guil', 'citation' : 'guil', u'citation étrangère' : 'guil',
-                u'unité' : u'unité', 'heure' : 'heure', 'wikimag bistro' : 'WM_bistro'
+        self.modeles = {
+                'u' : 1,    'm' : 1,    'u\'' : 1,  'a' : 1,    'l' : 1,    'citation' : 1,
+                'lang' : 2,
+                'a-label' : 'lien',
+                'guil' : 'guil',    'citation' : 'guil',    u'citation étrangère' : 'guil',
+                u'unité' : u'unité',    'heure' : 'heure',     'wikimag bistro' : 'WM_bistro'
                 } # Ce qu'il faut faire avec chaque modele : les modèles inconnus seront supprimés
         self.interprojets = {
                 'wikipedia'     : 'wikipedia.org/wiki/',
@@ -129,22 +129,23 @@ from=           # adresse de l'expédieur, truc@toto.fr
         """ Traitement spécifique pour les transclusions
         """
         page = match.group(1)
-        if page in self.mods.keys():
-            return u'{{%s}}' % page # Modèle qui sera traité
+        if page in self.modeles.keys():
+            return u'{{%s}}' % page # Modèle simple pour lequel on a un plan
+        p = pywikibot.Page(self.site, u'Modèle:'+page)
+        if p.exists():
+            return u'' # Modèle inconnu, mais certainement pas une transclusion
         if page[0] == u'/':
             page = self.mag.title() + page
-        elif not pywikibot.Page(self.site, page).exists():
-            return u''
         # Lien seul
         #return u'Retrouvez la page « %s » sur le wiki' % self.lien_interne(%page.split('/').pop())
 
         # Recopiage
-        text = pywikibot.Page(self.site, page).text
-        text = self.exps['noinclude'].sub(r'', text)
-        return text
+        p = pywikibot.Page(self.site, page)
+        p.text = self.exps['noinclude'].sub(r'', p.text)
+        return p.text
 
     def modele(self, match):
-        """ Traitement spécifiques pour les modèles à paramètres
+        """ Traitement spécifiques pour les modèles (à paramètres ou non)
         """
         params = {} # Les paramètres du modèle
         i = -1
@@ -160,18 +161,15 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 c = a[1]
             params[b] = c
         nom = params[-1].lower()
-        #pywikibot.output(params)
-        if nom not in self.mods.keys():
-            return u''
-        action = self.mods[nom]
-        if action == 'rien':
-            return u''  # rien
-        elif action == 'tel':
-            return params[0]  # tel-quel
-        elif action == u'tel2':
-            return params[1]
+        if nom not in self.modeles.keys():
+            return u'' # Les modèles complexes restants
+        action = self.modeles[nom]
+        if   type(action) == type(1):
+            return params[action-1]  # i-ème paramètre
+        elif action == 'lien':
+            return u'[[' + params[0] + u']]' # lien interne
         elif action == 'espace':
-            return ' '
+            return u' '
         elif action == u'guil':
             return u'« ' + params[0] + u' »'
         elif action == u'unité':
@@ -264,6 +262,17 @@ from=           # adresse de l'expédieur, truc@toto.fr
         #pywikibot.output('|'.join(sep) + ' : ' + lien_externe_associe)
         return self.lien_externe(u'[%s %s]' % (lien_externe_associe, nom))
 
+    def remplacer_les_liens(self, text):
+        """ Mets en forme des liens
+        """
+        for lien in re.finditer(self.exps['lien_ext'], text):
+            b = text.partition(lien.group(0))
+            text = b[0] + self.lien_externe(lien.group(0)) + b[2]
+        for lien in re.finditer(self.exps['lien_int'], text):
+            b = text.partition(lien.group(0))
+            text = b[0] + self.lien_interne(lien.group(0)) + b[2]
+        return text
+
     def gen_plaintext(self, pagetmp):
         """ Génération du format texte brut
         """
@@ -280,36 +289,30 @@ from=           # adresse de l'expédieur, truc@toto.fr
             sys.exit(2)
         text = pywikibot.Page(self.site, self.tmp).text + self.disclaimer
         if self.epreuve: text = u'CE MAIL EST UNE ÉPREUVE DU PROCHAIN MAG.\n' + text
+        text = self.exps['User'].sub(r'{{u|\1}}', text)
+        text = self.exps['='].sub(r'&#x3D;', text)
+        text = self.exps['formatnum'].sub(r'\2', text)
+        text = self.exps['annonces'].sub(r'* \1 : \2', text)
         text = self.exps['transclu'].sub(self.transclusion, text)
+        text = self.exps['modele'].sub(self.modele, text)
+
         text = self.exps['ref'].sub(r' (\1)', text)
         text = BeBot.retirer( [self.exps['comment'], self.exps['br'], \
                 self.exps['image'], self.exps['W___'], \
                 self.exps['noinclude']], text)
-        text = self.exps['User'].sub(r'{{u|\1}}', text)
-        text = self.exps['annonces'].sub(r'* \1 : \2', text)
-        text = self.exps['label'].sub(r'[[\1]]', text)
-
-        # Remplacement des liens
-        for lien in re.finditer(self.exps['lien_ext'], text):
-            b = text.partition(lien.group(0))
-            text = b[0] + self.lien_externe(lien.group(0)) + b[2]
-        for lien in re.finditer(self.exps['lien_int'], text):
-            b = text.partition(lien.group(0))
-            text = b[0] + self.lien_interne(lien.group(0)) + b[2]
         text = self.exps['hr'].sub(r'-----  -----  -----', text)
-        text = self.exps['formatnum'].sub(r'\2', text)
         text = self.exps['tableau'].sub(self.tableau, text)
-        text = self.exps['modele'].sub(self.modele, text)
         text = self.exps['center'].sub(r'    \1', text)
         text = self.exps['html'].sub(r'\2', text)
         text = self.exps['quote'].sub(r'\2', text)
-        return text;
+        text = text.replace('&#x3D;', '=')
+        return self.remplacer_les_liens(text)
 
     def gen_html(self):
         """ Génération au format Html
         """
         self.mode = u'html'
-        text = self.mag.text
+        text = self.mag.text[2:]
         parametres = {
                 u'édito'        : ['paragraphe',    u'Éditorial'],
                 'annonces'      : ['annonces',      'Annonces'],
@@ -331,13 +334,16 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'ba', 'propositions ba', u'actualités', u'médias', 'entretien', \
                 'tribune', 'histoire', 'citation', 'planete', u'rédaction' ] # Ordre de placement des paramètres
 
+        text = self.exps['='].sub(r'&#x3D;', text)
+        text = self.exps['User'].sub(r'{{u|\1}}', text)
+        text = self.exps['formatnum'].sub(r'\2', text)
+        text = self.exps['annonces'].sub(r'* \1 : \2', text)
         text = self.exps['transclu'].sub(self.transclusion, text)
+        text = self.exps['modele'].sub(self.modele, text)
+
         text = self.exps['ref'].sub(r' (\1)', text)
         text = BeBot.retirer( [self.exps['comment'],self.exps['image'],self.exps['W___'], \
                 self.exps['noinclude']], text)
-        text = self.exps['User'].sub(r'{{u|\1}}', text)
-        text = self.exps['formatnum'].sub(r'\2', text)
-        text = self.exps['label'].sub(r'[[\1]]', text)
         text = self.exps['W_br'].sub(r'<br />\n', text)
         text = self.exps['b'].sub(r'<b>\2</b>', text)
         text = self.exps['i'].sub(r'<i>\2</i>', text)
@@ -373,7 +379,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
             params[a[i].lower()] = a[i+1].rstrip('\n').strip(' ')
 
         for p in ordre_parametres:
-            if (len(params[p]) > 0):
+            if params.has_key(p) and len(params[p]) > 0:
                 action = parametres[p][0]
                 titre = parametres[p][1]
                 if   action == 'paragraphe':
@@ -410,15 +416,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                             BeBot.retirer([self.exps['User talk']], p) )
         r += self.html_paragraphe(self.disclaimer)
 
-        r = self.exps['modele'].sub(self.modele, r)
-        # Remplacement des liens
-        for lien in re.finditer(self.exps['lien_ext'], r):
-            b = r.partition(lien.group(0))
-            r = b[0] + self.lien_externe(lien.group(0)) + b[2]
-        for lien in re.finditer(self.exps['lien_int'], r):
-            b = r.partition(lien.group(0))
-            r = b[0] + self.lien_interne(lien.group(0)) + b[2]
-        # Sommaire
+        r = self.remplacer_les_liens(r)
         r = self.exps['sommaire'].sub(self.sommaire+'</ol>\n', r)
         return r + u'</body>\n</html>'
 
