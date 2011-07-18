@@ -66,8 +66,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'br'        : re.compile("<br[ /]*>", re.LOCALE|re.UNICODE),
                 'W_br'      : re.compile("\n\n", re.LOCALE|re.UNICODE|re.MULTILINE),
                 'annonces'  : re.compile("\*? ?\{\{Annonce[ \w\xe9]*\|(\d+)\|(.+)\}\}", re.LOCALE|re.UNICODE|re.IGNORECASE),
-                #'image'     : re.compile("\[\[(?:Image|File|Fichier):.*?(\[{1,2})?.+?(?(1)\]).*?\]\]\s*", re.LOCALE|re.UNICODE|re.IGNORECASE|re.DOTALL),
                 'image'     : re.compile("\[\[(?:Image|File|Fichier):([^\]]+)\]\]\s*", re.LOCALE|re.UNICODE|re.IGNORECASE),
+                'image_seule' : re.compile("^\[\[(?:Image|File|Fichier):(.*)\]\]$\s?", re.LOCALE|re.UNICODE|re.IGNORECASE|re.MULTILINE),
                 'lien_ext'  : re.compile("(\[http:[^\] ]+ +[^\]]*\])", re.LOCALE|re.UNICODE),
                 'lien_int'  : re.compile("(\[\[.+?\]\])", re.LOCALE|re.UNICODE),
                 'modele'    : re.compile("\{\{(.+?)\}\}", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
@@ -298,7 +298,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
 
         text = self.exps['ref'].sub(r' (\1)', text)
         text = BeBot.retirer( [self.exps['comment'], self.exps['br'], \
-                self.exps['image'], self.exps['W___'], \
+                self.exps['image_seule'], self.exps['image'], self.exps['W___'], \
                 self.exps['noinclude']], text)
         text = self.exps['hr'].sub(r'-----  -----  -----', text)
         text = self.exps['tableau'].sub(self.tableau, text)
@@ -342,8 +342,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
         text = self.exps['modele'].sub(self.modele, text)
 
         text = self.exps['ref'].sub(r' (\1)', text)
-        text = BeBot.retirer( [self.exps['comment'],self.exps['image'],self.exps['W___'], \
-                self.exps['noinclude']], text)
+        text = BeBot.retirer( [self.exps['comment'], self.exps['image_seule'], \
+                self.exps['image'], self.exps['W___'], self.exps['noinclude']], text)
         text = self.exps['W_br'].sub(r'<br />\n', text)
         text = self.exps['b'].sub(r'<b>\2</b>', text)
         text = self.exps['i'].sub(r'<i>\2</i>', text)
@@ -379,6 +379,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
             params[a[i].lower()] = a[i+1].rstrip('\n').strip(' ')
 
         for p in ordre_parametres:
+            if p == 'adq':
+                r += self.html_chapitre(u'Articles labellisés cette semaine')
             if params.has_key(p) and len(params[p]) > 0:
                 action = parametres[p][0]
                 titre = parametres[p][1]
@@ -396,7 +398,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
                     r += self.html_chapitre(titre)
                     tmp = self.html_liste(self.exps['html'].sub(r'', params[p]))
                     r += self.exps[p].sub(r'\1 : \2', tmp)
-                    r += self.html_chapitre(u'Articles labellisés cette semaine')
                 elif action == 'actualites':
                     r += self.html_chapitre(titre)
                     q = params[p]
