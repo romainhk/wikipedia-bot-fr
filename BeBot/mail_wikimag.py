@@ -23,7 +23,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
         TODO
         gérer les interlangues
         html : inclure les images ?
-        problème avec les descriptions d'images contenant un lien : [[File:Welcome2WP French WEB.pdf|140px|thumb|right|[[:File:Welcome2WP French WEB.pdf|Feuilletez-moi !]] ahaha.]]
     """
     def __init__(self, site, fichier_conf, epreuve):
         self.site = site
@@ -50,8 +49,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
         if self.mag.isRedirectPage():
             self.mag = self.mag.getRedirectTarget()
 
-        self.fichier_mail = u'./wikimag_mail.tmp' # Fichier temporaire pour le mail
-        self.mode = u'' # Mode de génération en cours
+        self.fichier_mail = u'./mail_wikimag.tmp' # Fichier temporaire pour le mail
+        self.mode = u'' # Mode de génération en cours : text ou html
         self.sommaire_jocker = '###141### SOMMAIRE ###592###'
         self.exps = {
                 'split'     : re.compile("^\|([\w \xe9]+?)\s*=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
