@@ -87,6 +87,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 } # Toute les expressions qui seront détectée
         self.modeles = {
                 'u' : 1,    'm' : 1,    'u\'' : 1,  'a' : 1,    'l' : 1,    'citation' : 1,
+                'grossir' : 1,
                 'lang' : 2,
                 'a-label' : 'lien',
                 'guil' : 'guil',    'citation' : 'guil',    u'citation étrangère' : 'guil',
