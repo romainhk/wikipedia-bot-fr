@@ -222,7 +222,7 @@ class ContenuDeQualite:
             cattoa = ordre_cats[i]
 
             for p in pagegenerators.DuplicateFilterPageGenerator(cpg):
-                if NB_AJOUTS < 1000:
+                if NB_AJOUTS < 2000:
                     if p.namespace() == 0:
                         page = p
                     elif p.namespace() == 1: # Pour EN:GA et IT:FA
