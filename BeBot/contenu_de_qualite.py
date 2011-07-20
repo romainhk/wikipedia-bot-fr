@@ -207,6 +207,7 @@ class ContenuDeQualite:
 
     def run(self):
         NB_AJOUTS = 0
+        RETRAITS = True
         connus = BeBot.charger_bdd(self.db, self.nom_base, champs=u'page')
         connus = map(self.normaliser_page, connus)
         self.total_avant = len(connus)
@@ -243,13 +244,15 @@ class ContenuDeQualite:
                               'label': cattoa } ) # Ils ne seront pas ajoutés
                 else:
                     pywikibot.output("Limite d'ajouts atteinte avec "+p.title())
+                    RETRAITS = False
                     break
 
         # On retire ceux qui ont disparus
-        pywikibot.output('Retraits : '+str(connus))
-        for c in connus:
-            self.req_bdd(c, 'delete')
-        self.connus = len(connus)
+        if RETRAITS:
+            pywikibot.output('Retraits : '+str(connus))
+            for c in connus:
+                self.req_bdd(c, 'delete')
+            self.connus = len(connus)
 
         pywikibot.log( u"Total: %i ajouts ; %i déjà connus ; %i retraits." \
                 % (len(self.nouveau), len(self.connaitdeja), len(connus)) )
