@@ -252,7 +252,7 @@ class ContenuDeQualite:
             pywikibot.output('Retraits : '+str(connus))
             for c in connus:
                 self.req_bdd(c, 'delete')
-            self.connus = len(connus)
+        self.connus = len(connus)
 
         pywikibot.log( u"Total: %i ajouts ; %i déjà connus ; %i retraits." \
                 % (len(self.nouveau), len(self.connaitdeja), len(connus)) )
