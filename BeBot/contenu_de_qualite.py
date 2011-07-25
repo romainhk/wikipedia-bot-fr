@@ -277,8 +277,8 @@ def main():
         pywikibot.log( u"== WP:%s ..." % cl )
         cdq = ContenuDeQualite(pywikibot.Site(cl))
         cdq.run()
-        log += unicode(cdq)
         cdq.sauvegarder()
+        log += unicode(cdq)
 
     pywikibot.Page(pywikibot.Site('fr'), \
         u'Utilisateur:BeBot/Contenu de qualité').put(log, \

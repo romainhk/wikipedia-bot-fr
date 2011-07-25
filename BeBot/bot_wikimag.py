@@ -64,8 +64,18 @@ class BotWikimag:
         except pywikibot.Error, e:
             pywikibot.warning(u"Impossible de sauvegarder la liste des Adq/BA pour le Projet:Adl" )
 
+    def message(self):
+        """ (Option) Ajoute un message après le mag
+        """
+        pm = pywikibot.Page(self.site, u'Utilisateur:BeBot/MessageWikimag')
+        r = re.compile("==\s*%s/%s\s*==\s*(.*?)\s*==" % (self.annee, self.semaine), re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
+        m = r.search(pm.text)
+        if (m):
+            return '\n'.m.group(1)
+        return ''
+
     def newsboy(self, lecteur, msg):
-        """ Distribut un magasine
+        """ Distribut un magazine
         """
         if lecteur.isRedirectPage():
             lecteur = lecteur.getRedirectTarget()
@@ -77,8 +87,9 @@ class BotWikimag:
 
     def run(self):
         # Message à distribuer
-        msg = msg2 = u"\n== Wikimag n°%s - Semaine %s ==\n" % (self.numero, self.semaine)
-        msg += u"{{Wiki magazine|%s|%s}} ~~~~" % (self.annee, self.semaine)
+        msg = msg2 = u"\n\n== Wikimag n°%s - Semaine %s ==\n" % (self.numero, self.semaine)
+        message = self.message()
+        msg += u"{{Wiki magazine|%s|%s}}\n%s ~~~~" % (self.annee, self.semaine, message)
 
         r = re.compile(u"\*\* \{\{u\|(.+?)\}\}", re.LOCALE|re.UNICODE)
         liste = []

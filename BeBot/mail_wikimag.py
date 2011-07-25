@@ -23,6 +23,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
         TODO
         gérer les interlangues
         html : inclure les images ?
+        crochet / accolade : traitement récurssif ? 
+ exp : {{guil|[[Wikipédia:Sondage/Discussion pages liées|Avis sur une proposition de changement de message système concernant les liens « pages liées » et « Suivi des pages liées »]]}}
     """
     def __init__(self, site, fichier_conf, epreuve):
         self.site = site
@@ -55,6 +57,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
         self.exps = {
                 'split'     : re.compile("^\|([\w \xe9]+?)\s*=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'style'     : re.compile("\s*(style|valign|width|rowspan|colspan)=\".+?\"\s*", re.LOCALE|re.UNICODE|re.IGNORECASE),
+                'crochet'   : re.compile("\[\[[^(\[\[)]*\]\]", re.LOCALE|re.UNICODE|re.IGNORECASE),
+                'accolade'  : re.compile("\{\{[^(\{\{)]*\}\}", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'sommaire'  : re.compile(self.sommaire_jocker, re.LOCALE|re.UNICODE),
                 'W_liste'   : re.compile("^\s*\*", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'http'      : re.compile("(http)%3A", re.LOCALE|re.UNICODE|re.MULTILINE),
@@ -509,7 +513,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
         msg['Subject'] = u'#%s, semaine %s - %s' % \
                 (self.numero, self.semaine, \
                  unicode(self.lundi_pre.strftime("%e %b %Y").lstrip(' '), 'utf-8') )
-        if self.epreuve: msg['Subject'] += u' # ÉPREUVE'
+        if self.epreuve:
+            msg['Subject'] += u' # ÉPREUVE'
         f = open(self.fichier_mail, "w")
         f.write(msg.as_string())
         f.close()
