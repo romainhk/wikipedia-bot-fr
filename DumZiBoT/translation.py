@@ -300,6 +300,6 @@ if not page.exists():
 
 == [[Projet:Traduction/*/Demandes/MONTH YEAR|/Demandes]] ==
 {{Projet:Traduction/*/Demandes/MONTH YEAR| paragraphe=Demandes}}"""[1:])
-    text.replace('MONTH', int2month[month])    
-    text.replace('YEAR', year)    
+    text.replace('MONTH', int2month[month])
+    text.replace('YEAR', str(year))
     put_page(page, text)
