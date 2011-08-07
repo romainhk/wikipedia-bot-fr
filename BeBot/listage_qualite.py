@@ -222,11 +222,7 @@ class ListageQualite:
                 page[champs[2]] = unicode(a[2], 'UTF-8')
             else:
                 page[champs[2]] = None
-            if a[3] is not None:
-                page[champs[3]] = unicode(a[3], 'UTF-8')
-            else:
-                page[champs[3]] = None
-            page[champs[4]] = unicode(a[4], 'UTF-8')
+            page[champs[3]] = unicode(a[3], 'UTF-8')
             page['avancement'] = BeBot.info_wikiprojet( \
                     pywikibot.Page(self.site_fr, nom_page), \
                     self.avancementER, 'avancement', \
