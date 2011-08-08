@@ -514,7 +514,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 (self.numero, self.semaine, \
                  unicode(self.lundi_pre.strftime("%e %b %Y").lstrip(' '), 'utf-8') )
         if self.epreuve:
-            msg['Subject'] += u' # ÉPREUVE'
+            msg['Subject'] = msg['Subject'] + u' # ÉPREUVE'
         f = open(self.fichier_mail, "w")
         f.write(msg.as_string())
         f.close()
@@ -522,9 +522,10 @@ from=           # adresse de l'expédieur, truc@toto.fr
             pywikibot.output(u"# Publication sur la mailing list")
             try:
                 cmd = u'cat %s | mail -s "%s" %s' % (self.fichier_mail, msg['Subject'], msg['To'])
+                pywikibot.output(u'Commande > ' + cmd)
                 os.system(cmd)
             except:
-                pywikibot.error(u"Erreur l'ors de l'envoie du mail")
+                pywikibot.error(u"Erreur l'hors de l'envoie du mail")
 
 def main():
     epreuve = False
