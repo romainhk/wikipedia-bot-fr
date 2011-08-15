@@ -72,7 +72,7 @@ class BotWikimag:
         r = re.compile("==\s*%s/%s\s*==\s*(.*?)\s*==" % (self.annee, self.semaine), re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         m = r.search(pm.text)
         if (m):
-            return '\n'.m.group(1) + u' '
+            return '\n' + m.group(1) + u' '
         return ''
 
     def newsboy(self, lecteur, msg):

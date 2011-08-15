@@ -510,11 +510,12 @@ from=           # adresse de l'expédieur, truc@toto.fr
         else:
             msg['To'] = conf['mailinglist']
         msg['Date'] = formatdate(localtime=True)
-        msg['Subject'] = u'#%s, semaine %s - %s' % \
+        Subject = u'#%s, semaine %s - %s' % \
                 (self.numero, self.semaine, \
                  unicode(self.lundi_pre.strftime("%e %b %Y").lstrip(' '), 'utf-8') )
         if self.epreuve:
-            msg['Subject'] = msg['Subject'] + u' # ÉPREUVE'
+            Subject += u' # ÉPREUVE'
+        msg['Subject'] = Subject
         f = open(self.fichier_mail, "w")
         f.write(msg.as_string())
         f.close()
