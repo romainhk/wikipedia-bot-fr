@@ -113,7 +113,7 @@ Legend = left:70 top:295"""[1:] % (largeur, width, maxi, graduation, graduation/
         #Labels
         self.msg += '\nPlotData=\n'
         for r in range(1, nb_enregistrement):
-            if r % 3 == 1:
+            if r % 3 == 2:
                 p = res[r-1][6]
                 self.msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r, p, p)
                 q = res[r-1][1] + res[r-1][2]

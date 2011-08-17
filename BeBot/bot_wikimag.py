@@ -69,10 +69,12 @@ class BotWikimag:
         """
         pm = pywikibot.Page(self.site, u'Utilisateur:BeBot/MessageWikimag')
         #pywikibot.output("== %s/%s == (.*?) ==" % (self.annee, self.semaine))
-        r = re.compile("==\s*%s/%s\s*==\s*(.*?)\s*==" % (self.annee, self.semaine), re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
+        r = re.compile("==\s*%s/%s\s*==\s*(.*?)(\s*==)?" % (self.annee, self.semaine), re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         m = r.search(pm.text)
         if (m):
-            return '\n' + m.group(1) + u' '
+            k = m.group(1)
+            if len(k) > 0:
+                return k + u' '
         return ''
 
     def newsboy(self, lecteur, msg):
