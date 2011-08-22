@@ -1,34 +1,29 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, locale
+import re, datetime, locale, sys
 import BeBot
 import pywikibot
 locale.setlocale(locale.LC_ALL, '')
 
-class BotWikimag:
-    """ Bot Wikimag
-        Publie le wikimag de la semaine sur la page de discussion des abonnées
+class Infolettre:
+    """ Infolettre
+        Publie une infolettre sur la page de discussion des abonnées (wikimag et news de la WMF)
     """
-    def __init__(self, site):
+    def __init__(self, site, infolettre):
         self.site = site
+        self.infolettre = infolettre
+        pywikibot.output("# Publication de l'infolettre %s" % self.infolettre)
         self.date = datetime.date.today()
         self.lundi = self.date - datetime.timedelta(days=self.date.weekday())
         self.lundi_pre = self.lundi - datetime.timedelta(weeks=1)
         self.semaine = self.lundi_pre.strftime("%W").lstrip('0')
         self.annee = self.lundi_pre.strftime("%Y")
-
-        self.mag = pywikibot.Page(self.site, u'Wikipédia:Wikimag/%s/%s' % (self.annee, self.semaine) )
-        self.numero = '???'
-        num = re.compile(u"\|numéro *= *(\d+)", re.LOCALE|re.UNICODE)
-        m = num.search(self.mag.text)
-        if m is not None:
-            self.numero = m.group(1)
-
-        self.resume = u'Demandez [[Wikipédia:Wikimag/%s/%s|Cannes Midi (n°%s)]]. Le tueur de Cannes frappe encore... 5 cents' \
-                % (self.annee, self.semaine, self.numero)
+        self.abn = {
+                "wikimag" : u"Wikipédia:Wikimag/Abonnement",
+                "wmf"     : u"Wikipédia:Nouvelles de la WMF/Inscription" }
 
     def adl(self):
-        """ Ajoute les adq/ba de la semaine à l'Atelier de Lecture
+        """ (Wikimag) Ajoute les adq/ba de la semaine à l'Atelier de Lecture
         """
         separation = u'<center><hr style="width:42%;" /></center>'
         # Infos
@@ -58,14 +53,13 @@ class BotWikimag:
                 + u'\n{{colonnes|nombre=3|\n' + propositions  + u'\n}}\n' \
                 + u'<noinclude>\n[[Catégorie:Wikipédia:Atelier de lecture|Lumière sur...]]\n</noinclude>'
         pywikibot.output(u"# Publication sur l'Atelier de lecture")
-        #pywikibot.output(lumiere.text)
         try:
             lumiere.save(comment=u'Maj hebdomadaire de la liste', minor=False, async=True)
         except pywikibot.Error, e:
             pywikibot.warning(u"Impossible de sauvegarder la liste des Adq/BA pour le Projet:Adl" )
 
     def message(self):
-        """ (Option) Ajoute un message après le mag
+        """ (Option wikimag) Ajoute un message après le mag
         """
         pm = pywikibot.Page(self.site, u'Utilisateur:BeBot/MessageWikimag')
         #pywikibot.output("== %s/%s == (.*?) ==" % (self.annee, self.semaine))
@@ -77,8 +71,33 @@ class BotWikimag:
                 return k + u' '
         return ''
 
+    def wikimag(self):
+        """ Wikimag """
+        self.mag = pywikibot.Page(self.site, u'Wikipédia:Wikimag/%s/%s' % (self.annee, self.semaine) )
+        numero = '???'
+        num = re.compile(u"\|numéro *= *(\d+)", re.LOCALE|re.UNICODE)
+        m = num.search(self.mag.text)
+        if m is not None:
+            numero = m.group(1)
+
+        self.resume = u'Demandez [[Wikipédia:Wikimag/%s/%s|Cannes Midi (n°%s)]]. Le tueur de Cannes frappe encore... 5 cents' \
+                % (self.annee, self.semaine, numero)
+        # Message à distribuer
+        msg  = u"\n\n== Wikimag n°%s - Semaine %s ==\n" % (numero, self.semaine)
+        msg += u"{{Wiki magazine|%s|%s}}\n%s~~~~" % (self.annee, self.semaine, self.message())
+        # Travail pour l'atelier de lecture
+        self.adl()
+        return msg
+
+    def wmf(self):
+        """ WMF """
+        self.resume = u'Nouvelles de la WikiMedia Foundation'
+        msg  = u"\n\n== Nouvelles de la WMF - Semaine %s ==\n" % (self.semaine)
+        msg += u"{{MODELE|%s|%s}}\n~~~~" % (self.annee, self.semaine)
+        return msg
+
     def newsboy(self, lecteur, msg):
-        """ Distribut un magazine
+        """ Distribut l'infolettre
         """
         if lecteur.isRedirectPage():
             lecteur = lecteur.getRedirectTarget()
@@ -86,30 +105,37 @@ class BotWikimag:
         try:
             lecteur.save(comment=self.resume, minor=False, async=True)
         except pywikibot.Error, e:
-            pywikibot.warning(u"Impossible de refourger le mag à %s" % lecteur.title(withNamespace=True) )
+            pywikibot.warning(u"Impossible de refourger l'infolettre à %s" % lecteur.title(withNamespace=True) )
 
     def run(self):
-        # Message à distribuer
-        msg = msg2 = u"\n\n== Wikimag n°%s - Semaine %s ==\n" % (self.numero, self.semaine)
-        message = self.message()
-        msg += u"{{Wiki magazine|%s|%s}}\n%s~~~~" % (self.annee, self.semaine, message)
+        if   self.infolettre == u"wikimag":
+            msg = self.wikimag()
+        elif self.infolettre == u"wmf":
+            msg = self.wmf()
+        else:
+            pywikibot.output(u"Infolettre %s inconnue" % self.infolettre)
+            sys.exit(1)
 
+        # Liste des abonnés
         r = re.compile(u"\*\* \{\{u\|(.+?)\}\}", re.LOCALE|re.UNICODE)
         liste = []
-        for i in BeBot.page_ligne_par_ligne(self.site, u"Wikipédia:Wikimag/Abonnement"):
+        for i in BeBot.page_ligne_par_ligne(self.site, self.abn[self.infolettre]):
             m = r.search(i)
             if m is not None:
                 liste.append(m.group(1))
-        # Pour chaque abonné
+
+        # Distribution
         for l in liste:
             self.newsboy(pywikibot.Page(self.site, u"Utilisateur:"+l).toggleTalkPage(), msg)
 
-        # Travail pour l'atelier de lecture
-        self.adl()
-
 def main():
+    print sys.argv
+    if len(sys.argv) != 2:
+        lettre = u"wikimag"
+    else:
+        lettre = sys.argv[1].lower()
     site = pywikibot.getSite()
-    bw = BotWikimag(site)
+    bw = Infolettre(site, lettre)
     bw.run()
 
 if __name__ == "__main__":
