@@ -87,7 +87,7 @@ class ListageQualite:
             rep += u'{{Boîte déroulante début|titre=Plus de %i %s}}\n' % (lim_deroul, titre)
         rep += u'{{Colonnes|nombre=2|1=\n'
         for titre, infos in sorted(les_se.iteritems()):
-            rep += u"* [[:%s:%s]]\n" % (self.langue, titre)
+            rep += u"* {{Lien|fr=%s|lang=%s}}\n" % (titre, self.langue)
         rep += u'}}\n'
         if len(les_se) > lim_deroul:
             rep += u'{{Boîte déroulante fin}}\n'
@@ -108,17 +108,12 @@ class ListageQualite:
         rep += u'\n== %i articles sans équivalent en français ==\n' \
                 % len(self.label_se)
         label_se_adq = {}
-        #lim_adq = 250
-        #lim_ba = 100
         label_se_ba = {}
         for titre, infos in self.label_se.items():
-            #if infos['label'] == 'AdQ' and len(label_se_adq) < lim_adq :
             if infos['label'] == 'AdQ' :
                 label_se_adq[titre] = infos
-            #elif infos['label'] == 'BA' and len(label_se_ba) < lim_ba :
             elif infos['label'] == 'BA' :
                 label_se_ba[titre] = infos
-#        rep += u"''Tronqué à partir de %i adq et %i ba.''\n" % (lim_adq, lim_ba)
         if len(self.label_se) == self.limite_label_se:
             rep += u"''Limité à %i articles.''\n" % self.limite_label_se
         if len(label_se_adq) > 0:

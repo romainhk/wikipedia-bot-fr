@@ -113,7 +113,7 @@ class Infolettre:
         elif self.infolettre == u"wmf":
             msg = self.wmf()
         else:
-            pywikibot.output(u"Infolettre %s inconnue" % self.infolettre)
+            pywikibot.output(u"Infolettre '%s' inconnue. Abandon." % self.infolettre)
             sys.exit(1)
 
         # Liste des abonnés
@@ -129,7 +129,6 @@ class Infolettre:
             self.newsboy(pywikibot.Page(self.site, u"Utilisateur:"+l).toggleTalkPage(), msg)
 
 def main():
-    print sys.argv
     if len(sys.argv) != 2:
         lettre = u"wikimag"
     else:
