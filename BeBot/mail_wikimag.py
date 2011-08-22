@@ -523,10 +523,10 @@ from=           # adresse de l'expédieur, truc@toto.fr
             pywikibot.output(u"# Publication sur la mailing list")
             try:
                 cmd = u'cat %s | mail -s "%s" %s' % (self.fichier_mail, msg['Subject'], msg['To'])
-                pywikibot.output(u'Commande > ' + cmd)
+                pywikibot.output(u'Cmd > ' + cmd)
                 os.system(cmd)
-            except:
-                pywikibot.error(u"Erreur l'hors de l'envoie du mail")
+            except os.error errno:
+                pywikibot.error(u"Erreur l'hors de l'envoie du mail : %s" % errno.errorcode[errno])
 
 def main():
     epreuve = False
