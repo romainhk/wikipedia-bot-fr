@@ -20,8 +20,7 @@ class Infolettre:
         self.annee = self.lundi_pre.strftime("%Y")
         self.abn = {
                 "wikimag" : u"Wikipédia:Wikimag/Abonnement",
-                "raw"     : u"Utilisateur:Romainhk/Souspage1" }
-                #"raw"     : u"Wikipédia:Regards sur l'actualité de la Wikimedia/Inscription" }
+                "raw"     : u"Wikipédia:Regards sur l'actualité de la Wikimedia/Inscription" }
 
     def adl(self):
         """ (Wikimag) Ajoute les adq/ba de la semaine à l'Atelier de Lecture
