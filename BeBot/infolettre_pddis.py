@@ -7,7 +7,7 @@ locale.setlocale(locale.LC_ALL, '')
 
 class Infolettre:
     """ Infolettre
-        Publie une infolettre sur la page de discussion des abonnées (wikimag et news de la WMF)
+        Publie une infolettre sur la page de discussion des abonnées (wikimag et RAW)
     """
     def __init__(self, site, infolettre):
         self.site = site
@@ -20,7 +20,8 @@ class Infolettre:
         self.annee = self.lundi_pre.strftime("%Y")
         self.abn = {
                 "wikimag" : u"Wikipédia:Wikimag/Abonnement",
-                "wmf"     : u"Wikipédia:Nouvelles de la WMF/Inscription" }
+                "raw"     : u"Utilisateur:Romainhk/Souspage1" }
+                #"raw"     : u"Wikipédia:Regards sur l'actualité de la Wikimedia/Inscription" }
 
     def adl(self):
         """ (Wikimag) Ajoute les adq/ba de la semaine à l'Atelier de Lecture
@@ -89,11 +90,11 @@ class Infolettre:
         self.adl()
         return msg
 
-    def wmf(self):
-        """ WMF """
-        self.resume = u'Nouvelles de la WikiMedia Foundation'
-        msg  = u"\n\n== Nouvelles de la WMF - Semaine %s ==\n" % (self.semaine)
-        msg += u"{{MODELE|%s|%s}}\n~~~~" % (self.annee, self.semaine)
+    def raw(self):
+        """ Regards sur l'actualité de la Wikimedia """
+        self.resume = u"Regards sur l'actualité de la Wikimedia - semeine %s de %s" % (self.semaine, self.annee)
+        msg  = u"\n\n== Regards sur l'actualité de la Wikimedia - Semaine %s ==\n" % (self.semaine)
+        msg += u"{{Regards sur l'actualité de la Wikimedia/PdD|%s|%s}}\n~~~~" % (self.annee, self.semaine)
         return msg
 
     def newsboy(self, lecteur, msg):
@@ -110,8 +111,8 @@ class Infolettre:
     def run(self):
         if   self.infolettre == u"wikimag":
             msg = self.wikimag()
-        elif self.infolettre == u"wmf":
-            msg = self.wmf()
+        elif self.infolettre == u"raw":
+            msg = self.raw()
         else:
             pywikibot.output(u"Infolettre '%s' inconnue. Abandon." % self.infolettre)
             sys.exit(1)
