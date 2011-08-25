@@ -91,6 +91,7 @@ class Infolettre:
 
     def raw(self):
         """ Regards sur l'actualité de la Wikimedia """
+        self.semaine = self.lundi.strftime("%W").lstrip('0')
         self.resume = u"Regards sur l'actualité de la Wikimedia - semeine %s de %s" % (self.semaine, self.annee)
         msg  = u"\n\n== Regards sur l'actualité de la Wikimedia - Semaine %s ==\n" % (self.semaine)
         msg += u"{{Regards sur l'actualité de la Wikimedia/PdD|%s|%s}}\n~~~~" % (self.annee, self.semaine)
