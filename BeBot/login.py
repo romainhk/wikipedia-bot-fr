@@ -4,3 +4,5 @@ import BeBot
 import pywikibot
 
 site = pywikibot.getSite()
+page = pywikibot.Page(site, u'Utilisateur:BeBot')
+
