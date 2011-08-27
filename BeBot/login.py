@@ -1,0 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8  -*-
+import BeBot
+import pywikibot
+
+site = pywikibot.getSite()
