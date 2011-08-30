@@ -525,7 +525,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 cmd = u'cat %s | mail -s "%s" %s' % (self.fichier_mail, msg['Subject'], msg['To'])
                 pywikibot.output(u'Cmd > ' + cmd)
                 os.system(cmd)
-            except os.error errno:
+            except os.error as errno:
                 pywikibot.error(u"Erreur l'hors de l'envoie du mail : %s" % errno.errorcode[errno])
 
 def main():
