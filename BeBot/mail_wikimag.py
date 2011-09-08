@@ -510,9 +510,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         else:
             msg['To'] = conf['mailinglist']
         msg['Date'] = formatdate(localtime=True)
-        Subject = u'#%s, semaine %s - %s' % \
-                (self.numero, self.semaine, \
-                 unicode(self.lundi_pre.strftime("%e %b %Y").lstrip(' '), 'utf-8') )
+        Subject = u'#%s, semaine %s' % (self.numero, self.semaine)
         if self.epreuve:
             Subject += u' # ÉPREUVE'
         msg['Subject'] = Subject
