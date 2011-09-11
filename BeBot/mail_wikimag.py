@@ -512,7 +512,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         msg['Date'] = formatdate(localtime=True)
         Subject = u'#%s, semaine %s' % (self.numero, self.semaine)
         if self.epreuve:
-            Subject += u' # ÉPREUVE'
+            Subject += u' # EPREUVE'
         msg['Subject'] = Subject
         f = open(self.fichier_mail, "w")
         f.write(msg.as_string())
