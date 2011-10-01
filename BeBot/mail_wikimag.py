@@ -22,7 +22,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
 
         TODO
         gérer les interlangues
-        html : inclure les images ?
         crochet / accolade : traitement récurssif ? 
  exp : {{guil|[[Wikipédia:Sondage/Discussion pages liées|Avis sur une proposition de changement de message système concernant les liens « pages liées » et « Suivi des pages liées »]]}}
     """
@@ -40,13 +39,14 @@ from=           # adresse de l'expédieur, truc@toto.fr
             self.lundi_pre = self.lundi
             self.lundi = self.lundi_pre + datetime.timedelta(weeks=1)
         self.debug = False # Mode de débugage actif ?
+        self.annee = self.lundi_pre.strftime("%Y")
         if 'semaine' in self.conf:
             self.semaine = self.conf['semaine']
             self.debug = True
         else:
             self.semaine = self.lundi_pre.strftime("%W").lstrip('0')
         self.mag = pywikibot.Page(site, u'Wikipédia:Wikimag/%s/%s' % \
-                (self.lundi_pre.strftime("%Y"), self.semaine) )
+                (self.annee, self.semaine) )
         self.numero = 0
         if self.mag.isRedirectPage():
             self.mag = self.mag.getRedirectTarget()
@@ -55,7 +55,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         self.mode = u'' # Mode de génération en cours : text ou html
         self.sommaire_jocker = '###141### SOMMAIRE ###592###'
         self.exps = {
-                'split'     : re.compile("^\|([\w \xe9]+?)\s*=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
+                'split'     : re.compile("^\|([\w \xe9\xe8]+?)\s*=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'style'     : re.compile("\s*(style|valign|width|rowspan|colspan)=\".+?\"\s*", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'crochet'   : re.compile("\[\[[^(\[\[)]*\]\]", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'accolade'  : re.compile("\{\{[^(\{\{)]*\}\}", re.LOCALE|re.UNICODE|re.IGNORECASE),
@@ -88,10 +88,10 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'W___'      : re.compile("__[A-Z]+__\s*", re.LOCALE),
                 'transclu'  : re.compile("\{\{([^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'noinclude' : re.compile("<noinclude>(.*?)</noinclude>\s*", re.LOCALE|re.UNICODE|re.DOTALL)
-                } # Toute les expressions qui seront détectée
+                } # Toute les expressions qui seront détectées
         self.modeles = {
                 'u' : 1,    'm' : 1,    'u\'' : 1,  'a' : 1,    'l' : 1,    'citation' : 1,
-                'grossir' : 1,
+                'grossir' : 1,  'pays' : 1,
                 'lang' : 2,
                 'a-label' : 'lien',
                 'guil' : 'guil',    'citation' : 'guil',    u'citation étrangère' : 'guil',
@@ -127,7 +127,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
 
         self.aProjetLocal = [ 'wikipedia', 'wiktionary', 'wikinews', 'wikibooks', 
                 'wikiquote', 'wikisource', 'v' ] # Projets pour lesquels il existe une version localisée
-        self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version sur le wiki]]' % self.mag.title() # Message de fin
+        self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version en ligne]]' % self.mag.title() # Message de fin
 
     def transclusion(self, match):
         """ Traitement spécifique pour les transclusions
@@ -316,27 +316,30 @@ from=           # adresse de l'expédieur, truc@toto.fr
         """ Génération au format Html
         """
         self.mode = u'html'
-        text = self.mag.text[2:]
+        text = self.mag.text[2:-2] # - les {{ }} de Composition WIkimag
         parametres = {
-                u'édito'        : ['paragraphe',    u'Éditorial'],
+                u'éditorial'    : ['paragraphe',    u'Éditorial'],
+                u'actualités'   : ['actualites', u'Actualités'],
+                u'médias'       : ['liste',         'Revue de presse',      2],
+                'entretien'     : ['trans',         'Entretien'],###
+                'tribune'       : ['signe',         'Tribune',              'signature tribune'],
+                'article'       : ['trans',         'Article'],###
                 'annonces'      : ['annonces',      'Annonces'],
                 'bistro'        : ['liste',         u'Échos du bistro',     2],
                 'adq'           : ['liste',         u'Articles de qualité', 3],
                 'propositions adq'  : ['liste',     'Propositions',         4],
                 'ba'            : ['liste',         'Bons articles',        3],
                 'propositions ba'   : ['liste',     'Propositions',         4],
-                u'actualités'       : ['actualites', u'Actualités'],
-                u'médias'       : ['liste',         'Revue de presse',      2],
-                'entretien'     : ['signe',         'Interview',            'entretien avec'],
-                'tribune'       : ['signe',         'Tribune',              'signature'],
-                'histoire'      : ['paragraphe',    'Histoire'],
-                'citation'      : ['paragraphe',    'Citation'],
-                'planete'       : ['planete',       u'Planète Wikimédia'],
+                'anecdotes'     : ['paragraphe',    'Anecdotes'],
+                'citation'      : ['signe',         'Citation',             'signature citation'],###
+                'ville du mois' : ['paragraphe',    'Ville du mois'],###
+                u'planète'      : ['planete',       u'Planète Wikimédia'],
                 u'rédaction'    : ['redaction',     u'Rédaction']
-                } # Les paramètres reconnus: ce qu'il faut en faire, titre de la section, option
-        ordre_parametres = [ u'édito', 'annonces', 'bistro', 'adq', 'propositions adq', \
-                'ba', 'propositions ba', u'actualités', u'médias', 'entretien', \
-                'tribune', 'histoire', 'citation', 'planete', u'rédaction' ] # Ordre de placement des paramètres
+                } # Les paramètres reconnus: 1) ce qu'il faut en faire, 2) titre de la section, 3) option
+        ordre_parametres = [ u'éditorial', 'annonces', 'bistro', 'adq', 'propositions adq', \
+                'ba', 'propositions ba', u'actualités', u'médias', 'entretien', 'article', \
+                'tribune', 'anecdotes', 'ville du mois', 'citation', u'planète', u'rédaction' ]
+            # Ordre de placement des paramètres
 
         text = self.exps['='].sub(r'&#x3D;', text)
         text = self.exps['User'].sub(r'{{u|\1}}', text)
@@ -377,7 +380,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         r += self.sommaire_jocker
 
         params = {} # Les paramètres du mag
-        params['planete'] = '&nbsp;' # Paramètre ajouté même s'il est vide
+        params[u'planète'] = '&nbsp;' # Paramètre ajouté même s'il est vide
         a = re.split(self.exps['split'], text)
         for i in range(1, len(a), 2):
             params[a[i].lower()] = a[i+1].rstrip('\n').strip(' ')
@@ -394,7 +397,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 elif action == 'liste':
                     r += self.html_chapitre(titre, parametres[p][2])
                     r += self.html_liste(params[p])
-                elif action == 'signe' and len(params[parametres[p][2]]) > 0: # Signé : Entretien, Tribune
+                elif action == 'signe' and len(params[parametres[p][2]]) > 0:
                     r += self.html_chapitre(titre)
                     r += self.html_paragraphe(params[p])
                     r += self.html_paragraphe(self.exps['html'].sub(r'', params[parametres[p][2]]), 'text-align:right;')
@@ -409,6 +412,15 @@ from=           # adresse de l'expédieur, truc@toto.fr
                         r += self.html_liste(q)
                     else:
                         r += self.html_paragraphe(q)
+                elif action == 'trans':
+                    if titre == 'Entretien':
+                        r += self.html_chapitre(titre)
+                        r += self.html_paragraphe(params[p])
+                    else:
+                        r += self.html_chapitre(params[p])
+                    r += self.html_paragraphe(u"Lire l'%s " % titre.lower() \
+                            + self.html_lien(u'http://fr.wikipedia.org/wiki/Wikipédia:Wikimag/%s/%s/%s' % (self.annee, self.semaine, titre), 'sur wikipedia') \
+                            + u'.')
                 elif action == 'planete':
                     r += self.html_chapitre(titre)
                     r += self.html_paragraphe(u'Ce qui se dit dans ' \
