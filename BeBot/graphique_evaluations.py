@@ -53,7 +53,7 @@ class GraphiqueEvaluations:
             pywikibot.error(u"INSERT error %d: %s.\nRequête : %s" % (e.args[0], e.args[1], req))
         
         # Dessin
-        limite = 30 #nombre de colonnes
+        limite = 20 #nombre max de colonnes
         largeur = 600 #largeur du graphique
         maxi = 0 #valeur max en hauteur
         res = BeBot.charger_bdd(self.db, self.nom_base, lim=limite, ordre='"date" ASC')

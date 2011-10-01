@@ -84,7 +84,6 @@ class Infolettre:
                 % (self.annee, self.semaine, numero)
         # Message à distribuer
         msg  = u"\n\n== Wikimag n°%s - Semaine %s ==\n" % (numero, self.semaine)
-        #msg += u"{{Wiki magazine|%s|%s}}\n%s~~~~" % (self.annee, self.semaine, self.message())
         msg += u"{{Wikimag message|%s|%s|%s}}\n%s~~~~" % (numero, self.annee, self.semaine, self.message())
         # Travail pour l'atelier de lecture
         self.adl()
