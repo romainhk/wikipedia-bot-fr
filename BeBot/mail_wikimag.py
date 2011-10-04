@@ -316,7 +316,9 @@ from=           # adresse de l'expédieur, truc@toto.fr
         """ Génération au format Html
         """
         self.mode = u'html'
-        text = self.mag.text[2:-2] # - les {{ }} de Composition WIkimag
+        text = self.mag.text[2:] # - les {{ }} de Composition WIkimag
+        text = BeBot.retirer( [self.exps['noinclude']], text) # retrait de la catégorie
+        text = text[:-2]
         parametres = {
                 u'éditorial'    : ['paragraphe',    u'Éditorial'],
                 u'actualités'   : ['actualites', u'Actualités'],
