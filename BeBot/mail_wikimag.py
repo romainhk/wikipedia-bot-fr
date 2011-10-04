@@ -282,7 +282,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         """
         self.mode = u'text'
         modele_de_presentation = u'Wikimag_par_mail'
-        modele = re.compile("\{\{[cC]omposition wikimag", re.LOCALE)
+        modele = re.compile("\{\{composition wikimag[0-9]?", re.LOCALE|re.IGNORECASE)
 
         pagetmp.text = modele.sub(u'{{subst:%s|' % modele_de_presentation, self.mag.text)
         pagetmp.text = BeBot.retirer( [self.exps['noinclude']], pagetmp.text) # retrait de la catégorie
