@@ -8,6 +8,7 @@ locale.setlocale(locale.LC_ALL, '')
 class Infolettre:
     """ Infolettre
         Publie une infolettre sur la page de discussion des abonnées (wikimag et RAW)
+        TODO : si une lettre n'est pas prête
     """
     def __init__(self, site, infolettre):
         self.site = site
