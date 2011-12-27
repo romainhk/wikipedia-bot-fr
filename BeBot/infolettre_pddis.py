@@ -8,7 +8,6 @@ locale.setlocale(locale.LC_ALL, '')
 class Infolettre:
     """ Infolettre
         Publie une infolettre sur la page de discussion des abonnées (wikimag et RAW)
-        TODO : si une lettre n'est pas prête
     """
     def __init__(self, site, infolettre):
         self.site = site
@@ -23,7 +22,7 @@ class Infolettre:
                 "wikimag" : u"Wikipédia:Wikimag/Abonnement",
                 "raw"     : u"Wikipédia:Regards sur l'actualité de la Wikimedia/Inscription" }
 
-    def adl(self):
+    def adl(self, mag):
         """ (Wikimag) Ajoute les adq/ba de la semaine à l'Atelier de Lecture
         """
         separation = u'<center><hr style="width:42%;" /></center>'
@@ -31,7 +30,7 @@ class Infolettre:
         split = re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         params = {  'adq': u'', u'propositions adq' : u'',
                     'ba' : u'', u'propositions ba'  : u'' } # Les paramètres du mag
-        a = re.split(split, self.mag.text)
+        a = re.split(split, mag.text)
         for i in range(1, len(a), 2):
             params[a[i].lower()] = a[i+1].rstrip('\n').strip(' ')
 
@@ -74,10 +73,15 @@ class Infolettre:
 
     def wikimag(self):
         """ Wikimag """
-        self.mag = pywikibot.Page(self.site, u'Wikipédia:Wikimag/%s/%s' % (self.annee, self.semaine) )
+        mag = pywikibot.Page(self.site, u'Wikipédia:Wikimag/%s/%s' % (self.annee, self.semaine) )
+        if not mag.exists():
+            pywikibot.output("Impossible de trouver l'infolettre à distribuer")
+            return ""
+        if mag.isRedirectPage():
+            mag = mag.getRedirectTarget()
         numero = '???'
         num = re.compile(u"\|numéro *= *(\d+)", re.LOCALE|re.UNICODE)
-        m = num.search(self.mag.text)
+        m = num.search(mag.text)
         if m is not None:
             numero = m.group(1)
 
@@ -87,7 +91,7 @@ class Infolettre:
         msg  = u"\n\n== Wikimag n°%s - Semaine %s ==\n" % (numero, self.semaine)
         msg += u"{{Wikimag message|%s|%s|%s}}\n%s~~~~" % (numero, self.annee, self.semaine, self.message())
         # Travail pour l'atelier de lecture
-        self.adl()
+        self.adl(mag)
         return msg
 
     def raw(self):
