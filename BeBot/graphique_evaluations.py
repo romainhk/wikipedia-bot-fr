@@ -28,6 +28,15 @@ class GraphiqueEvaluations:
     def BotSectionEdit(self, match):
         return u'%s\n%s\n%s' % (BeBot.BeginBotSection, self.msg, BeBot.EndBotSection)
 
+    def trouver_stat_mens(self, ressource, mois, annee):
+        # Retrouve l'enregistrement d'un mois en particulier
+        for i in range(0, len(ressource)):
+            month = ressource[i][0].month
+            year = ressource[i][0].year
+            if year == annee and month == mois:
+                return ressource[i]
+        return [ datetime.date(day=1,month=mois,year=annee),0,0,0,0,0,0 ]
+
     def run(self):
         # Dénombrement
         l = {}
@@ -56,12 +65,30 @@ class GraphiqueEvaluations:
         limite = 20 #nombre max de colonnes
         largeur = 600 #largeur du graphique
         maxi = 0 #valeur max en hauteur
+        nb_bande = 6
         res = BeBot.charger_bdd(self.db, self.nom_base, lim=limite, ordre='"date" ASC')
-        nb_enregistrement = len(res)+1
+        nb_enregistrement = len(res)
+        if nb_enregistrement > nb_bande:
+            # Tri des résultats sur les 6 derniers mois
+            res2 = []
+            ajd = datetime.date.today()
+            month = ajd.month
+            year = ajd.year
+            res2.append(self.trouver_stat_mens(res, month, year))
+            for d in range(1,nb_bande):
+                month = month-1
+                if month <= 0:
+                    year = year-1
+                    month = 12
+                res2.append(self.trouver_stat_mens(res, month, year))
+            res2.reverse()
+            res = res2
+            nb_enregistrement = len(res)
+
         width = math.ceil(largeur/nb_enregistrement) #largeur d'une bande
-        for r in range(1, nb_enregistrement):
-            if maxi < res[r-1][6]:
-                maxi = res[r-1][6] # point le plus haut
+        for r in range(0, nb_enregistrement):
+            if maxi < res[r][6]:
+                maxi = res[r][6] # point le plus haut
         #Majoration du maximum
         t = maxi
         rang = 0
@@ -95,29 +122,29 @@ BackgroundColors = canvas:sfondo
 Legend = left:70 top:295"""[1:] % (largeur, width, maxi, graduation, graduation/2) )
         #Nom des bars
         self.msg += '\nBarData=\n'
-        for r in range(1, nb_enregistrement):
+        for r in range(0, nb_enregistrement):
             p = ''
-            if r % 2 == 0:
-                p = res[r-1][0].strftime("%m/%y")
-            self.msg += '  bar:%d text:%s\n' % (r, p)
+            if r % 2 == 1:
+                p = res[r][0].strftime("%m/%y")
+            self.msg += '  bar:%d text:%s\n' % (r+1, p)
         #Valeurs : total
         self.msg += '\nPlotData=\n  color:barra width:$width align:left\n\n'
-        for r in range(1, nb_enregistrement):
-            p = res[r-1][6]
-            self.msg += '  bar:%d from:0 till: %d\n' % (r, p)
+        for r in range(0, nb_enregistrement):
+            p = res[r][6]
+            self.msg += '  bar:%d from:0 till: %d\n' % (r+1, p)
         #Valeurs : importants
         self.msg += '\nPlotData=\n  color:rouge width:$width align:left\n\n'
-        for r in range(1, nb_enregistrement):
-            p = res[r-1][1] + res[r-1][2]
-            self.msg += '  bar:%d from:0 till: %d\n' % (r, p)
+        for r in range(0, nb_enregistrement):
+            p = res[r][1] + res[r][2]
+            self.msg += '  bar:%d from:0 till: %d\n' % (r+1, p)
         #Labels
         self.msg += '\nPlotData=\n'
-        for r in range(1, nb_enregistrement):
-            if r % 3 == 2:
-                p = res[r-1][6]
-                self.msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r, p, p)
-                q = res[r-1][1] + res[r-1][2]
-                self.msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r, q, q)
+        for r in range(0, nb_enregistrement):
+            if r % 2 == 1:
+                p = res[r][6]
+                self.msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r+1, p, p)
+                q = res[r][1] + res[r][2]
+                self.msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r+1, q, q)
         self.msg += '</timeline>'
 
         # Publication
