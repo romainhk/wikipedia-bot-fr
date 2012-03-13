@@ -78,7 +78,7 @@ class Infolettre:
         """ Wikimag """
         mag = pywikibot.Page(self.site, u'Wikipédia:Wikimag/%s/%s' % (self.annee, self.semaine) )
         if not mag.exists():
-            pywikibot.output("Impossible de trouver l'infolettre à distribuer")
+            pywikibot.output("# Impossible de trouver l'infolettre à distribuer")
             return ""
         if mag.isRedirectPage():
             mag = mag.getRedirectTarget()
@@ -134,8 +134,9 @@ class Infolettre:
                 liste.append(m.group(1))
 
         # Distribution
-        for l in liste:
-            self.newsboy(pywikibot.Page(self.site, u"Utilisateur:"+l).toggleTalkPage(), msg)
+        if hasattr(self, "resume"):
+            for l in liste:
+                self.newsboy(pywikibot.Page(self.site, u"Utilisateur:"+l).toggleTalkPage(), msg)
 
 def main():
     if len(sys.argv) != 2:
