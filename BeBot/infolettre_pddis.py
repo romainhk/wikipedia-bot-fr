@@ -28,10 +28,13 @@ class Infolettre:
         separation = u'<center><hr style="width:42%;" /></center>'
         # Infos
         split = re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
+        lien = re.compile("\[\[.*?\]\]", re.LOCALE|re.UNICODE)
         params = {  'adq': u'', u'propositions adq' : u'',
                     'ba' : u'', u'propositions ba'  : u'' } # Les paramètres du mag
         a = re.split(split, mag.text)
         for i in range(1, len(a), 2):
+            #retrait des liens
+            a[i] = lien.sub(r'', a[i])
             params[a[i].lower()] = a[i+1].rstrip('\n').strip(' ')
 
         # Résultat
