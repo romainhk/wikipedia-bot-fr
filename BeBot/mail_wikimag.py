@@ -95,7 +95,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'lang' : 2,
                 'a-label' : 'lien',
                 'guil' : 'guil',    'citation' : 'guil',    u'citation étrangère' : 'guil',
-                u'unité' : u'unité',    'heure' : 'heure',     'wikimag bistro' : 'WM_bistro'
+                u'unité' : u'unité',    'heure' : 'heure',     'wikimag bistro' : 'WM_bistro',
+                'article' : 'article'
                 } # Ce qu'il faut faire avec chaque modele : les modèles inconnus seront supprimés
         self.interprojets = {
                 'wikipedia'     : 'wikipedia.org/wiki/',
@@ -180,6 +181,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
             return params[0] + u' ' + params[1]
         elif action == u'heure':
             return params[0] + u'h' + params[1]
+        elif action == u'article' and params.has_key('url texte') and params.has_key('titre'):
+            return self.lien_externe(params['url texte'] + ' ' + params['titre'])
         elif action == u'WM_bistro':
             jour = params[0].replace(' ', '_')
             titre = params[1]
