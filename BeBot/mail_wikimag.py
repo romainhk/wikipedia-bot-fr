@@ -157,13 +157,13 @@ from=           # adresse de l'expédieur, truc@toto.fr
         pipe = match.group(1).split('|')
         for p in pipe:
             a = p.split('=')
-            b = a[0]
+            b = a[0].strip(' \n')
             if len(a) < 2:
                 c = b
                 b = i
                 i += 1
             else:
-                c = a[1]
+                c = a[1].strip(' \n')
             params[b] = c
         nom = params[-1].lower()
         if nom not in self.modeles.keys():
