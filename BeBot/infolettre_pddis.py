@@ -23,10 +23,10 @@ class Infolettre:
                 "raw"     : u"Wikipédia:Regards sur l'actualité de la Wikimedia/Inscription" }
 
     def adl(self, mag):
-        """ (Wikimag) Ajoute les adq/ba de la semaine à l'Atelier de Lecture
+        """ (Avec le wikimag) Ajoute les adq/ba de la semaine à l'Atelier de Lecture
         """
         separation = u'<center><hr style="width:42%;" /></center>'
-        # Infos
+
         split = re.compile("\|([\w \xe9]+?)=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         lien = re.compile("\[\[.*?\]\]", re.LOCALE|re.UNICODE)
         params = {  'adq': u'', u'propositions adq' : u'',
@@ -37,7 +37,6 @@ class Infolettre:
             a[i] = lien.sub(r'', a[i])
             params[a[i].lower()] = a[i+1].rstrip('\n').strip(' ')
 
-        # Résultat
         lumiere = pywikibot.Page(self.site, u'Wikipédia:Atelier de lecture/Lumière sur...')
         #Retrait des a-label
         alabel = re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE)
@@ -65,7 +64,6 @@ class Infolettre:
         """ (Option wikimag) Ajoute un message après le mag
         """
         pm = pywikibot.Page(self.site, u'Utilisateur:BeBot/MessageWikimag')
-        #pywikibot.output("== %s/%s == (.*?) ==" % (self.annee, self.semaine))
         r = re.compile("==\s*%s/%s\s*==\s*(.*?)(\s*==)?" % (self.annee, self.semaine), re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         m = r.search(pm.text)
         if (m):
