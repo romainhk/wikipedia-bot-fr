@@ -21,6 +21,7 @@ class Infolettre:
         self.abn = {
                 "wikimag" : u"Wikipédia:Wikimag/Abonnement",
                 "raw"     : u"Wikipédia:Regards sur l'actualité de la Wikimedia/Inscription" }
+        self.rm_old(pywikibot.Page(self.site, u'Discussion utilisateur:Romainhk'))
 
     def adl(self, mag):
         """ (Avec le wikimag) Ajoute les adq/ba de la semaine à l'Atelier de Lecture
@@ -91,11 +92,30 @@ class Infolettre:
         msg += u"{{Regards sur l'actualité de la Wikimedia/PdD|%s|%s}}\n~~~~" % (self.annee, self.semaine)
         return msg
 
+    def rm_old(self, page):
+        """ Supprime les anciens mag
+        """
+        if self.infolettre == u"wikimag":
+            oldmag = re.compile("== Wikimag n.?\d+ - Semaine (\d+) ==.*?==", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
+        else:
+            return page.text
+
+        for f in oldmag.finditer(page.text):
+            sem = int(f.group(1))
+            #pywikibot .output("%d -- %d ++ %d"%(int(self.semaine),sem,abs(int(self.semaine)-sem)))
+            if abs(int(self.semaine)-sem) > 1:
+                pywikibot.output(f.group(0))
+                page.text = page.text.replace(f.group(0), '==')
+            pywikibot.output("++++++++++++++++++++++")
+        pywikibot.output(page.text)
+        return page.text
+
     def newsboy(self, lecteur, msg):
         """ Distribut l'infolettre
         """
         if lecteur.isRedirectPage():
             lecteur = lecteur.getRedirectTarget()
+        lecteur.text = rm_old(lecteur)
         lecteur.text += msg
         try:
             lecteur.save(comment=self.resume, minor=False, async=True)
@@ -122,7 +142,8 @@ class Infolettre:
         # Distribution
         if hasattr(self, "resume"):
             for l in liste:
-                self.newsboy(pywikibot.Page(self.site, u"Utilisateur:"+l).toggleTalkPage(), msg)
+                boiteauxlettres = pywikibot.Page(self.site, u"Utilisateur:"+l).toggleTalkPage()
+                self.newsboy(boiteauxlettres, msg)
 
 def main():
     if len(sys.argv) != 2:
