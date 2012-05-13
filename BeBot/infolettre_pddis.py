@@ -60,18 +60,6 @@ class Infolettre:
         except pywikibot.Error, e:
             pywikibot.warning(u"Impossible de sauvegarder la liste des Adq/BA pour le Projet:Adl" )
 
-    def message(self):
-        """ (Option wikimag) Ajoute un message après le mag
-        """
-        pm = pywikibot.Page(self.site, u'Utilisateur:BeBot/MessageWikimag')
-        r = re.compile("==\s*%s/%s\s*==\s*(.*?)(\s*==)?" % (self.annee, self.semaine), re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
-        m = r.search(pm.text)
-        if (m):
-            k = m.group(1)
-            if len(k) > 0:
-                return k + u' '
-        return ''
-
     def wikimag(self):
         """ Wikimag """
         mag = pywikibot.Page(self.site, u'Wikipédia:Wikimag/%s/%s' % (self.annee, self.semaine) )
@@ -90,7 +78,7 @@ class Infolettre:
                 % (self.annee, self.semaine, numero)
         # Message à distribuer
         msg  = u"\n\n== Wikimag n°%s - Semaine %s ==\n" % (numero, self.semaine)
-        msg += u"{{Wikimag message|%s|%s|%s}}\n%s~~~~" % (numero, self.annee, self.semaine, self.message())
+        msg += u"{{Wikimag message|%s|%s|%s}} ~~~~" % (numero, self.annee, self.semaine)
         # Travail pour l'atelier de lecture
         self.adl(mag)
         return msg
