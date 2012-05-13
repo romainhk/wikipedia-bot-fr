@@ -21,7 +21,7 @@ class Infolettre:
         self.abn = {
                 "wikimag" : u"Wikipédia:Wikimag/Abonnement",
                 "raw"     : u"Wikipédia:Regards sur l'actualité de la Wikimedia/Inscription" }
-        self.rm_old(pywikibot.Page(self.site, u'Discussion utilisateur:Romainhk'))
+        #self.rm_old(pywikibot.Page(self.site, u'Discussion utilisateur:Romainhk'))
 
     def adl(self, mag):
         """ (Avec le wikimag) Ajoute les adq/ba de la semaine à l'Atelier de Lecture
@@ -98,24 +98,23 @@ class Infolettre:
         if self.infolettre == u"wikimag":
             oldmag = re.compile("== Wikimag n.?\d+ - Semaine (\d+) ==.*?==", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         else:
-            return page.text
+            return False
 
         for f in oldmag.finditer(page.text):
             sem = int(f.group(1))
             #pywikibot .output("%d -- %d ++ %d"%(int(self.semaine),sem,abs(int(self.semaine)-sem)))
             if abs(int(self.semaine)-sem) > 1:
-                pywikibot.output(f.group(0))
+                #pywikibot.output(f.group(0))
                 page.text = page.text.replace(f.group(0), '==')
-            pywikibot.output("++++++++++++++++++++++")
-        pywikibot.output(page.text)
-        return page.text
+            #pywikibot.output("++++++++++++++++++++++")
+        return True
 
     def newsboy(self, lecteur, msg):
         """ Distribut l'infolettre
         """
         if lecteur.isRedirectPage():
             lecteur = lecteur.getRedirectTarget()
-        lecteur.text = rm_old(lecteur)
+        self.rm_old(lecteur)
         lecteur.text += msg
         try:
             lecteur.save(comment=self.resume, minor=False, async=True)
