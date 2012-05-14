@@ -56,7 +56,7 @@ def page_ligne_par_ligne(site, nompage):
     for ligne in page.split("\n"):
         yield ligne
 
-def taille_page(page):
+def taille_page(page, ordre=1000):
     """
     Retourne la taille d'une page en millier de caractères/signes
     """
@@ -64,7 +64,7 @@ def taille_page(page):
         p = page.get()
     except:
         p = []
-    return len(p)/1000
+    return len(p)/ordre
 
 def togglePageTrad(page):
     """

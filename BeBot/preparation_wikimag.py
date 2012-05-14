@@ -4,7 +4,7 @@
 import re, datetime, locale
 import BeBot
 import pywikibot
-from pywikibot import pagegenerators
+from pywikibot import pagegenerators, catlib
 locale.setlocale(locale.LC_ALL, '')
 
 class PreparationWikimag:
@@ -133,25 +133,25 @@ class PreparationWikimag:
         """ Prévient les rédacteurs si le mag n'est même pas commancé !
         """
         semaine = self.date.strftime("%W").lstrip('0')
-        annee = seld.date.year
-        num = "%s/%s" % (annee, semaine)
+        annee = self.date.year
+        num = u"%s/%s" % (annee, semaine)
         msg  = u"\n\n== Wikimag - Semaine %s ==\n" % semaine
         msg += u"Attention, le [[Wikipédia:Wikimag/%s|wikimag de cette semaine]] n'est pas encore rédigé. Dépéchez vous ! ~~~~" % num
 
-        wm = pywikibot.Page(self.site, "Wikipédia:Wikimag/%s" % num)
-        pywikibot.output(len(wm.text))
+        wm = pywikibot.Page(self.site, u"Wikipédia:Wikimag/%s" % num)
+        pywikibot.output(BeBot.taille_page(wm, 1))
         #NB: Wikipédia:Wikimag/pre fait 501 signes
-        if not wm.exists() or len(wm.text) < 510 :
-            cat = u'Utilisateur rédacteur Wikimag'
+        if not wm.exists() or BeBot.taille_page(wm, 1) < 510 :
+            cat = catlib.Category(self.site, u'Utilisateur rédacteur Wikimag')
             cpg = pagegenerators.CategorizedPageGenerator(cat, recurse=False)
             for r in pagegenerators.DuplicateFilterPageGenerator(cpg):
-                can = r.title.split('/')
+                can = r.title().split('/')
                 if len(can) > 0:
                     can = can[0]
                 redacteur = pywikibot.Page(self.site, can)
-                if not redaction.isTalkPage():
+                if not redacteur.isTalkPage():
                     redacteur = redacteur.toggleTalkPage()
-                pywikibot.output(redacteur.title)
+                pywikibot.output(redacteur.title())
             pywikibot.output("***********\n"+msg)
 
     def run(self):
