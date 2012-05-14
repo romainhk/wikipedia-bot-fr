@@ -3,9 +3,7 @@
 # Paramètre 1 : nom du bot
 # Paramètre 2 : nom du script
 # Paramètre 3 : arguments
-#
-# Ne pas oublier de mettre le dépôt rewrite dans PYTHONPATH
-#  => export PYTHONPATH=~/rewrite
+export PYTHONPATH=$HOME/rewrite
 export LC_ALL="fr_FR.UTF-8"
 export WP_BOT_FR="$HOME/wikipedia-bot-fr"
 echo -ne "\n%%%%% $2 %% "
