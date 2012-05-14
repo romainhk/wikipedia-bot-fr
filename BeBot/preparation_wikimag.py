@@ -135,13 +135,16 @@ class PreparationWikimag:
         semaine = self.date.strftime("%W").lstrip('0')
         annee = self.date.year
         num = u"%s/%s" % (annee, semaine)
-        msg  = u"\n\n== Wikimag - Semaine %s ==\n" % semaine
-        msg += u"Attention, le [[Wikipédia:Wikimag/%s|wikimag de cette semaine]] n'est pas encore rédigé. Dépéchez vous ! ~~~~" % num
+        msg  = u"\n== Wikimag - Semaine %s ==\n" % semaine
+        msg += u"Attention, le [[Wikipédia:Wikimag/%s|wikimag de cette semaine]] n'est pas encore rédigé. Dépéchez vous ! (Aide: [[Utilisateur:BeBot/Préparation Wikimag]]) ~~~~" % num
+        msg += u"\n{{Petit|Ce message a été déposé automatiquement grâce à [[Catégorie:Utilisateur rédacteur Wikimag]]}}"
 
         wm = pywikibot.Page(self.site, u"Wikipédia:Wikimag/%s" % num)
         pywikibot.output(BeBot.taille_page(wm, 1))
         #NB: Wikipédia:Wikimag/pre fait 501 signes
         if not wm.exists() or BeBot.taille_page(wm, 1) < 510 :
+            redac = []
+            resume = u"Wikimag : alerte"
             cat = catlib.Category(self.site, u'Utilisateur rédacteur Wikimag')
             cpg = pagegenerators.CategorizedPageGenerator(cat, recurse=False)
             for r in pagegenerators.DuplicateFilterPageGenerator(cpg):
@@ -151,8 +154,16 @@ class PreparationWikimag:
                 redacteur = pywikibot.Page(self.site, can)
                 if not redacteur.isTalkPage():
                     redacteur = redacteur.toggleTalkPage()
-                pywikibot.output(redacteur.title())
-            pywikibot.output("***********\n"+msg)
+                # Avertissement avec dédoublonnage
+                if not redac.has(redacteur):
+                    redac.append(redacteur)
+                    pywikibot.output(redacteur.title())
+                    redacteur.text += msg
+                    try:
+                        #redacteur.save(comment=resume, minor=False, async=True)
+                    except pywikibot.Error, e:
+                        pywikibot.warning(u"Pas d'alerte pour %s" % redacteur.title(withNamespace=True) )
+            pywikibot.output("%s\n***********\n"%redac+msg)
 
     def run(self):
         pywikibot.output(u"Préparation du wikimag débutant le " + self.lasemaine)
@@ -187,10 +198,10 @@ class PreparationWikimag:
 def main():
     site = pywikibot.getSite()
     pw = PreparationWikimag(site)
-    #pw.run()
+    pw.run()
 
-    page_resultat = pywikibot.Page(site, u'Utilisateur:BeBot/Préparation Wikimag')
-    page_resultat.put(unicode(pw))
+    #page_resultat = pywikibot.Page(site, u'Utilisateur:BeBot/Préparation Wikimag')
+    #page_resultat.put(unicode(pw))
 
 if __name__ == "__main__":
     try:
