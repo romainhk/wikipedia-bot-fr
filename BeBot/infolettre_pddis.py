@@ -95,14 +95,18 @@ class Infolettre:
         """ Supprime les anciens mag
         """
         if self.infolettre == u"wikimag":
-            oldmag = re.compile("== Wikimag (n.?\d+ )?- Semaine (\d+) ==.*?==", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
+            oldmag = re.compile("== Wikimag (n.?\d+ )?- Semaine (\d+) ?==.*?==", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         else:
             return False
 
         for f in oldmag.finditer(page.text):
-            sem = int(f.group(1))
-            #pywikibot .output("%d -- %d ++ %d"%(int(self.semaine),sem,abs(int(self.semaine)-sem)))
-            if abs(int(self.semaine)-sem) > 1:
+            if len(f.groups()) == 2:
+                sem = int(f.group(2))
+                #pywikibot.output("%d -- %d ++ %d"%(int(self.semaine),sem,abs(int(self.semaine)-sem)))
+                if abs(int(self.semaine)-sem) > 1:
+                    page.text = page.text.replace(f.group(0), '==')
+            else:
+                #Ancien format, sans la semaine
                 page.text = page.text.replace(f.group(0), '==')
         return True
 
