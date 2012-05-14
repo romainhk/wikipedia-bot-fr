@@ -4,6 +4,7 @@
 import re, datetime, locale
 import BeBot
 import pywikibot
+from pywikibot import pagegenerators
 locale.setlocale(locale.LC_ALL, '')
 
 class PreparationWikimag:
@@ -40,6 +41,8 @@ class PreparationWikimag:
         if self.date_fin.month == u'janvier':
             pywikibot.output(self.date.strftime("%Y/%m/%d")+u" : Attention, certaines données de l'année %i ne seront pas prises en compte" % int(self.date_fin.year)-1)
         self.articleRE = re.compile("\* [^\{]*\{\{a-label\|([^\|\}]+)\}\}")
+        # Test !!
+        self.verif_feneantise()
 
     def __str__(self):
         """ Page à publier 
@@ -126,6 +129,31 @@ class PreparationWikimag:
                     self.inconnu.append(a)
         return r
 
+    def verif_feneantise(self):
+        """ Prévient les rédacteurs si le mag n'est même pas commancé !
+        """
+        semaine = self.date.strftime("%W").lstrip('0')
+        annee = seld.date.year
+        num = "%s/%s" % (annee, semaine)
+        msg  = u"\n\n== Wikimag - Semaine %s ==\n" % semaine
+        msg += u"Attention, le [[Wikipédia:Wikimag/%s|wikimag de cette semaine]] n'est pas encore rédigé. Dépéchez vous ! ~~~~" % num
+
+        wm = pywikibot.Page(self.site, "Wikipédia:Wikimag/%s" % num)
+        pywikibot.output(len(wm.text))
+        #NB: Wikipédia:Wikimag/pre fait 501 signes
+        if not wm.exists() or len(wm.text) < 510 :
+            cat = u'Utilisateur rédacteur Wikimag'
+            cpg = pagegenerators.CategorizedPageGenerator(cat, recurse=False)
+            for r in pagegenerators.DuplicateFilterPageGenerator(cpg):
+                can = r.title.split('/')
+                if len(can) > 0:
+                    can = can[0]
+                redacteur = pywikibot.Page(self.site, can)
+                if not redaction.isTalkPage():
+                    redacteur = redacteur.toggleTalkPage()
+                pywikibot.output(redacteur.title)
+            pywikibot.output("***********\n"+msg)
+
     def run(self):
         pywikibot.output(u"Préparation du wikimag débutant le " + self.lasemaine)
            
@@ -154,10 +182,12 @@ class PreparationWikimag:
         self.ba = self.articles_promus(u'Wikipédia:Bons articles/Justification de leur promotion/%i' \
                 % self.date.year, modeleRE)
 
+        self.verif_feneantise()
+
 def main():
     site = pywikibot.getSite()
     pw = PreparationWikimag(site)
-    pw.run()
+    #pw.run()
 
     page_resultat = pywikibot.Page(site, u'Utilisateur:BeBot/Préparation Wikimag')
     page_resultat.put(unicode(pw))

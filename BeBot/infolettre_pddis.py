@@ -95,7 +95,7 @@ class Infolettre:
         """ Supprime les anciens mag
         """
         if self.infolettre == u"wikimag":
-            oldmag = re.compile("== Wikimag (n.?\d+ )?- Semaine (\d+) ?==.*?==", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
+            oldmag = re.compile("^== Wikimag (n.?\d+ )?- Semaine (\d+) ?==.*?^==", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         else:
             return False
 
