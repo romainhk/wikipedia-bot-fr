@@ -21,7 +21,6 @@ class Infolettre:
         self.abn = {
                 "wikimag" : u"Wikipédia:Wikimag/Abonnement",
                 "raw"     : u"Wikipédia:Regards sur l'actualité de la Wikimedia/Inscription" }
-        #self.rm_old(pywikibot.Page(self.site, u'Discussion utilisateur:Romainhk'))
 
     def adl(self, mag):
         """ (Avec le wikimag) Ajoute les adq/ba de la semaine à l'Atelier de Lecture
@@ -96,7 +95,7 @@ class Infolettre:
         """ Supprime les anciens mag
         """
         if self.infolettre == u"wikimag":
-            oldmag = re.compile("== Wikimag n.?\d+ - Semaine (\d+) ==.*?==", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
+            oldmag = re.compile("== Wikimag (n.?\d+ )?- Semaine (\d+) ==.*?==", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
         else:
             return False
 
@@ -104,9 +103,7 @@ class Infolettre:
             sem = int(f.group(1))
             #pywikibot .output("%d -- %d ++ %d"%(int(self.semaine),sem,abs(int(self.semaine)-sem)))
             if abs(int(self.semaine)-sem) > 1:
-                #pywikibot.output(f.group(0))
                 page.text = page.text.replace(f.group(0), '==')
-            #pywikibot.output("++++++++++++++++++++++")
         return True
 
     def newsboy(self, lecteur, msg):

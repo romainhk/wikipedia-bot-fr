@@ -7,9 +7,10 @@
 # Ne pas oublier de mettre le dépôt rewrite dans PYTHONPATH
 #  => export PYTHONPATH=~/rewrite
 export LC_ALL="fr_FR.UTF-8"
+export WP_BOT_FR="$HOME/wikipedia-bot-fr"
 echo -ne "\n%%%%% $2 %% "
 echo `date`
-`python $1/$2 $3 $4 $5 $6 $7 $8 $9`
+`python $WP_BOT_FR/$1/$2 $3 $4 $5 $6 $7 $8 $9`
 #`cronsub -s bebot python2.6 $1/$2 $3 $4 $5 $6 $7 $8 $9`
 echo `date`
 
