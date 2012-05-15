@@ -139,8 +139,8 @@ class PreparationWikimag:
 
         wm = pywikibot.Page(self.site, u"Wikipédia:Wikimag/%s" % num)
         pywikibot.output(BeBot.taille_page(wm, 1))
-        #NB: Wikipédia:Wikimag/pre fait 501 signes
-        if not wm.exists() or BeBot.taille_page(wm, 1) < 510 :
+        #NB: Wikipédia:Wikimag/pre fait 522 signes
+        if not wm.exists() or BeBot.taille_page(wm, 1) < 566 :
             resume = u"Wikimag : alerte"
             redac = []
             cat = catlib.Category(self.site, u'Utilisateur rédacteur Wikimag')
