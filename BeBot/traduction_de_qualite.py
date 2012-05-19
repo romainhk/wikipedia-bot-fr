@@ -44,12 +44,14 @@ class TraductionDeQualite:
         for tion in gen:
             a = BeBot.togglePageTrad(tion).title()
             tmp.append(a.replace('(', '\\x28').replace(')', '\\x29'))
-                #Remplacement des parenthèses à cause d'un problème de comparaison de chaine utf-8 ; ex : Timée (Platon)
+            #Remplacement des parenthèses à cause d'un problème de comparaison de chaine utf-8 ; ex : Timée (Platon)
             self.tradQualite.append(tion)
             self.ignor_list += u' %s ;;' % a
 
-        self.trads = [ [], [], [], [], [], [] ] # Pages de traductions d'articles de qualité classées par statut
-        self.term_et_label = [ [], [], [] ]   # Traductions terminées sans label, en attente de label, ou labellisées
+        #Pages de traductions d'articles de qualité classées par statut
+        self.trads = [ [], [], [], [], [], [] ]
+        #Traductions terminées sans label, en attente de label, ou labellisées
+        self.term_et_label = [ [], [], [] ]
 
     def __str__(self):
         """
@@ -181,7 +183,7 @@ class TraductionDeQualite:
             self.term_et_label[etat_label].append(pt)
 
         self.publier(u'Labellisées', self.term_et_label, 2, True)
-#        pywikibot.Page(self.site, u"Projet:Suivi des articles de qualité des autres wikipédias/Traduction/En attente d'être labellisées").put(self.genererListing(self.term_et_label[1]), comment=self.resumeListing)
+        #pywikibot.Page(self.site, u"Projet:Suivi des articles de qualité des autres wikipédias/Traduction/En attente d'être labellisées").put(self.genererListing(self.term_et_label[1]), comment=self.resumeListing)
         self.publier(u'Terminées sans label', self.term_et_label, 0, False)
 
 def main():

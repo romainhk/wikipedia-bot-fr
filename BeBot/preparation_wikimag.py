@@ -9,7 +9,7 @@ locale.setlocale(locale.LC_ALL, '')
 
 class PreparationWikimag:
     """ Préparation d'un wikimag : 
-        annonces, images et promotions AdQ/BA de la semaine courante.
+        annonces, images, promotions AdQ/BA de la semaine courante ; alerte si pas de mag.
         TODO : problème de reconnaissance des dates :
             {{Article de qualité|...|date=1{{er}} février 2011}}
     """
@@ -61,11 +61,9 @@ class PreparationWikimag:
         resultat += u"\n=== AdQ ===\n"
         for a in self.adq:
             resultat += u'* {{a-label|' + a + u'}}\n'
-            #resultat += u'* [[' + a + u']]\n'
         resultat += u"\n=== BA ===\n"
         for a in self.ba:
             resultat += u'* {{a-label|' + a + u'}}\n'
-            #resultat += u'* [[' + a + u']]\n'
 
         if len(self.inconnu) > 0:
             resultat += u"\n=== Inconnus ===\n"
@@ -97,7 +95,7 @@ class PreparationWikimag:
                 continue
             a = self.articleRE.match(ligne)
             if a is not None:
-                if mc != "":                    # Si on a un mois valide
+                if mc != "":                      # Si on a un mois valide
                     articles.append( a.group(1) )
 
         # Vérification des dates exactes

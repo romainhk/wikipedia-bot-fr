@@ -88,7 +88,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'W___'      : re.compile("__[A-Z]+__\s*", re.LOCALE),
                 'transclu'  : re.compile("\{\{([^\|\}]+)\}\}", re.LOCALE|re.UNICODE),
                 'noinclude' : re.compile("<noinclude>(.*?)</noinclude>\s*", re.LOCALE|re.UNICODE|re.DOTALL)
-                } # Toute les expressions qui seront détectées
+                } # Toutes les expressions qui seront détectées
         self.modeles = {
                 'u' : 1,    'm' : 1,    'u\'' : 1,  'a' : 1,    'l' : 1,    'citation' : 1,
                 'grossir' : 1,  'pays' : 1,
@@ -97,7 +97,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'guil' : 'guil',    'citation' : 'guil',    u'citation étrangère' : 'guil',
                 u'unité' : u'unité',    'heure' : 'heure',     'wikimag bistro' : 'WM_bistro',
                 'article' : 'article'
-                } # Ce qu'il faut faire avec chaque modele : les modèles inconnus seront supprimés
+                } # Ce qu'il faut faire avec chaque modèle ; les modèles inconnus seront supprimés
         self.interprojets = {
                 'wikipedia'     : 'wikipedia.org/wiki/',
                 'wiktionary'    : 'wiktionary.org/wiki/',
@@ -126,8 +126,9 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'm'     : 'meta'
                 }
 
+        #Projets pour lesquels il existe une version localisée
         self.aProjetLocal = [ 'wikipedia', 'wiktionary', 'wikinews', 'wikibooks', 
-                'wikiquote', 'wikisource', 'v' ] # Projets pour lesquels il existe une version localisée
+                'wikiquote', 'wikisource', 'v' ]
         self.disclaimer = u'Des erreurs ? Consulter [[%s|la dernière version en ligne]]' % self.mag.title() # Message de fin
 
     def transclusion(self, match):
