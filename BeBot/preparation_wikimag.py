@@ -133,23 +133,22 @@ class PreparationWikimag:
         """ Liste les propositions
             (cf. self.articles_promus() )
         """
-        semRE = re.compile("^; Semaine du \d+ .*? au (\d+) (.+?) (\d{4})", \
+        semRE = re.compile("^; Semaine du \d+ .*?au (\d+) (.+?) (\d{4})", \
                 re.LOCALE|re.MULTILINE)
-        cetteSemaine = self.date_fin.strftime("%e#%B#%Y")
         articles = []
+        extremum = self.date_fin - datetime.timedelta(days=1)
+        cetteSemaine = unicode(extremum.strftime("%e#%B#%Y"))
         trouve = False
         for ligne in BeBot.page_ligne_par_ligne(self.site, nompage):
             s = semRE.search(ligne)
             if s is not None:              # Changement de semaine
                 fin = s.group(1)+u'#'+s.group(2)+u'#'+s.group(3)
-                pywikibot.output(u"####====####====\n"+fin)
-                if fin == cetteSemaine:
-                    if not trouve:
-                        trouve = True
-                    else:
-                        pywikibot.output(u"^^^^((()))\n"+fin)
-                        return articles    # Abandon au premier changement
+                if fin == cetteSemaine and not trouve:
+                    trouve = True
+                else:
+                    return articles    # Abandon au premier changement
             else:
+                pywikibot.output(ligne)
                 s = RE.search(ligne)
                 if s is not None:
                     pywikibot.output(u"||||''''\n"+s.group(0))
@@ -226,7 +225,7 @@ class PreparationWikimag:
         self.ba = self.articles_promus(u'Wikipédia:Bons articles/Justification de leur promotion/%i' \
                 % self.date.year, modeleRE)
         # Propositions
-        modeleRE = re.compile("^\* \d+ : \{\{Sous page:a2\|Discuter\|(.+?)\|\w+\}\}.*?(\{\{Icône wikiconcours\|.*?\}\}).*?$", re.LOCALE|re.MULTILINE)
+        modeleRE = re.compile("^\* \d+ : \{\{Sous-page:a2\|Discuter\|(.+?)\|\w+\}\}.*?(\{\{Icône wikiconcours\|.*?\}\}).*?$", re.LOCALE|re.MULTILINE)
         self.propositions  = self.articles_propositions( \
                 u'Wikipédia:Contenus de qualité/Propositions', modeleRE)
         self.propositions += self.articles_propositions( \
