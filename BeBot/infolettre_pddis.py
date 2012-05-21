@@ -39,7 +39,7 @@ class Infolettre:
 
         lumiere = pywikibot.Page(self.site, u'Wikipédia:Atelier de lecture/Lumière sur...')
         #Retrait des a-label
-        alabel = re.compile("\{\{[aA]-label\|([^\}]+)\}\}", re.LOCALE|re.UNICODE)
+        alabel = re.compile("\{\{[aA]-label\|([^\}\|]+).*?\}\}", re.LOCALE|re.UNICODE)
         params['adq'] = alabel.sub(r'[[\1]]', params['adq'])
         params['propositions adq'] = alabel.sub(r'[[\1]]', params['propositions adq'])
         params['ba']  = alabel.sub(r'[[\1]]', params['ba'])

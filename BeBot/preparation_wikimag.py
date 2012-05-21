@@ -18,6 +18,7 @@ class PreparationWikimag:
         self.annonces = []
         self.adq = []
         self.ba = []
+        self.propositions = []
         self.inconnu = []
 
         #Dates
@@ -64,6 +65,9 @@ class PreparationWikimag:
         resultat += u"\n=== BA ===\n"
         for a in self.ba:
             resultat += u'* {{a-label|' + a + u'}}\n'
+        resultat += u"\n=== Propositions ===\n"
+        for a,b in self.propositions:
+            resultat += u'* {{a-label|' + a + u'}} '+ b + u'\n'
 
         if len(self.inconnu) > 0:
             resultat += u"\n=== Inconnus ===\n"
@@ -71,7 +75,7 @@ class PreparationWikimag:
                 resultat += u'* [[' + a + u']]\n'
         return resultat+u'\n'
 
-    def articles_promus(self, nompage, RE):
+    def articles_promus(self, nompage, RE, propositions):
         """ Traitement pour les articles promus
         * listage des articles à vérifier
         * tri par date
@@ -124,6 +128,32 @@ class PreparationWikimag:
                 else:
                     self.inconnu.append(a)
         return r
+
+    def articles_propositions(self, nompage, RE):
+        """ Liste les propositions
+            (cf. self.articles_promus() )
+        """
+        semRE = re.compile("; Semaine du \d+ .*? au (\d+) (.+?) (\d{4})", re.LOCALE)
+        cetteSemaine = self.date_fin.strftime("%e#%B#%Y"), re.LOCALE)
+        articles = []
+        trouve = False
+        for ligne in BeBot.page_ligne_par_ligne(self.site, nompage):
+            s = semRE.search(ligne)
+            if s is not None:              # Changement de semaine
+                fin = s.group(1)+u'#'+s.group(2)+u'#'+s.group(3)
+                if fin == cetteSemaine:
+                    if not trouve:
+                        trouve = True
+                    else:
+                        return articles    # Abandon au premier changement
+            else:
+                s = RE.search(ligne)
+                if s is not None:
+                    icone = ''
+                    if len(s.groups()) >= 2:
+                        icone = s.group(2)
+                    articles.append([s.group(1), icone])
+        return articles    # Impossible ; en cas de foirage complet
 
     def verif_feneantise(self):
         """ Prévient les rédacteurs si le mag n'a même pas été commencé !
@@ -189,6 +219,12 @@ class PreparationWikimag:
         modeleRE = re.compile("\{\{[bB]on article[^\}]*\| *date *=([^\|\}]+)", re.LOCALE)
         self.ba = self.articles_promus(u'Wikipédia:Bons articles/Justification de leur promotion/%i' \
                 % self.date.year, modeleRE)
+        # Propositions
+        modeleRE = re.compile("^* \d+ : \{\{Sous page:a2\|Discuter\|(.*?+)\|\w+\}\}.*?(\{\{Icône wikiconcours\|.*?\}\}).*?$", re.LOCALE|re.MULTILINE)
+        self.propositions  = self.articles_propositions( \
+                u'Wikipédia:Contenus de qualité/Propositions', modeleRE)
+        self.propositions += self.articles_propositions( \
+                u'Wikipédia:Bons articles/Propositions', modeleRE)
 
         self.verif_feneantise()
 
