@@ -75,7 +75,7 @@ class PreparationWikimag:
                 resultat += u'* [[' + a + u']]\n'
         return resultat+u'\n'
 
-    def articles_promus(self, nompage, RE, propositions):
+    def articles_promus(self, nompage, RE):
         """ Traitement pour les articles promus
         * listage des articles à vérifier
         * tri par date
@@ -133,22 +133,26 @@ class PreparationWikimag:
         """ Liste les propositions
             (cf. self.articles_promus() )
         """
-        semRE = re.compile("; Semaine du \d+ .*? au (\d+) (.+?) (\d{4})", re.LOCALE)
-        cetteSemaine = self.date_fin.strftime("%e#%B#%Y"), re.LOCALE)
+        semRE = re.compile("^; Semaine du \d+ .*? au (\d+) (.+?) (\d{4})", \
+                re.LOCALE|re.MULTILINE)
+        cetteSemaine = self.date_fin.strftime("%e#%B#%Y")
         articles = []
         trouve = False
         for ligne in BeBot.page_ligne_par_ligne(self.site, nompage):
             s = semRE.search(ligne)
             if s is not None:              # Changement de semaine
                 fin = s.group(1)+u'#'+s.group(2)+u'#'+s.group(3)
+                pywikibot.output(u"####====####====\n"+fin)
                 if fin == cetteSemaine:
                     if not trouve:
                         trouve = True
                     else:
+                        pywikibot.output(u"^^^^((()))\n"+fin)
                         return articles    # Abandon au premier changement
             else:
                 s = RE.search(ligne)
                 if s is not None:
+                    pywikibot.output(u"||||''''\n"+s.group(0))
                     icone = ''
                     if len(s.groups()) >= 2:
                         icone = s.group(2)
@@ -158,6 +162,8 @@ class PreparationWikimag:
     def verif_feneantise(self):
         """ Prévient les rédacteurs si le mag n'a même pas été commencé !
         """
+        if not self.date.strftime("%w") == 0:
+            return False        # Alerte uniquement le dimanche
         semaine = self.date.strftime("%W").lstrip('0')
         annee = self.date.year
         num = u"%s/%s" % (annee, semaine)
@@ -166,7 +172,7 @@ class PreparationWikimag:
         msg += u"\n{{Petit|Ce message a été déposé automatiquement grâce à [[:Catégorie:Utilisateur rédacteur Wikimag]]}}" # A supprimer un jour
 
         wm = pywikibot.Page(self.site, u"Wikipédia:Wikimag/%s" % num)
-        pywikibot.output(BeBot.taille_page(wm, 1))
+        #pywikibot.output(BeBot.taille_page(wm, 1))
         #NB: Wikipédia:Wikimag/pre fait 522 signes
         if not wm.exists() or BeBot.taille_page(wm, 1) < 566 :
             resume = u"Wikimag : alerte rédaction"
@@ -220,7 +226,7 @@ class PreparationWikimag:
         self.ba = self.articles_promus(u'Wikipédia:Bons articles/Justification de leur promotion/%i' \
                 % self.date.year, modeleRE)
         # Propositions
-        modeleRE = re.compile("^* \d+ : \{\{Sous page:a2\|Discuter\|(.*?+)\|\w+\}\}.*?(\{\{Icône wikiconcours\|.*?\}\}).*?$", re.LOCALE|re.MULTILINE)
+        modeleRE = re.compile("^\* \d+ : \{\{Sous page:a2\|Discuter\|(.+?)\|\w+\}\}.*?(\{\{Icône wikiconcours\|.*?\}\}).*?$", re.LOCALE|re.MULTILINE)
         self.propositions  = self.articles_propositions( \
                 u'Wikipédia:Contenus de qualité/Propositions', modeleRE)
         self.propositions += self.articles_propositions( \
