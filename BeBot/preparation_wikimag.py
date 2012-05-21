@@ -147,13 +147,11 @@ class PreparationWikimag:
                     trouve = True
                 else:
                     return articles    # Abandon au premier changement
-            else:
-                pywikibot.output(ligne)
+            elif trouve:
                 s = RE.search(ligne)
                 if s is not None:
-                    pywikibot.output(u"||||''''\n"+s.group(0))
-                    icone = ''
-                    if len(s.groups()) >= 2:
+                    icone = u''
+                    if len(s.groups()) >= 2 and s.group(2) is not None:
                         icone = s.group(2)
                     articles.append([s.group(1), icone])
         return articles    # Impossible ; en cas de foirage complet
@@ -225,7 +223,7 @@ class PreparationWikimag:
         self.ba = self.articles_promus(u'Wikipédia:Bons articles/Justification de leur promotion/%i' \
                 % self.date.year, modeleRE)
         # Propositions
-        modeleRE = re.compile("^\* \d+ : \{\{Sous-page:a2\|Discuter\|(.+?)\|\w+\}\}.*?(\{\{Icône wikiconcours\|.*?\}\}).*?$", re.LOCALE|re.MULTILINE)
+        modeleRE = re.compile("^\* \d+ : \{\{Sous-page:a2\|Discuter\|([^\|\}]+)\|.+?\}\}.*?(\{\{Icône wikiconcours\|.*?\}\})?.*?$", re.LOCALE|re.MULTILINE)
         self.propositions  = self.articles_propositions( \
                 u'Wikipédia:Contenus de qualité/Propositions', modeleRE)
         self.propositions += self.articles_propositions( \
