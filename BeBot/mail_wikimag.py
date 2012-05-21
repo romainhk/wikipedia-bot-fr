@@ -289,10 +289,10 @@ from=           # adresse de l'expédieur, truc@toto.fr
         modele = re.compile("\{\{composition wikimag[0-9]?", re.LOCALE|re.IGNORECASE)
 
         pagetmp.text = modele.sub(u'{{subst:%s|' % modele_de_presentation, self.mag.text)
-        pagetmp.text = BeBot.retirer( [self.exps['noinclude']], pagetmp.text) # retrait de la catégorie
+        pagetmp.text = BeBot.retirer( [self.exps['noinclude']], pagetmp.text ) # retrait de la catégorie
         try:
             pagetmp.save(comment=u'Préparation pour le mail du Wikimag', minor=False)
-        except:
+        except pywikibot.Error, e:
             pywikibot.error(u"Impossible d'effectuer la substitution")
             sys.exit(2)
         text = pywikibot.Page(self.site, self.tmp).text + self.disclaimer

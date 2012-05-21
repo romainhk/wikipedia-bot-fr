@@ -132,14 +132,14 @@ class PreparationWikimag:
         annee = self.date.year
         num = u"%s/%s" % (annee, semaine)
         msg  = u"\n\n== Wikimag - Semaine %s ==\n" % semaine
-        msg += u"Attention, le [[Wikipédia:Wikimag/%s|wikimag de cette semaine]] n'est pas encore rédigé. Dépéchez vous ! (Aide: [[Utilisateur:BeBot/Préparation Wikimag]]) ~~~~" % num
-        msg += u"\n{{Petit|Ce message a été déposé automatiquement grâce à [[Catégorie:Utilisateur rédacteur Wikimag]]}}" # A supprimer un jour
+        msg += u"Attention, le [[WP:WM|wikimag]] ''[[Wikipédia:Wikimag/%s|de cette semaine]]'' n'est pas encore rédigé. Dépéchez vous ! (Aide: [[Utilisateur:BeBot/Préparation Wikimag]]) ~~~~\n" % num
+        msg += u"\n{{Petit|Ce message a été déposé automatiquement grâce à [[:Catégorie:Utilisateur rédacteur Wikimag]]}}" # A supprimer un jour
 
         wm = pywikibot.Page(self.site, u"Wikipédia:Wikimag/%s" % num)
         pywikibot.output(BeBot.taille_page(wm, 1))
         #NB: Wikipédia:Wikimag/pre fait 522 signes
         if not wm.exists() or BeBot.taille_page(wm, 1) < 566 :
-            resume = u"Wikimag : alerte"
+            resume = u"Wikimag : alerte rédaction"
             redac = []
             cat = catlib.Category(self.site, u'Utilisateur rédacteur Wikimag')
             cpg = pagegenerators.CategorizedPageGenerator(cat, recurse=False)
@@ -150,6 +150,8 @@ class PreparationWikimag:
                 redacteur = pywikibot.Page(self.site, can)
                 if not redacteur.isTalkPage():
                     redacteur = redacteur.toggleTalkPage()
+                if redacteur.isRedirectPage():
+                    redacteur = redacteur.getRedirectTarget()
                 # Avertissement avec dédoublonnage
                 if not redacteur in redac:
                     redac.append(redacteur)
