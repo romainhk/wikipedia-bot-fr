@@ -18,7 +18,8 @@ class PreparationWikimag:
         self.annonces = []
         self.adq = []
         self.ba = []
-        self.propositions = []
+        self.propositions_adq = []
+        self.propositions_ba = []
         self.inconnu = []
 
         #Dates
@@ -62,11 +63,15 @@ class PreparationWikimag:
         resultat += u"\n=== AdQ ===\n"
         for a in self.adq:
             resultat += u'* {{a-label|' + a + u'}}\n'
+        resultat += u"\n; Propositions\n"
+        for a,b in self.propositions_adq:
+            resultat += u'* {{a-label|' + a + u'}} '+ b + u'\n'
+
         resultat += u"\n=== BA ===\n"
         for a in self.ba:
             resultat += u'* {{a-label|' + a + u'}}\n'
-        resultat += u"\n=== Propositions ===\n"
-        for a,b in self.propositions:
+        resultat += u"\n; Propositions\n"
+        for a,b in self.propositions_ba:
             resultat += u'* {{a-label|' + a + u'}} '+ b + u'\n'
 
         if len(self.inconnu) > 0:
@@ -224,9 +229,9 @@ class PreparationWikimag:
                 % self.date.year, modeleRE)
         # Propositions
         modeleRE = re.compile("^\* \d+ : \{\{Sous-page:a2\|Discuter\|([^\|\}]+)\|.+?\}\}.*?(\{\{Icône wikiconcours\|.*?\}\})?.*?$", re.LOCALE|re.MULTILINE)
-        self.propositions  = self.articles_propositions( \
+        self.propositions_adq = self.articles_propositions( \
                 u'Wikipédia:Contenus de qualité/Propositions', modeleRE)
-        self.propositions += self.articles_propositions( \
+        self.propositions_ba  = self.articles_propositions( \
                 u'Wikipédia:Bons articles/Propositions', modeleRE)
 
         self.verif_feneantise()
