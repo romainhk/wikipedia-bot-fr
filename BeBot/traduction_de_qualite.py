@@ -26,13 +26,11 @@ class TraductionDeQualite:
         self.modeleTradRE = re.compile("\{\{(Traduction/Suivi|Translation/Information)[^\|\}}]*\|(\w+)\|", re.LOCALE)
         
         self.traductions = [] # Pages en cours de traduction
-        cats = []
-        cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article à traduire")))
-        cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article à relire")))
-        cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article en cours de traduction")))
-        cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Article en cours de relecture")))
-        for t in pagegenerators.CombinedPageGenerator(cats):
-            self.traductions.append(t)
+        cats = [u"Article à traduire", u"Article à relire", u"Article en cours de traduiction", u"Article en cours de relecture"]
+        for cat in cats:
+            c = pywikibot.page.Category(self.site, u"Catégorie:"+cat)
+            for t in c.members():
+                self.traductions.append(t)
         
         cats = []
         self.ignor_list = u'' # On ignore les pages qui ont déjà le paramètre adq/ba

@@ -160,7 +160,7 @@ for item in cats:
     #gen = site.categorymembers(cur_cat, step=4900)
     #gen = site.preloadpages(gen, groupsize=200)
     cur_cat = pywikibot.page.Category(site, u"Catégorie:%s" % cat)
-    gen = cur_cat.members(step=400)
+    gen = cur_cat.members()
     for page in gen:
         if (page.namespace() % 2) == 1 : # = espace de discussion
             match = get_on_regexp(page, re_date)
