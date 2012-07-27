@@ -26,15 +26,20 @@ class Stats_ProjetTraduction:
         duree = self.resultats['duree']/total
         contribution = float(self.resultats['contribution'])/total
         contributeur = float(self.resultats['contributeur'])/total
-        taille = self.resultats['taille']/total
-        msg = u''
-        msg += u"* Nombre total de pages : %i" % total
-        msg += u"* Durée moyenne d'une traduction : %i jours (%.2f années)" % (duree, float(duree/365.25))
-        msg += u"* Nombre moyen de contributions : %.1f" % contribution
-        msg += u"* Nombre moyen de contributeurs : %.1f" % contributeur
-        msg += u"* Taille moyenne des pages de suivi : %.2f milliers de caractères" % float(taille)/1000.0
+        taille = float(self.resultats['taille'])/total
+        msg = u'== Statistiques ==\nStatisitques au %s\n' % datetime.datetime.today().strftime("%d/%m/%Y")
+        msg += u"* Nombre total de pages : %i\n" % total
+        msg += u"* Durée moyenne d'une traduction : %i jours (%.2f années)\n" % (duree, float(duree/365.25))
+        msg += u"* Nombre moyen de contributions : %.1f\n" % contribution
+        msg += u"* Nombre moyen de contributeurs : %.1f\n" % contributeur
+        msg += u"* Taille moyenne des pages de suivi : %.2f milliers de caractères\n" % (float(taille)/1000.0)
+        msg += u"\n[[Catégorie:Maintenance du Projet Traduction|*]]\n"
 
-        res = pywikibot.Page(self.site, u"Utilisateur:BeBot/Stats_ProjetTraduction")
+        #res = pywikibot.Page(self.site, u"Utilisateur:BeBot/Stats_ProjetTraduction")
+        res = pywikibot.Page(self.site, u"Projet:Traduction/*/Maintenance")
+        stats = re.compile(u"^== Statistiques ==[^=]*", re.DOTALL|re.MULTILINE)
+        res.text = stats.sub(r'', res.text)
+        res.text = res.text + msg
         try:
             res.save(comment=self.resume, minor=False, async=True)
         except pywikibot.Error, e:
@@ -45,7 +50,7 @@ class Stats_ProjetTraduction:
         parstatut = pywikibot.Category(self.site, u"Catégorie:Traduction par statut")
         for c in parstatut.subcategories(recurse=False):
             if c.title() != u"Catégorie:Liste des traductions par mois":
-                for p in c.articles(total=6):
+                for p in c.articles():
                     if p.namespace() == 1:
                         taille = BeBot.taille_page(p, 1) # en octet
                         #(oldid, u'2004-07-27T16:15:30Z', u'USER', u'CONTENU')
