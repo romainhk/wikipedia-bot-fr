@@ -17,7 +17,8 @@ class Stats_ProjetTraduction:
             "taille" : 0,
             "contribution" : 0,
             "contributeur" : 0,
-            "duree" : 0}
+            "duree" : 0 }
+        self.categories = [ u'Article \xe0 traduire', u'Article en cours de traduction', u'Article \xe0 relire', u'Article en cours de relecture', u'Traduction termin\xe9e' ]
 
     def put_resultats(self):
         """ Affichage des resultats
@@ -27,15 +28,20 @@ class Stats_ProjetTraduction:
         contribution = float(self.resultats['contribution'])/total
         contributeur = float(self.resultats['contributeur'])/total
         taille = float(self.resultats['taille'])/total
-        msg = u'== Statistiques ==\nStatisitques au %s\n' % datetime.datetime.today().strftime("%d/%m/%Y")
+        msg = u'== Statistiques ==\nAu %s\n' % datetime.datetime.today().strftime("%d/%m/%Y")
         msg += u"* Nombre total de pages : %i\n" % total
         msg += u"* Durée moyenne d'une traduction : %i jours (%.2f années)\n" % (duree, float(duree/365.25))
-        msg += u"* Nombre moyen de contributions : %.1f\n" % contribution
-        msg += u"* Nombre moyen de contributeurs : %.1f\n" % contributeur
-        msg += u"* Taille moyenne des pages de suivi : %.2f milliers de caractères\n" % (float(taille)/1000.0)
+        msg += u"* Nombre moyen de contributions (hors bots) : %.1f\n" % contribution
+        msg += u"* Nombre moyen de contributeurs (hors bots): %.1f\n" % contributeur
+        msg += u"* Taille moyenne des pages de shors uivi : %.2f milliers de caractères\n" % (float(taille)/1000.0)
+        msg += u"* Par statut:\n"
+        for c in self.categories:
+            cat = pywikibot.Category(self.site, u"Catégorie:%s" % c)
+            msg += u"** %s : %i\n" % (c, len(list(cat.articles())))
+        cat = pywikibot.Category(self.site, u"Catégorie:Projet:Traduction/Articles liés")
+        msg += u"* Pages de suivi actives : %i\n" % len(list(cat.articles()))
         msg += u"\n[[Catégorie:Maintenance du Projet Traduction|*]]\n"
 
-        #res = pywikibot.Page(self.site, u"Utilisateur:BeBot/Stats_ProjetTraduction")
         res = pywikibot.Page(self.site, u"Projet:Traduction/*/Maintenance")
         stats = re.compile(u"^== Statistiques ==[^=]*", re.DOTALL|re.MULTILINE)
         res.text = stats.sub(r'', res.text)
@@ -49,9 +55,10 @@ class Stats_ProjetTraduction:
         bot = re.compile('bot', re.IGNORECASE)
         parstatut = pywikibot.Category(self.site, u"Catégorie:Traduction par statut")
         for c in parstatut.subcategories(recurse=False):
-            if c.title() != u"Catégorie:Liste des traductions par mois":
+            catTitle = c.title(withNamespace=False)
+            if catTitle != u"Liste des traductions par mois":
                 for p in c.articles():
-                    if p.namespace() == 1:
+                    if (p.namespace() % 2) == 1:
                         taille = BeBot.taille_page(p, 1) # en octet
                         #(oldid, u'2004-07-27T16:15:30Z', u'USER', u'CONTENU')
                         histo = p.getVersionHistory()
