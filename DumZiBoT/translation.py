@@ -255,7 +255,7 @@ for item in cats:
     page = pywikibot.Page(site, pattern  % (ttype, int2month[month], year))
     i = 0
     for elem in bystatus[cat]:
-        pywikibot.output(elem)
+        pywikibot.output(elem.encode('utf-8', 'ignore'))
         edate = elem[0].date()
         if edate.month != month:
             month = edate.month
