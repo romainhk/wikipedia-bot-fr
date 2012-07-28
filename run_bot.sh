@@ -11,6 +11,5 @@ echo `date`
 `python2.7 $WP_BOT_FR/$1/$2 $3 $4 $5 $6 $7 $8 $9`
 #`cronsub -s bebot python2.7 $1/$2 $3 $4 $5 $6 $7 $8 $9`
 #`qsub -j y -e $HOME/bebot.out -N bebot $WP_BOT_FR/$1/$2 $3 $4 $5 $6 $7 $8 $9`
-
 echo `date`
 
