@@ -156,12 +156,8 @@ for item in cats:
     cat = item[0]
     pywikibot.output(u'Processing category "%s"...' % cat)
     bystatus[cat] = []
-    #cur_cat = pywikibot.Page(site, u'Catégorie:%s' % cat)
-    #gen = site.categorymembers(cur_cat, step=4900)
-    #gen = site.preloadpages(gen, groupsize=200)
     cur_cat = pywikibot.page.Category(site, u"Catégorie:%s" % cat)
-    gen = cur_cat.members()
-    for page in gen:
+    for page in cur_cat.articles():
         if (page.namespace() % 2) == 1 : # = espace de discussion
             match = get_on_regexp(page, re_date)
             if not match:

@@ -19,21 +19,23 @@ class Trad_maintenance:
     def run(self):
         ancien = self.date.year - 2
         re_annee = re.compile('Traduction de (\d{4})')
+        re_projet = re.compile(r'Projet:Traduction/*')
         parannee = pywikibot.Category(self.site, u"Catégorie:Traduction par année")
         for c in parannee.subcategories(recurse=False):
             catTitle = c.title(withNamespace=False)
             m = re_annee.match(catTitle)
+            pywikibot.output(catTitle)
             if not m:
                 continue
-            annee = m.group(1)
-            if annee <= ancien:
-                pywikibot.output(annee)
+            annee = int(m.group(1))
+            if annee <= ancien: # critère d'ancienneté
                 for p in c.articles(total=3):
-                    for b in p.backlinks():
-                        pywikibot.output(b.title())
-            #if catTitle == u'Article \xe0 relire':
-            #    for p in c.articles():
-            # Vérifier aussi les licences
+                    for b in p.backlinks(): # pages liées
+                        if b.title()[:19] != u'Projet:Traduction/*':
+                            pywikibot.output(b.title())
+                        #Supprimer la page
+                        # Vérifier aussi les licences
+                    #CHanger le status
 
 def main():
     site = pywikibot.getSite()
