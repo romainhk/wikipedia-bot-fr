@@ -16,6 +16,7 @@ class Trad_maintenance:
         self.debug = debug
         self.resume = u"Maintenance du [[Projet:Traduction]]"
         self.date = datetime.date.today()
+        self.stats = { 'suppr': 0, 'cloture' : 0, 'modele' : 0 }
         self.re_trad = re.compile(r'{{Traduction}}\s*', re.IGNORECASE)
         self.re_appel = re.compile('[\[\{]{2}Discussion:[\w/ ]+?/Traduction[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_statut = re.compile('\|\s*status\s*=\s*(\d{1})', re.LOCALE|re.UNICODE|re.IGNORECASE)
@@ -27,6 +28,7 @@ class Trad_maintenance:
         pywikibot.output(u"&&&& retirer_le_modele_Traduction : %s" % page.title())
         pywikibot.output(b.text)
         # save b
+        self.stats['modele'] += 1
         
     def supprimer(self, page, backlinks):
         """ Supprime la page et nettoie les pages liées
@@ -40,6 +42,7 @@ class Trad_maintenance:
             # save b
         self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page))
         #delete page
+        self.stats['suppr'] += 1
         
     def clore_traduction(self, page):
         """ Clôt une relecture : statut 3/4 -> 5
@@ -49,6 +52,7 @@ class Trad_maintenance:
         pywikibot.output(page.text)
         # save page
         self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page))
+        self.stats['cloture'] += 1
 
     def traduit_de(self, page):
         """ Ajoute le {{Traduit de}} à la page de discussion
@@ -95,6 +99,7 @@ class Trad_maintenance:
                             ## Vérifier aussi les licences : self.traduit_de(p)
                         else:
                             pywikibot.output(u"* [[%s]]" % p.title())
+        pywikibot.out(u'=== Statistiques ===\n* Nb de pages supprimmées: %i\n* Nb de pages closes: %i\n* Nb de {{Traduction}} retirés: %i' % (self.stats['suppr'], self.stats['cloture'], self.stats['modele'])
 
 def main():
     debug = False
