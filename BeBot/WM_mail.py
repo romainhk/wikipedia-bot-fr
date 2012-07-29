@@ -336,9 +336,9 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'annonces'      : ['annonces',      'Annonces'],
                 'bistro'        : ['liste',         u'Échos du bistro',     2],
                 'adq'           : ['liste',         u'Articles de qualité', 3],
-                'propositions adq'  : ['liste',     'Propositions',         4],
+                'propositions adq'  : ['liste',     'Propositions AdQ',     4],
                 'ba'            : ['liste',         'Bons articles',        3],
-                'propositions ba'   : ['liste',     'Propositions',         4],
+                'propositions ba'   : ['liste',     'Propositions BA',      4],
                 'anecdotes'     : ['paragraphe',    'Anecdotes'],
                 'citation'      : ['signe',         'Citation',             'signature citation'],###
                 'ville du mois' : ['paragraphe',    'Ville du mois'],###
