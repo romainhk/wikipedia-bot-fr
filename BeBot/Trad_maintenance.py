@@ -10,16 +10,32 @@ class Trad_maintenance:
         Effectue les maintenances du Projet:Traduction :
       * supprimmer les anciennes demandes sans suite
       * clôre les relectures anciennes
+      * supprimer les listes mensuelles devenus inutiles
     """
     def __init__(self, site, debug):
         self.site = site
         self.debug = debug
-        self.resume = u"Maintenance du [[Projet:Traduction]]"
+        self.resume = u'Maintenance du [[Projet:Traduction]]'
         self.date = datetime.date.today()
         self.stats = { 'suppr': 0, 'cloture' : 0, 'modele' : 0 }
+
         self.re_trad = re.compile(r'{{Traduction}}\s*', re.IGNORECASE)
         self.re_appel = re.compile('[\[\{]{2}Discussion:[\w/ ]+?/Traduction[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_statut = re.compile('\|\s*status\s*=\s*(\d{1})', re.LOCALE|re.UNICODE|re.IGNORECASE)
+        self.re_traduitde = re.compile('\{\{Traduit de.+?\}\}\s*', re.IGNORECASE)
+
+        self.suppressions = []
+        self.les_statuts = [ 'Demandes', 'En cours', 'A relire', 'En relecture', u'Terminée' ]
+        les_mois = {'janvier' : 0,    u'février' : 0,    'mars' : 0,        'avril' : 0,
+                        'mai' : 0,         'juin' : 0,        'juillet' : 0,     u'août' : 0,
+                        'septembre' : 0,   'octobre' : 0,     'novembre' : 0,    u'décembre': 0 }
+        self.listes = {} # Nombre d'articles par statut / année / mois
+        for s in self.les_statuts:
+            self.listes[s] = {}
+            for a in range(2006, self.date.year+1):
+                self.listes[s][a] = les_mois
+        pywikibot.ouput(self.listes)
+
         
     def retirer_le_modele_Traduction(self, page):
         """ Supprime le {{Traduction}} d'une page
@@ -64,6 +80,7 @@ class Trad_maintenance:
             pywikibot.output(u"=== Mode débuggage actif ; aucunes modifications effectuées")
         ancien = self.date.year - 2
         re_annee = re.compile('Traduction de (\d{4})')
+        re_mois  = re.compile('Traduction du mois de (\w+)')
         parannee = pywikibot.Category(self.site, u"Catégorie:Traduction par année")
         for c in parannee.subcategories(recurse=False):
             catTitle = c.title(withNamespace=False)
@@ -71,18 +88,27 @@ class Trad_maintenance:
             if not m:
                 continue
             annee = int(m.group(1))
-            if annee <= ancien: # critère d'ancienneté
-                for p in c.articles(total=4, content=True):
-                    supprimer = False
-                    n = self.re_statut.search(p.text)
-                    if not n:
+            for p in c.articles(total=4, content=True): # Pour chaque traduction
+                # Recherche du mois
+                mois = ""
+                for c in p.categories():
+                    m = re_mois.match(c.title())
+                    if m:
+                        mois = m.group(1)
                         continue
-                    n = int(n.group(1))
-                    pywikibot.output(u"%s !! %i" % (p.title(), n))
-                    if n == 1:
+                # Recherche du statut
+                statut = self.re_statut.search(p.text)
+                if not statut:
+                    continue
+                statut = int(statut.group(1))
+
+                if annee <= ancien: # critère d'ancienneté
+                    supprimer = False
+                    pywikibot.output(u"%s !! %i" % (p.title(), statut))
+                    if statut == 1:
                         supprimer = True
                         backlinks = []
-                        for b in p.backlinks(): # pages liées
+                        for b in p.backlinks(): # les pages liées
                             if b.title()[:19] == u'Projet:Traduction/*': # sera nettoyé automatiquement
                                 continue
                             elif b.namespace() == 1: # utilisé comme bandeau de licence
@@ -90,15 +116,34 @@ class Trad_maintenance:
                                 continue
                             else:
                                 backlinks.append(b)
-                    elif n == 3 or n == 4:
+                    elif statut == 3 or statut == 4:
+                        # Clôtures
+                        statut = 5
                         self.clore_traduction(p)
-                        
+
                     if supprimer:
-                        if not self.debug:
-                            self.supprimer(p, backlinks)
-                            ## Vérifier aussi les licences : self.traduit_de(p)
-                        else:
-                            pywikibot.output(u"* [[%s]]" % p.title())
+                        self.suppressions.append([p, backlinks])
+                    else:
+                        # Dénombrement global
+                        self.listes[self.les_statuts[statut-1]][annee][mois] += 1
+
+        # Application des suppressions
+        for p, backlinks in self.suppressions:
+            if not self.debug:
+                self.supprimer(p, backlinks)
+                ## Vérifier aussi les licences : self.traduit_de(p)
+            else:
+                pywikibot.output(u"* [[%s]]" % p.title())
+
+        # Nettoyage des listes mensuelles
+        pywikibot.output(u"------ Listes à supprimmer ------")
+        for statut, l in self.listes:
+            for annee, m in l:
+                for mois, nb in m:
+                    if nb == 0:
+                        pywikibot.output(u'* [[Projet:Traduction/*/%s/%s %i]]' % (statut, mois, annee))
+                        # delete id
+
         pywikibot.out(u'=== Statistiques ===\n* Nb de pages supprimmées: %i\n* Nb de pages closes: %i\n* Nb de {{Traduction}} retirés: %i' % (self.stats['suppr'], self.stats['cloture'], self.stats['modele']))
 
 def main():
