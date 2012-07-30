@@ -21,13 +21,13 @@ class Trad_maintenance:
         self.re_appel = re.compile('[\[\{]{2}Discussion:[\w/ ]+?/Traduction[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_statut = re.compile('\|\s*status\s*=\s*(\d{1})', re.LOCALE|re.UNICODE|re.IGNORECASE)
         
-    def retirer_le_modele_Traduction(page):
+    def retirer_le_modele_Traduction(self, page):
         """ Supprime le {{Traduction}} d'une page
-        """"
-        b.text = self.re_trad.sub(r'', b.text)
+        """
+        page.text = self.re_trad.sub(r'', page.text)
         pywikibot.output(u"&&&& retirer_le_modele_Traduction : %s" % page.title())
-        pywikibot.output(b.text)
-        # save b
+        pywikibot.output(page.text)
+        # save page
         self.stats['modele'] += 1
         
     def supprimer(self, page, backlinks):
@@ -99,7 +99,7 @@ class Trad_maintenance:
                             ## Vérifier aussi les licences : self.traduit_de(p)
                         else:
                             pywikibot.output(u"* [[%s]]" % p.title())
-        pywikibot.out(u'=== Statistiques ===\n* Nb de pages supprimmées: %i\n* Nb de pages closes: %i\n* Nb de {{Traduction}} retirés: %i' % (self.stats['suppr'], self.stats['cloture'], self.stats['modele'])
+        pywikibot.out(u'=== Statistiques ===\n* Nb de pages supprimmées: %i\n* Nb de pages closes: %i\n* Nb de {{Traduction}} retirés: %i' % (self.stats['suppr'], self.stats['cloture'], self.stats['modele']))
 
 def main():
     debug = False
