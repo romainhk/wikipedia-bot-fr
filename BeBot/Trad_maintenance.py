@@ -40,7 +40,7 @@ class Trad_maintenance:
         """
         page.text = self.re_trad.sub(r'', page.text)
         pywikibot.output(u"&&&& retirer_le_modele_Traduction : %s" % page.title())
-        pywikibot.output(page.text)
+        #pywikibot.output(page.text)
         # save page
         self.stats['modele'] += 1
         
@@ -52,7 +52,7 @@ class Trad_maintenance:
         for b in backlinks:
             b.text = self.re_trad.sub(r'', b.text)
             b.text = self.re_appel.sub(r'', b.text)
-            pywikibot.output(b.text)
+            #pywikibot.output(b.text)
             # save b
         self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page))
         #delete page
@@ -63,7 +63,7 @@ class Trad_maintenance:
         """
         pywikibot.output(u"&&& clore : %s" % page.title())
         page.text = self.re_statut.sub('|status=5', page.text)
-        pywikibot.output(page.text)
+        #pywikibot.output(page.text)
         # save page
         self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page))
         self.stats['cloture'] += 1
@@ -78,7 +78,7 @@ class Trad_maintenance:
             pywikibot.output(u"=== Mode débuggage actif ; aucunes modifications effectuées ===")
         ancien = self.date.year - 2
         re_annee = re.compile('Traduction de (\d{4})')
-        re_mois  = re.compile('Traduction du mois de ([\wéû]+)', re.UNICODE|re.LOCALE)
+        re_mois  = re.compile('Traduction du mois de ([\w\xe9\xfb]+)', re.UNICODE|re.LOCALE) # éû
         parannee = pywikibot.Category(self.site, u"Catégorie:Traduction par année")
         for c in parannee.subcategories(recurse=False):
             catTitle = c.title(withNamespace=False)
@@ -126,6 +126,7 @@ class Trad_maintenance:
                         self.listes[self.les_statuts[statut-1]][annee][mois] += 1
 
         # Application des suppressions
+        pywikibot.output(u"------ Pages à supprimmer ------")
         for p, backlinks in self.suppressions:
             if not self.debug:
                 self.supprimer(p, backlinks)
@@ -142,7 +143,7 @@ class Trad_maintenance:
                         pywikibot.output(u'* [[Projet:Traduction/*/%s/%s %i]]' % (statut, mois, annee))
                         # delete id
 
-        pywikibot.out(u'=== Statistiques ===\n* Nb de pages supprimmées: %i\n* Nb de pages closes: %i\n* Nb de {{Traduction}} retirés: %i' % (self.stats['suppr'], self.stats['cloture'], self.stats['modele']))
+        pywikibot.output(u'=== Statistiques ===\n* Nb de pages supprimmées: %i\n* Nb de pages closes: %i\n* Nb de {{Traduction}} retirés: %i' % (self.stats['suppr'], self.stats['cloture'], self.stats['modele']))
 
 def main():
     debug = False
