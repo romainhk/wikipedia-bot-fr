@@ -17,12 +17,14 @@ class Trad_maintenance:
         self.debug = debug
         self.resume = u'Maintenance du [[Projet:Traduction]]'
         self.date = datetime.date.today()
-        self.stats = { 'suppr': 0, 'cloture' : 0, 'modele' : 0, 'liste' : 0 }
+        self.stats = { 'suppr': 0, 'cloture' : 0, 'liste' : 0 }
 
         self.re_trad = re.compile(r'{{Traduction}}\s*', re.IGNORECASE)
         self.re_appel = re.compile('[\[\{]{2}Discussion:[\w/ ]+?/Traduction[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_statut = re.compile('\|\s*status\s*=\s*(\d{1})', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_traduitde = re.compile('\{\{Traduit de.+?\}\}\s*', re.IGNORECASE)
+        self.re_traduitde_inser = re.compile('^==', re.MULTILINE)
+        self.re_suivi = re.compile("\{\{(Traduction/Suivi|Translation/Information)[^\|\}}]*\|(\w+)\|(\w+)\|", re.LOCALE|re.UNICODE|re.IGNORECASE)
 
         self.suppressions = []
         self.les_statuts = [ 'Demandes', 'En cours', 'A relire', 'En relecture', u'Terminée' ]
@@ -33,13 +35,13 @@ class Trad_maintenance:
         for s in self.les_statuts:
             self.listes[s] = {}
             for a in range(2006, self.date.year+1):
-                self.listes[s][a] = les_mois
+                self.listes[s][a] = les_mois.copy()
         
     def retirer_le_modele_Traduction(self, page):
         """ Supprime le {{Traduction}} d'une page
         """
         page.text = self.re_trad.sub(r'', page.text)
-        pywikibot.output(u"&&&& retirer_le_modele_Traduction : %s" % page.title())
+        #pywikibot.output(u"&&&& retirer_le_modele_Traduction : %s" % page.title())
         #pywikibot.output(page.text)
         # BeBot.save(page, comment=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True)
         self.stats['modele'] += 1
@@ -69,9 +71,24 @@ class Trad_maintenance:
         self.stats['cloture'] += 1
 
     def traduit_de(self, page):
-        """ Ajoute le {{Traduit de}} à la page de discussion
+        """ Vérifie et ajoute le {{Traduit de}} à la page de discussion
         """
-        pass
+        disc = pywikibot.Page(self.site, page.title().replace('/Traduction', ''))
+        pywikibot.output(disc.title())
+        m = re_traduitde.search(disc.text)
+        if not m:
+            # Récupérer les infos
+            n = re_suivi.search(page.text)
+            if n:
+                langue = n.group(2)
+                article = n.group(3)
+                appel = u'{{Traduit de|%s|%s}}' % (langue, article)
+                pywikibot.output(appel)
+                disc.text = self.re_traduitde_inser.sub(r'%s\n\n==' % appel, disc.text)
+                pywikibot.output(disc.text)
+                #BeBot.save(disc, comment=self.resume+u' : Ajout du bandeau de licence')
+            else:
+                pywikibot.output(u'Impossible de trouver les infos de traduction pour [[%s]]' % page.title())
         
     def run(self):
         if self.debug:
@@ -103,7 +120,7 @@ class Trad_maintenance:
                 if annee <= ancien: # critère d'ancienneté
                     supprimer = False
                     #pywikibot.output(u"%s !! %i" % (p.title(), statut))
-                    if statut == 1:
+                    if statut == 1:  # Vieille demande
                         supprimer = True
                         backlinks = []
                         for b in p.backlinks(): # les pages liées
@@ -114,8 +131,7 @@ class Trad_maintenance:
                                 continue
                             else:
                                 backlinks.append(b)
-                    elif statut == 3 or statut == 4:
-                        # Clôtures
+                    elif statut == 3 or statut == 4: # Relecture abandonnée
                         statut = 5
                         self.clore_traduction(p)
 
@@ -130,7 +146,7 @@ class Trad_maintenance:
         for p, backlinks in self.suppressions:
             if not self.debug:
                 self.supprimer(p, backlinks)
-                ## Vérifier aussi les licences : self.traduit_de(p)
+                self.traduit_de(p)
             else:
                 pywikibot.output(u"* [[%s]]" % p.title())
 
@@ -145,14 +161,14 @@ class Trad_maintenance:
                         self.stats['liste'] += 1
 
         pywikibot.output(self.listes)
-        pywikibot.output(u'=== Statistiques ===\n* Nb de pages supprimmées: %i\n* Nb de pages closes: %i\n* Nb de {{Traduction}} retirés: %i' % (self.stats['suppr'], self.stats['cloture'], self.stats['modele']))
+        pywikibot.output(u'=== Statistiques ===\n* Nb de pages supprimées: %i\n* Nb de pages closes: %i\n* Listes périmées : %i' % (self.stats['suppr'], self.stats['cloture'], self.Stats['liste']))
 
 def main():
     debug = False
-    if len(sys.argv) == 1:
+    if len(sys.argv) == 2 and sys.argv[1] == "debug":
         debug = True
-    elif len(sys.argv) != 0:
-        pywwikibot.output(u"Nombre de paramètres incorrectes")
+    elif len(sys.argv) != 1:
+        pywikibot.output(u"Nombre de paramètres incorrectes")
         sys.exit(1)
     site = pywikibot.getSite()
     tm = Trad_maintenance(site, debug)
