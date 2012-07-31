@@ -216,11 +216,14 @@ def save(page, comment=u'', minor=False):
     except pywikibot.ServerError, e:
         pywikibot.warning(u'Server Error : %s' % e)
 
-def delete(page, raison):
+def delete(page, raison, debug=False):
     """ Supprime la page
     """
-    try:
-        page.delete(page, reason=raison, prompt=False)
-    except pywikibot.NoUsername, e:
-        pywikibot.warning(u'Delete %s is impossible - User unknown' % (page,))
+    if debug:
+        pywikibot.output(u'Del -> %s' % page.title())
+    else:
+        try:
+            page.delete(page, reason=raison, prompt=False)
+        except pywikibot.NoUsername, e:
+            pywikibot.warning(u'Delete %s is impossible - User unknown' % (page,))
 

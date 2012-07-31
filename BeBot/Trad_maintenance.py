@@ -8,16 +8,16 @@ locale.setlocale(locale.LC_ALL, '')
 class Trad_maintenance:
     """ Trad_maintenance
         Effectue les maintenances du Projet:Traduction :
-      * supprimmer les anciennes demandes sans suite
-      * clôre les relectures anciennes
-      * supprimer les listes mensuelles devenus inutiles
+      * supprimer les anciennes demandes sans suite
+      * clore les relectures anciennes
+      * supprimer les listes mensuelles devenues inutiles
     """
     def __init__(self, site, debug):
         self.site = site
         self.debug = debug
         self.resume = u'Maintenance du [[Projet:Traduction]]'
         self.date = datetime.date.today()
-        self.stats = { 'suppr': 0, 'cloture' : 0, 'modele' : 0 }
+        self.stats = { 'suppr': 0, 'cloture' : 0, 'modele' : 0, 'liste' : 0 }
 
         self.re_trad = re.compile(r'{{Traduction}}\s*', re.IGNORECASE)
         self.re_appel = re.compile('[\[\{]{2}Discussion:[\w/ ]+?/Traduction[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE)
@@ -41,7 +41,7 @@ class Trad_maintenance:
         page.text = self.re_trad.sub(r'', page.text)
         pywikibot.output(u"&&&& retirer_le_modele_Traduction : %s" % page.title())
         #pywikibot.output(page.text)
-        # save page
+        # BeBot.save(page, comment=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True)
         self.stats['modele'] += 1
         
     def supprimer(self, page, backlinks):
@@ -53,9 +53,9 @@ class Trad_maintenance:
             b.text = self.re_trad.sub(r'', b.text)
             b.text = self.re_appel.sub(r'', b.text)
             #pywikibot.output(b.text)
-            # save b
+            # BeBot.save(b, comment=self.resume+u' : Traduction abandonnée')
         self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page))
-        #delete page
+        BeBot.delete(page, self.resume+u' : Traduction abandonnée', debug=self.debug)
         self.stats['suppr'] += 1
         
     def clore_traduction(self, page):
@@ -64,7 +64,7 @@ class Trad_maintenance:
         pywikibot.output(u"&&& clore : %s" % page.title())
         page.text = self.re_statut.sub('|status=5', page.text)
         #pywikibot.output(page.text)
-        # save page
+        # BeBot.save(page, comment=self.resume+u' : Clôture de la traduction')
         self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page))
         self.stats['cloture'] += 1
 
@@ -80,7 +80,7 @@ class Trad_maintenance:
         re_annee = re.compile('Traduction de (\d{4})')
         re_mois  = re.compile('Traduction du mois de ([\w\xe9\xfb]+)', re.UNICODE|re.LOCALE) # éû
         parannee = pywikibot.Category(self.site, u"Catégorie:Traduction par année")
-        for c in parannee.subcategories(recurse=False):
+        for c in parannee.subcategories(recurse=False): #parcours des traductions par année
             catTitle = c.title(withNamespace=False)
             m = re_annee.match(catTitle)
             if not m:
@@ -121,12 +121,12 @@ class Trad_maintenance:
 
                     if supprimer:
                         self.suppressions.append([p, backlinks])
-                    else:
+                    elif mois != u'':
                         # Dénombrement global
                         self.listes[self.les_statuts[statut-1]][annee][mois] += 1
 
         # Application des suppressions
-        pywikibot.output(u"------ Pages à supprimmer ------")
+        pywikibot.output(u"------ Pages à supprimer ------")
         for p, backlinks in self.suppressions:
             if not self.debug:
                 self.supprimer(p, backlinks)
@@ -135,14 +135,16 @@ class Trad_maintenance:
                 pywikibot.output(u"* [[%s]]" % p.title())
 
         # Nettoyage des listes mensuelles
-        pywikibot.output(u"------ Listes à supprimmer ------")
+        pywikibot.output(u"------ Listes à supprimer ------")
         for statut, l in self.listes.items():
             for annee, m in l.items():
                 for mois, nb in m.items():
                     if nb == 0:
-                        pywikibot.output(u'* [[Projet:Traduction/*/%s/%s %i]]' % (statut, mois, annee))
-                        # delete id
+                        lis = pywikibot.Page(self.site, u'Projet:Traduction/*/%s/%s %i' % (statut, mois, annee))
+                        BeBot.delete(lis, self.resume+u' : Liste mensuelle périmée', debug=self.debug)
+                        self.stats['liste'] += 1
 
+        pywikibot.output(self.listes)
         pywikibot.output(u'=== Statistiques ===\n* Nb de pages supprimmées: %i\n* Nb de pages closes: %i\n* Nb de {{Traduction}} retirés: %i' % (self.stats['suppr'], self.stats['cloture'], self.stats['modele']))
 
 def main():
