@@ -23,7 +23,7 @@ class Trad_maintenance:
         self.re_appel = re.compile('[\[\{]{2}Discussion:[\w/ ]+?/Traduction[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_statut = re.compile('\|\s*status\s*=\s*(\d{1})', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_traduitde = re.compile('\{\{Traduit de.+?\}\}\s*', re.IGNORECASE)
-        self.re_suivi = re.compile("\{\{(Traduction/Suivi|Translation/Information)\s*\|(\w+)\|(\w+)\|", re.LOCALE|re.UNICODE|re.IGNORECASE)
+        self.re_suivi = re.compile("\{\{(Traduction/Suivi|Translation/Information)\s*\|(\w+)\|([^\|]+)\|", re.LOCALE|re.UNICODE|re.IGNORECASE)
 
         self.suppressions = []
         self.les_statuts = [ 'Demandes', 'En cours', 'A relire', 'En relecture', u'Terminée' ]
@@ -56,6 +56,7 @@ class Trad_maintenance:
             # BeBot.save(b, comment=self.resume+u' : Traduction abandonnée')
         self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page))
         BeBot.delete(page, self.resume+u' : Traduction abandonnée', debug=self.debug)
+        #BeBot.delete(page.toggleTalkPage(), self.resume+u' : Traduction abandonnée', debug=self.debug)
         self.stats['suppr'] += 1
         
     def clore_traduction(self, page):
@@ -78,9 +79,8 @@ class Trad_maintenance:
             n = self.re_suivi.search(page.text)
             if n:
                 langue = n.group(2)
-                article = n.group(3)
-                appel = u'{{Traduit de|%s|%s}}' % (langue, article)
-                pywikibot.output(appel)
+                article = n.group(3).replace('_', ' ')
+                appel = u'{{Traduit de|%s|%s}}\n' % (langue, article)
                 disc.text = appel + disc.text
                 pywikibot.output(disc.text)
                 #BeBot.save(disc, comment=self.resume+u' : Ajout du bandeau de licence')
@@ -100,7 +100,7 @@ class Trad_maintenance:
             if not m:
                 continue
             annee = int(m.group(1))
-            for p in c.articles(total=4, content=True): # Pour chaque traduction
+            for p in c.articles(total=6, content=True): # Pour chaque traduction
                 # Recherche du mois
                 mois = u""
                 for d in p.categories():
@@ -135,15 +135,15 @@ class Trad_maintenance:
                     if supprimer:
                         self.suppressions.append([p, backlinks])
                     elif mois != u'':
+                        # Vérifier le {{Traduit de}}
+                        self.traduit_de(p)
                         # Dénombrement global
                         self.listes[self.les_statuts[statut-1]][annee][mois] += 1
 
         # Application des suppressions
         pywikibot.output(u"------ Pages à supprimer ------")
         for p, backlinks in self.suppressions:
-            self.traduit_de(p) # TEST
             if not self.debug:
-                self.traduit_de(p)
                 self.supprimer(p, backlinks)
             else:
                 pywikibot.output(u"* [[%s]]" % p.title())
@@ -155,7 +155,7 @@ class Trad_maintenance:
                 for mois, nb in m.items():
                     if nb == 0:
                         lis = pywikibot.Page(self.site, u'Projet:Traduction/*/%s/%s %i' % (statut, mois, annee))
-                        BeBot.delete(lis, self.resume+u' : Liste mensuelle périmée', debug=self.debug)
+                        #BeBot.delete(lis, self.resume+u' : Liste mensuelle périmée', debug=self.debug)
                         self.stats['liste'] += 1
 
         pywikibot.output(u'=== Statistiques ===\n* Nb de pages supprimées: %i\n* Nb de pages closes: %i\n* Listes périmées : %i' % (self.stats['suppr'], self.stats['cloture'], self.stats['liste']))
