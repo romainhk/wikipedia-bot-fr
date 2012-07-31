@@ -23,8 +23,7 @@ class Trad_maintenance:
         self.re_appel = re.compile('[\[\{]{2}Discussion:[\w/ ]+?/Traduction[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_statut = re.compile('\|\s*status\s*=\s*(\d{1})', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_traduitde = re.compile('\{\{Traduit de.+?\}\}\s*', re.IGNORECASE)
-        self.re_traduitde_inser = re.compile('^==', re.MULTILINE)
-        self.re_suivi = re.compile("\{\{(Traduction/Suivi|Translation/Information)[^\|\}}]*\|(\w+)\|(\w+)\|", re.LOCALE|re.UNICODE|re.IGNORECASE)
+        self.re_suivi = re.compile("\{\{(Traduction/Suivi|Translation/Information)\s*\|(\w+)\|(\w+)\|", re.LOCALE|re.UNICODE|re.IGNORECASE)
 
         self.suppressions = []
         self.les_statuts = [ 'Demandes', 'En cours', 'A relire', 'En relecture', u'Terminée' ]
@@ -44,7 +43,6 @@ class Trad_maintenance:
         #pywikibot.output(u"&&&& retirer_le_modele_Traduction : %s" % page.title())
         #pywikibot.output(page.text)
         # BeBot.save(page, comment=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True)
-        self.stats['modele'] += 1
         
     def supprimer(self, page, backlinks):
         """ Supprime la page et nettoie les pages liées
@@ -74,17 +72,16 @@ class Trad_maintenance:
         """ Vérifie et ajoute le {{Traduit de}} à la page de discussion
         """
         disc = pywikibot.Page(self.site, page.title().replace('/Traduction', ''))
-        pywikibot.output(disc.title())
-        m = re_traduitde.search(disc.text)
+        m = self.re_traduitde.search(disc.text)
         if not m:
             # Récupérer les infos
-            n = re_suivi.search(page.text)
+            n = self.re_suivi.search(page.text)
             if n:
                 langue = n.group(2)
                 article = n.group(3)
                 appel = u'{{Traduit de|%s|%s}}' % (langue, article)
                 pywikibot.output(appel)
-                disc.text = self.re_traduitde_inser.sub(r'%s\n\n==' % appel, disc.text)
+                disc.text = appel + disc.text
                 pywikibot.output(disc.text)
                 #BeBot.save(disc, comment=self.resume+u' : Ajout du bandeau de licence')
             else:
@@ -144,9 +141,10 @@ class Trad_maintenance:
         # Application des suppressions
         pywikibot.output(u"------ Pages à supprimer ------")
         for p, backlinks in self.suppressions:
+            self.traduit_de(p) # TEST
             if not self.debug:
-                self.supprimer(p, backlinks)
                 self.traduit_de(p)
+                self.supprimer(p, backlinks)
             else:
                 pywikibot.output(u"* [[%s]]" % p.title())
 
@@ -160,8 +158,7 @@ class Trad_maintenance:
                         BeBot.delete(lis, self.resume+u' : Liste mensuelle périmée', debug=self.debug)
                         self.stats['liste'] += 1
 
-        pywikibot.output(self.listes)
-        pywikibot.output(u'=== Statistiques ===\n* Nb de pages supprimées: %i\n* Nb de pages closes: %i\n* Listes périmées : %i' % (self.stats['suppr'], self.stats['cloture'], self.Stats['liste']))
+        pywikibot.output(u'=== Statistiques ===\n* Nb de pages supprimées: %i\n* Nb de pages closes: %i\n* Listes périmées : %i' % (self.stats['suppr'], self.stats['cloture'], self.stats['liste']))
 
 def main():
     debug = False
