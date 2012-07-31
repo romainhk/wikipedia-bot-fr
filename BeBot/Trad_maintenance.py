@@ -73,9 +73,9 @@ class Trad_maintenance:
         """ Vérifie et ajoute le {{Traduit de}} à la page de discussion
         """
         disc = pywikibot.Page(self.site, page.title().replace('/Traduction', ''))
+        l = self.re_trad.search(disc.text)
         m = self.re_traduitde.search(disc.text)
-        if not m:
-            # Récupérer les infos
+        if not l and not m:
             n = self.re_suivi.search(page.text)
             if n:
                 langue = n.group(2)
@@ -100,7 +100,7 @@ class Trad_maintenance:
             if not m:
                 continue
             annee = int(m.group(1))
-            for p in c.articles(total=6, content=True): # Pour chaque traduction
+            for p in c.articles(total=5, content=True): # Pour chaque traduction
                 # Recherche du mois
                 mois = u""
                 for d in p.categories():
