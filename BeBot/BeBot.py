@@ -17,6 +17,8 @@ Rassemble plusieurs fonctions génériques :
 * récupérer une table dans un bdd
 * lire un fichier de configuration
 * retourner une chaine de caractère...
+* sauvegarde une page
+* supprime une page
 """
 
 BeginBotSection = u'<!-- BEGIN BOT SECTION -->'
@@ -195,4 +197,30 @@ def retirer(exprs, text):
     for a in exprs:
         text = a.sub(r'', text)
     return text
+
+def save(page, comment=u'', minor=False):
+    """ Sauvegarde la page
+    """
+    try:
+        page.save(page, comment=comment, minor=minor)
+    except pywikibot.EditConflict:
+        pywikibot.warning(u'Skipping %s because of edit conflict'
+                          % (page,))
+    except pywikibot.SpamfilterError, e:
+        pywikibot.warning(u'Cannot change %s because of blacklist entry %s'
+                          % (page, e.url))
+    except pywikibot.PageNotSaved, error:
+        pywikibot.warning(u'Error putting page: %s' % error)
+    except pywikibot.LockedPage:
+        pywikibot.warning(u'Skipping %s (locked page)' % (page,))
+    except pywikibot.ServerError, e:
+        pywikibot.warning(u'Server Error : %s' % e)
+
+def delete(page, raison):
+    """ Supprime la page
+    """
+    try:
+        page.delete(page, reason=raison, prompt=False)
+    except pywikibot.NoUsername, e:
+        pywikibot.warning(u'Delete %s is impossible - User unknown' % (page,))
 
