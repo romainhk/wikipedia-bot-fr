@@ -37,7 +37,7 @@ class Trad_maintenance:
                 self.listes[s][a] = les_mois.copy()
         
     def retirer_le_modele_Traduction(self, page):
-        """ Supprime le {{Traduction}} d'une page
+        """ Retire le {{Traduction}} d'une page
         """
         page.text = self.re_trad.sub(r'', page.text)
         #pywikibot.output(u"&&&& retirer_le_modele_Traduction : %s" % page.title())
@@ -81,7 +81,7 @@ class Trad_maintenance:
                 article = n.group(3).replace('_', ' ')
                 appel = u'{{Traduit de|%s|%s}}\n' % (langue, article)
                 disc.text = appel + disc.text
-                pywikibot.output(disc.text)
+                #pywikibot.output(disc.text)
                 BeBot.save(disc, comment=self.resume+u' : Ajout du bandeau de licence', debug=self.debug)
             else:
                 pywikibot.warning(u'Impossible de trouver les infos de traduction pour [[%s]]' % page.title())
@@ -100,8 +100,7 @@ class Trad_maintenance:
                 continue
             annee = int(m.group(1))
             for p in c.articles(total=6, content=True): # Pour chaque traduction
-                # Recherche du mois
-                mois = u""
+                mois = u"" # Recherche du mois
                 for d in p.categories():
                     m = re_mois.search(d.title())
                     if m:
@@ -142,10 +141,7 @@ class Trad_maintenance:
         # Application des suppressions
         pywikibot.output(u"------ Pages à supprimer ------")
         for p, backlinks in self.suppressions:
-            if not self.debug:
-                self.supprimer(p, backlinks)
-            else:
-                pywikibot.output(u"* [[%s]]" % p.title())
+            self.supprimer(p, backlinks)
 
         # Nettoyage des listes mensuelles
         pywikibot.output(u"------ Listes à supprimer ------")
