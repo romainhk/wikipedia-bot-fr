@@ -55,10 +55,7 @@ class Infolettre:
                 + u'\n{{colonnes|nombre=3|\n' + propositions  + u'\n}}\n' \
                 + u'<noinclude>\n[[Catégorie:Wikipédia:Atelier de lecture|Lumière sur...]]\n</noinclude>'
         pywikibot.output(u"# Publication sur l'Atelier de lecture")
-        try:
-            lumiere.save(comment=u'Maj hebdomadaire de la liste', minor=False, async=True)
-        except pywikibot.Error, e:
-            pywikibot.warning(u"Impossible de sauvegarder la liste des Adq/BA pour le Projet:Adl" )
+        BeBot.save(lumiere, comment=u'Maj hebdomadaire de la liste')
 
     def wikimag(self):
         """ Wikimag """
@@ -117,10 +114,7 @@ class Infolettre:
             lecteur = lecteur.getRedirectTarget()
         self.rm_old(lecteur)
         lecteur.text += msg
-        try:
-            lecteur.save(comment=self.resume, minor=False, async=True)
-        except pywikibot.Error, e:
-            pywikibot.warning(u"Impossible de refourger l'infolettre à %s" % lecteur.title(withNamespace=True) )
+        BeBot.save(lecteur, comment=self.resume)
 
     def run(self):
         if   self.infolettre == u"wikimag":

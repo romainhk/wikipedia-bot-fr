@@ -58,7 +58,7 @@ class TraduitDe:
                                 founds[p.title()] = td
                                 #pywikibot.showDiff(p.text, self.tdRE.sub(td, p.text))
                                 p.text = self.tdRE.sub(td, p.text)
-                                p.save(comment=u'Ajout automatique du paramètre "date" au modèle "Traduit de" ([[Discussion modèle:Traduit de#Date de traduction sans oldid]])', minor=True, async=True)
+                                BeBot.save(p, comment=u'Ajout automatique du paramètre "date" au modèle "Traduit de" ([[Discussion modèle:Traduit de#Date de traduction sans oldid]])', minor=True)
         #for k in founds.iterkeys():
         #    pywikibot.output(k)
         pywikibot.output(u'Total : %i' % len(founds))

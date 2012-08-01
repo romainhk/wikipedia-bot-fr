@@ -195,10 +195,7 @@ class PreparationWikimag:
                     redac.append(redacteur)
                     pywikibot.output(redacteur.title())
                     redacteur.text += msg
-                    try:
-                        redacteur.save(comment=resume, minor=False, async=True)
-                    except pywikibot.Error, e:
-                        pywikibot.warning(u"Pas d'alerte pour %s" % redacteur.title(withNamespace=True) )
+                    BeBot.save(redacteur, comment=resume)
 
     def run(self):
         pywikibot.output(u"Préparation du wikimag débutant le " + self.lasemaine)

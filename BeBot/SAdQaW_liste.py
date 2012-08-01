@@ -303,8 +303,8 @@ def main():
         except:
             continue
         lq.run()
-        lq.page_projet.put(lq.publier(), \
-                comment=u'Mise à jour mensuelle des listings', minorEdit=False)
+        lq.page_projet.text = lq.publier()
+        BeBot.save(lq.page_projet, comment=u'Mise à jour mensuelle des listings')
         log += unicode(lq)
     pywikibot.Page(pywikibot.Site('fr'), \
             u'Utilisateur:BeBot/Listage qualité').put(log, \

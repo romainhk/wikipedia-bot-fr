@@ -207,17 +207,17 @@ def save(page, comment=u'', minor=False, debug=False):
         try:
             page.save(page, comment=comment, minor=minor)
         except pywikibot.EditConflict:
-            pywikibot.warning(u'Skipping %s because of edit conflict'
+            pywikibot.warning(u"Passe %s à cause d'un conflit d'édition"
                               % (page,))
         except pywikibot.SpamfilterError, e:
-            pywikibot.warning(u'Cannot change %s because of blacklist entry %s'
+            pywikibot.warning(u"Ne peut pas modifier %s à cause d'un blacklistage %s"
                               % (page, e.url))
         except pywikibot.PageNotSaved, error:
-            pywikibot.warning(u'Error putting page: %s' % error)
+            pywikibot.warning(u"Erreur lors de l'écriture de %s" % error)
         except pywikibot.LockedPage:
-            pywikibot.warning(u'Skipping %s (locked page)' % (page,))
+            pywikibot.warning(u'Passe %s (page verouillée)' % (page,))
         except pywikibot.ServerError, e:
-            pywikibot.warning(u'Server Error : %s' % e)
+            pywikibot.warning(u'Erreur Serveur : %s' % e)
 
 def delete(page, raison, debug=False):
     """ Supprime la page

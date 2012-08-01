@@ -46,10 +46,7 @@ class Stats_ProjetTraduction:
         stats = re.compile(u"^== Statistiques ==[^=]*", re.DOTALL|re.MULTILINE)
         res.text = stats.sub(r'', res.text)
         res.text = res.text + msg
-        try:
-            res.save(comment=self.resume, minor=False, async=True)
-        except pywikibot.Error, e:
-            pywikibot.warning(u"Impossible de modifier la page %s" % res.title(withNamespace=True) )
+        BeBot.save(res, comment=self.resume)
 
     def run(self):
         bot = re.compile('bot', re.IGNORECASE)

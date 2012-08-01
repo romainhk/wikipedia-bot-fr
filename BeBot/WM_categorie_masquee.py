@@ -4,7 +4,7 @@ import pywikibot
 
 class CategorieMasquee:
     """ Categorie Masquée
-        Ajoute une categorie à la fin, entre deux <noinclude>
+        Ajoute une catégorie à la fin, entre deux <noinclude>
     """
     def __init__(self, site, categorie):
         self.site = site
@@ -18,7 +18,7 @@ class CategorieMasquee:
                 if p.exists() and not p.isRedirectPage():
                     #pywikibot.output(p.title())
                     p.text += self.categorie
-                    p.save(comment=self.resume, minor=True, async=False)
+                    BeBot.save(p, comment=self.resume, minor=True)
 
 def main():
     site = pywikibot.getSite()

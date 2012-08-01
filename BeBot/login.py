@@ -6,4 +6,4 @@ import pywikibot
 site = pywikibot.getSite()
 page = pywikibot.Page(site, u'Utilisateur:BeBot/Test')
 page.text = ' '
-page.save(comment=u'Login', minor=True, async=False)
+BeBot.save(page, comment=u'Login', minor=True)
