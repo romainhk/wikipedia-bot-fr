@@ -198,23 +198,26 @@ def retirer(exprs, text):
         text = a.sub(r'', text)
     return text
 
-def save(page, comment=u'', minor=False):
+def save(page, comment=u'', minor=False, debug=False):
     """ Sauvegarde la page
     """
-    try:
-        page.save(page, comment=comment, minor=minor)
-    except pywikibot.EditConflict:
-        pywikibot.warning(u'Skipping %s because of edit conflict'
-                          % (page,))
-    except pywikibot.SpamfilterError, e:
-        pywikibot.warning(u'Cannot change %s because of blacklist entry %s'
-                          % (page, e.url))
-    except pywikibot.PageNotSaved, error:
-        pywikibot.warning(u'Error putting page: %s' % error)
-    except pywikibot.LockedPage:
-        pywikibot.warning(u'Skipping %s (locked page)' % (page,))
-    except pywikibot.ServerError, e:
-        pywikibot.warning(u'Server Error : %s' % e)
+    if debug:
+        pywikibot.output(u'Sav -> %s' % page.title())
+    else:
+        try:
+            page.save(page, comment=comment, minor=minor)
+        except pywikibot.EditConflict:
+            pywikibot.warning(u'Skipping %s because of edit conflict'
+                              % (page,))
+        except pywikibot.SpamfilterError, e:
+            pywikibot.warning(u'Cannot change %s because of blacklist entry %s'
+                              % (page, e.url))
+        except pywikibot.PageNotSaved, error:
+            pywikibot.warning(u'Error putting page: %s' % error)
+        except pywikibot.LockedPage:
+            pywikibot.warning(u'Skipping %s (locked page)' % (page,))
+        except pywikibot.ServerError, e:
+            pywikibot.warning(u'Server Error : %s' % e)
 
 def delete(page, raison, debug=False):
     """ Supprime la page

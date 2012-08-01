@@ -42,7 +42,7 @@ class Trad_maintenance:
         page.text = self.re_trad.sub(r'', page.text)
         #pywikibot.output(u"&&&& retirer_le_modele_Traduction : %s" % page.title())
         #pywikibot.output(page.text)
-        # BeBot.save(page, comment=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True)
+        BeBot.save(page, comment=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True, debug=self.debug)
         
     def supprimer(self, page, backlinks):
         """ Supprime la page et nettoie les pages liées
@@ -53,10 +53,9 @@ class Trad_maintenance:
             b.text = self.re_trad.sub(r'', b.text)
             b.text = self.re_appel.sub(r'', b.text)
             #pywikibot.output(b.text)
-            # BeBot.save(b, comment=self.resume+u' : Traduction abandonnée')
+            BeBot.save(b, comment=self.resume+u' : Traduction abandonnée', debug=self.debug)
         self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page))
         BeBot.delete(page, self.resume+u' : Traduction abandonnée', debug=self.debug)
-        #BeBot.delete(page.toggleTalkPage(), self.resume+u' : Traduction abandonnée', debug=self.debug)
         self.stats['suppr'] += 1
         
     def clore_traduction(self, page):
@@ -65,7 +64,7 @@ class Trad_maintenance:
         pywikibot.output(u"&&& clore : %s" % page.title())
         page.text = self.re_statut.sub('|status=5', page.text)
         #pywikibot.output(page.text)
-        # BeBot.save(page, comment=self.resume+u' : Clôture de la traduction')
+        BeBot.save(page, comment=self.resume+u' : Clôture de la traduction', debug=self.debug)
         self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page))
         self.stats['cloture'] += 1
 
@@ -83,13 +82,13 @@ class Trad_maintenance:
                 appel = u'{{Traduit de|%s|%s}}\n' % (langue, article)
                 disc.text = appel + disc.text
                 pywikibot.output(disc.text)
-                #BeBot.save(disc, comment=self.resume+u' : Ajout du bandeau de licence')
+                BeBot.save(disc, comment=self.resume+u' : Ajout du bandeau de licence', debug=self.debug)
             else:
-                pywikibot.output(u'Impossible de trouver les infos de traduction pour [[%s]]' % page.title())
+                pywikibot.warning(u'Impossible de trouver les infos de traduction pour [[%s]]' % page.title())
         
     def run(self):
         if self.debug:
-            pywikibot.output(u"=== Mode débuggage actif ; aucunes modifications effectuées ===")
+            pywikibot.warning(u"=== Mode débuggage actif ; aucunes modifications effectuées ===")
         ancien = self.date.year - 2
         re_annee = re.compile('Traduction de (\d{4})')
         re_mois  = re.compile('Traduction du mois de ([\w\xe9\xfb]+)', re.UNICODE|re.LOCALE) # éû
@@ -100,7 +99,7 @@ class Trad_maintenance:
             if not m:
                 continue
             annee = int(m.group(1))
-            for p in c.articles(total=5, content=True): # Pour chaque traduction
+            for p in c.articles(total=6, content=True): # Pour chaque traduction
                 # Recherche du mois
                 mois = u""
                 for d in p.categories():
@@ -165,7 +164,7 @@ def main():
     if len(sys.argv) == 2 and sys.argv[1] == "debug":
         debug = True
     elif len(sys.argv) != 1:
-        pywikibot.output(u"Nombre de paramètres incorrectes")
+        pywikibot.warning(u"Nombre de paramètres incorrectes")
         sys.exit(1)
     site = pywikibot.getSite()
     tm = Trad_maintenance(site, debug)
