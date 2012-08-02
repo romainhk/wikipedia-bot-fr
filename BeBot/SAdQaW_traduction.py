@@ -100,7 +100,7 @@ class TraductionDeQualite:
 
     def publier(self, souspage, liste, soustableau=0, simple=False):
         """
-        Racourci pour publier une liste d'article sur une souspage du P:SAdQaW
+        Raccourci pour publier une liste d'article sur une souspage du P:SAdQaW
         La paramètre « simple » permet d'obtenir un affichage simplifié sous forme d'une liste de liens.
         """
         retour = u'%s pages.\n\n' % str(len(liste[soustableau]))

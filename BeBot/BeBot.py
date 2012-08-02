@@ -24,6 +24,9 @@ Rassemble plusieurs fonctions génériques :
 BeginBotSection = u'<!-- BEGIN BOT SECTION -->'
 EndBotSection   = u'<!-- END BOT SECTION -->'
 ER_BotSection = re.compile("%s(.*)%s" % (BeginBotSection, EndBotSection), re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
+RE_Modele = re.compile('\{\{([^\}]+)\}\}', re.IGNORECASE|re.LOCALE|re.MULTILINE)
+RE_Comment = re.compile("(<!--.*?-->)", re.MULTILINE|re.DOTALL) # commentaire html
+RE_Pipe = re.compile("\[\[((.+?)\|.+?)\]\]", re.LOCALE|re.MULTILINE|re.DOTALL) # lien avec pipe
 
 def moistoint(mois):
     """
@@ -232,4 +235,29 @@ def delete(page, raison, debug=False):
             page.delete(page, reason=raison, prompt=False)
         except pywikibot.NoUsername, e:
             pywikibot.warning(u'Delete %s is impossible - User unknown' % (page,))
+
+def modeletodic(modele):
+    """ Transforme un chaine "modèle" en tableau
+    convention : r[0] est le nom du modèle
+    """
+    r = {}
+    m = RE_Modele.search(modele)
+    if m:
+        chaine = m.group(1).replace('\n', '')
+        chaine = RE_Comment.sub(r'', chaine)
+        chaine = RE_Pipe.sub(r'[[\2]]', chaine)
+        pos = 0
+        for l in chaine.split("|"):
+            if pos == 0:
+                r[0] = l
+                pos += 1
+            else:
+                a = l.split("=")
+                b = a[0].strip()
+                if len(a) > 1:
+                    r[b] = a[1].strip()
+                else:
+                    r[pos] = b
+                    pos +=1
+    return r
 
