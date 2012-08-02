@@ -140,12 +140,13 @@ class PreparationWikimag:
                 re.LOCALE|re.MULTILINE)
         articles = []
         extremum = self.date_fin - datetime.timedelta(days=1)
-        cetteSemaine = unicode(extremum.strftime("%e#%B#%Y"))
+        cetteSemaine = unicode(extremum.strftime("%e#%B#%Y"), errors='ignore')
         trouve = False
         for ligne in BeBot.page_ligne_par_ligne(self.site, nompage):
             s = semRE.search(ligne)
             if s is not None:              # Changement de semaine
-                fin = s.group(1)+u'#'+s.group(2)+u'#'+s.group(3)
+                mois = s.group(2).replace(u'û', '').replace(u'é', '')
+                fin = s.group(1)+u'#'+mois+u'#'+s.group(3)
                 if fin == cetteSemaine and not trouve:
                     trouve = True
                 else:
