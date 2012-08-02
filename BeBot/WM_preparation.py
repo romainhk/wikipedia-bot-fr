@@ -1,17 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-#$ -m ae
 import re, datetime, locale
 import BeBot
 import pywikibot
-from pywikibot import pagegenerators, catlib
+#from pywikibot import pagegenerators, catlib
 locale.setlocale(locale.LC_ALL, '')
 
 class PreparationWikimag:
     """ Préparation d'un wikimag : 
         annonces, images, promotions AdQ/BA de la semaine courante ; alerte si pas de mag.
-        TODO : problème de reconnaissance des dates :
-            {{Article de qualité|...|date=1{{er}} février 2011}}
+    TODO : problème de reconnaissance des dates: {{Article de qualité|...|date=1{{er}} février 2011}}
     """
     def __init__(self, site):
         self.site = site
@@ -179,9 +177,10 @@ class PreparationWikimag:
         if not wm.exists() or BeBot.taille_page(wm, 1) < 566 :
             resume = u"Wikimag : alerte rédaction"
             redac = []
-            cat = catlib.Category(self.site, u'Utilisateur rédacteur Wikimag')
-            cpg = pagegenerators.CategorizedPageGenerator(cat, recurse=False)
-            for r in cpg:
+            #cat = catlib.Category(self.site, u'Utilisateur rédacteur Wikimag')
+            #cpg = pagegenerators.CategorizedPageGenerator(cat, recurse=False)
+            cat = pywikibot.Category(self.site, u'Utilisateur rédacteur Wikimag')
+            for r in cat.articles():
                 can = r.title().split('/')
                 if len(can) > 0:
                     can = can[0]

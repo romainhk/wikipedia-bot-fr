@@ -4,7 +4,6 @@ import re, datetime, MySQLdb, getopt, sys, locale
 from MySQLdb.constants import ER
 import BeBot
 import pywikibot
-from pywikibot import pagegenerators, catlib
 locale.setlocale(locale.LC_ALL, '')
 
 class ListageQualite:
