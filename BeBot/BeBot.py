@@ -223,7 +223,10 @@ def delete(page, raison, debug=False):
     """ Supprime la page
     """
     if debug:
-        pywikibot.output(u'Del -> %s' % page.title())
+        redir = u''
+        if page.isRedirectPage():
+            redir = u" (redirection)"
+        pywikibot.output(u'Del -> %s%s' % (page.title(), redirection))
     else:
         try:
             page.delete(page, reason=raison, prompt=False)

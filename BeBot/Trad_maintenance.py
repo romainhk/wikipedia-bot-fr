@@ -44,17 +44,16 @@ class Trad_maintenance:
         #pywikibot.output(page.text)
         BeBot.save(page, comment=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True, debug=self.debug)
         
-    def supprimer(self, page, backlinks):
+    def supprimer(self, page):
         """ Supprime la page et nettoie les pages liées
         """
         pywikibot.output(u"&& supprimer : %s" % page.title())
-        pywikibot.output(backlinks)
-        for b in backlinks:
-            b.text = self.re_trad.sub(r'', b.text)
+        self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page)) # si traduction active
+        for b in page.backlinks():
+            #b.text = self.re_trad.sub(r'', b.text) #-> prise ne charge par retirer_le_modele_Traduction
             b.text = self.re_appel.sub(r'', b.text)
             #pywikibot.output(b.text)
             BeBot.save(b, comment=self.resume+u' : Traduction abandonnée', debug=self.debug)
-        self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page))
         BeBot.delete(page, self.resume+u' : Traduction abandonnée', debug=self.debug)
         self.stats['suppr'] += 1
         
@@ -79,6 +78,7 @@ class Trad_maintenance:
             if n:
                 langue = n.group(2)
                 article = n.group(3).replace('_', ' ')
+                # TODO : oldid et date
                 appel = u'{{Traduit de|%s|%s}}\n' % (langue, article)
                 disc.text = appel + disc.text
                 #pywikibot.output(disc.text)
@@ -99,7 +99,7 @@ class Trad_maintenance:
             if not m:
                 continue
             annee = int(m.group(1))
-            for p in c.articles(total=6, content=True): # Pour chaque traduction
+            for p in c.articles(total=9, content=True): # Pour chaque traduction
                 mois = u"" # Recherche du mois
                 for d in p.categories():
                     m = re_mois.search(d.title())
@@ -111,37 +111,25 @@ class Trad_maintenance:
                 if not statut:
                     continue
                 statut = int(statut.group(1))
+                if mois != u'':
+                    # Dénombrement global
+                    self.listes[self.les_statuts[statut-1]][annee][mois] += 1
 
                 if annee <= ancien: # critère d'ancienneté
-                    supprimer = False
-                    #pywikibot.output(u"%s !! %i" % (p.title(), statut))
+                    pywikibot.output(u"%s !! %i" % (p.title(), statut))
                     if statut == 1:  # Vieille demande
-                        supprimer = True
-                        backlinks = []
-                        for b in p.backlinks(): # les pages liées
-                            if b.title()[:19] == u'Projet:Traduction/*': # sera nettoyé automatiquement
-                                continue
-                            elif b.namespace() == 1: # utilisé comme bandeau de licence dans b
-                                supprimer = False
-                                continue
-                            else:
-                                backlinks.append(b)
+                        self.suppressions.append(p)
                     elif statut == 3 or statut == 4: # Relecture abandonnée
                         statut = 5
                         self.clore_traduction(p)
-
-                    if supprimer:
-                        self.suppressions.append([p, backlinks])
-                    elif mois != u'':
-                        # Vérifier le {{Traduit de}}
-                        self.traduit_de(p)
-                        # Dénombrement global
-                        self.listes[self.les_statuts[statut-1]][annee][mois] += 1
+                else:
+                    # Vérifier simplement le {{Traduit de}}
+                    self.traduit_de(p)
 
         # Application des suppressions
         pywikibot.output(u"------ Pages à supprimer ------")
-        for p, backlinks in self.suppressions:
-            self.supprimer(p, backlinks)
+        for p in self.suppressions:
+            self.supprimer(p)
 
         # Nettoyage des listes mensuelles
         pywikibot.output(u"------ Listes à supprimer ------")
