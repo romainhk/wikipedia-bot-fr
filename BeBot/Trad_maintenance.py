@@ -10,14 +10,14 @@ class Trad_maintenance:
         Effectue les maintenances du Projet:Traduction :
       * supprimer les anciennes demandes sans suite
       * clore les relectures anciennes
-      * supprimer les listes mensuelles devenues inutiles
+      * supprimer les listes mensuelles devenues inutiles (et qui ne se vident pas)
     """
     def __init__(self, site, debug):
         self.site = site
         self.debug = debug
         self.resume = u'Maintenance du [[Projet:Traduction]]'
         self.date = datetime.date.today()
-        self.stats = { 'suppr': 0, 'cloture' : 0, 'liste' : 0 }
+        self.stats = { 'suppr': 0, 'cloture' : 0, 'traduitde': 0,  'liste' : 0 }
 
         self.re_trad = re.compile(r'{{Traduction}}\s*', re.IGNORECASE)
         self.re_appel = re.compile('[\[\{]{2}Discussion:[\w/ ]+?/Traduction[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE)
@@ -27,21 +27,27 @@ class Trad_maintenance:
 
         self.suppressions = []
         self.les_statuts = [ 'Demandes', 'En cours', 'A relire', 'En relecture', u'Terminée' ]
-        les_mois = { 'janvier' : 0,    u'février' : 0,    'mars' : 0,        'avril' : 0,
-                     'mai' : 0,         'juin' : 0,        'juillet' : 0,     u'août' : 0,
-                     'septembre' : 0,   'octobre' : 0,     'novembre' : 0,    u'décembre': 0 }
+        les_mois = { 'janvier' : 0,    u'février' : 0,     'mars' : 0,        'avril' : 0,
+                     'mai' : 0,         'juin' : 0,        'juillet' : 0,    u'août' : 0,
+                     'septembre' : 0,   'octobre' : 0,     'novembre' : 0,   u'décembre': 0 }
         self.listes = {} # Nombre d'articles par statut / année / mois
         for s in self.les_statuts:
             self.listes[s] = {}
             for a in range(2006, self.date.year+1):
                 self.listes[s][a] = les_mois.copy()
         
+    def __str__(self):
+        r  = u"== Rapport d'exécution ==\n"
+        r += u'* Nb de pages supprimées: %i\n' % self.stats['suppr']
+        r += u'* Nb de traductions closes: %i\n' % self.stats['cloture']
+        r += u'* Nb de {{Traduit de}} ajoutés: %i\n' % self.stats['traduitde']
+        r += u'* Listes périmées : %i\n' % self.stats['liste']
+        return r
+
     def retirer_le_modele_Traduction(self, page):
         """ Retire le {{Traduction}} d'une page
         """
         page.text = self.re_trad.sub(r'', page.text)
-        #pywikibot.output(u"&&&& retirer_le_modele_Traduction : %s" % page.title())
-        #pywikibot.output(page.text)
         BeBot.save(page, comment=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True, debug=self.debug)
         
     def supprimer(self, page):
@@ -83,12 +89,13 @@ class Trad_maintenance:
                 disc.text = appel + disc.text
                 #pywikibot.output(disc.text)
                 BeBot.save(disc, comment=self.resume+u' : Ajout du bandeau de licence', debug=self.debug)
+                self.stats['traduitde'] += 1
             else:
                 pywikibot.warning(u'Impossible de trouver les infos de traduction pour [[%s]]' % page.title())
         
     def run(self):
         if self.debug:
-            pywikibot.warning(u"=== Mode débuggage actif ; aucunes modifications effectuées ===")
+            pywikibot.warning(u"== Mode débuggage actif ; aucunes modifications effectuées ==")
         ancien = self.date.year - 2
         re_annee = re.compile('Traduction de (\d{4})')
         re_mois  = re.compile('Traduction du mois de ([\w\xe9\xfb]+)', re.UNICODE|re.LOCALE) # éû
@@ -99,7 +106,7 @@ class Trad_maintenance:
             if not m:
                 continue
             annee = int(m.group(1))
-            for p in c.articles(total=9, content=True): # Pour chaque traduction
+            for p in c.articles(total=10, content=True): # Pour chaque traduction
                 mois = u"" # Recherche du mois
                 for d in p.categories():
                     m = re_mois.search(d.title())
@@ -116,7 +123,6 @@ class Trad_maintenance:
                     self.listes[self.les_statuts[statut-1]][annee][mois] += 1
 
                 if annee <= ancien: # critère d'ancienneté
-                    pywikibot.output(u"%s !! %i" % (p.title(), statut))
                     if statut == 1:  # Vieille demande
                         self.suppressions.append(p)
                     elif statut == 3 or statut == 4: # Relecture abandonnée
@@ -141,8 +147,6 @@ class Trad_maintenance:
                         #BeBot.delete(lis, self.resume+u' : Liste mensuelle périmée', debug=self.debug)
                         self.stats['liste'] += 1
 
-        pywikibot.output(u'=== Statistiques ===\n* Nb de pages supprimées: %i\n* Nb de pages closes: %i\n* Listes périmées : %i' % (self.stats['suppr'], self.stats['cloture'], self.stats['liste']))
-
 def main():
     debug = False
     if len(sys.argv) == 2 and sys.argv[1] == "debug":
@@ -153,6 +157,7 @@ def main():
     site = pywikibot.getSite()
     tm = Trad_maintenance(site, debug)
     tm.run()
+    pywikibot.output(tm)
 
 if __name__ == "__main__":
     try:

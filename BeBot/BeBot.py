@@ -215,7 +215,7 @@ def save(page, comment=u'', minor=False, debug=False):
         except pywikibot.PageNotSaved, error:
             pywikibot.warning(u"Erreur lors de l'écriture de %s" % error)
         except pywikibot.LockedPage:
-            pywikibot.warning(u'Passe %s (page verouillée)' % (page,))
+            pywikibot.warning(u'Passe %s (page verrouillée)' % (page,))
         except pywikibot.ServerError, e:
             pywikibot.warning(u'Erreur Serveur : %s' % e)
 
@@ -226,7 +226,7 @@ def delete(page, raison, debug=False):
         redir = u''
         if page.isRedirectPage():
             redir = u" (redirection)"
-        pywikibot.output(u'Del -> %s%s' % (page.title(), redirection))
+        pywikibot.output(u'Del -> %s%s' % (page.title(), redir))
     else:
         try:
             page.delete(page, reason=raison, prompt=False)
