@@ -3,7 +3,7 @@
 import re, datetime, locale
 import BeBot
 import pywikibot
-from pywikibot import pagegenerators, catlib
+from pywikibot import pagegenerators
 locale.setlocale(locale.LC_ALL, '')
 
 class TraductionDeQualite:
@@ -35,8 +35,10 @@ class TraductionDeQualite:
         cats = []
         self.ignor_list = u'' # On ignore les pages qui ont déjà le paramètre adq/ba
         tmp = []
-        cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Traduction d'un Article de Qualité")))
-        cats.append(pagegenerators.CategorizedPageGenerator(catlib.Category(self.site, u"Catégorie:Traduction d'un Bon Article")))
+        c1 = pywikibot.Category(self.site, u"Catégorie:Traduction d'un Article de Qualité")
+        cats.append(pagegenerators.CategorizedPageGenerator(c1))
+        c2 = pywikibot.Category(self.site, u"Catégorie:Traduction d'un Bon Article")))
+        cats.append(pagegenerators.CategorizedPageGenerator(c2))
         gen = pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats))
         gen = pagegenerators.PreloadingGenerator(gen, step=125)
         for tion in gen:

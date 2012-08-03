@@ -4,7 +4,7 @@
 import re, datetime, MySQLdb, getopt, sys, locale
 from MySQLdb.constants import ER
 import pywikibot
-from pywikibot import pagegenerators, catlib
+from pywikibot import pagegenerators
 import BeBot
 locale.setlocale(locale.LC_ALL, '')
 
@@ -213,7 +213,7 @@ class ContenuDeQualite:
         self.total_avant = len(connus)
         ordre_cats = [ u'AdQ', u'BA', u'?' ]
         for cat in self.cat_qualite:
-            categorie = catlib.Category(self.site, cat)
+            categorie = pywikibot.Category(self.site, cat)
             cpg = pagegenerators.CategorizedPageGenerator(categorie, recurse=False)
             try:
                 i = self.categories_de_qualite[self.langue].index(cat)

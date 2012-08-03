@@ -4,7 +4,6 @@ import re, datetime, locale, MySQLdb, math
 import BeBot
 from MySQLdb.constants import ER
 import pywikibot
-from pywikibot import catlib
 from textwrap import dedent
 locale.setlocale(locale.LC_ALL, '')
 
@@ -40,7 +39,8 @@ class GraphiqueEvaluations:
     def run(self):
         # Dénombrement
         l = {}
-        for c in catlib.Category(self.site, u"Catégorie:Article par importance").subcategories():
+        cat = pywikibot.Category(self.site, u"Catégorie:Article par importance"):
+        for c in cat.subcategories(recurse=False):
             nom = c.title().split(' ')[-1]
             l[nom] = 0
             for d in c.subcategories():

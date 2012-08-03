@@ -95,7 +95,7 @@ class Trad_maintenance:
                     oldid = a['oldid']
                     jour = a['jour']
                     mois = BeBot.moistoint(a['mois'])
-                    annee = a[u'année'])
+                    annee = a[u'année']
                     if oldid != u'' and jour != u'' and mois != 0 and annee != u'':
                         plus = u"|%s|%s/%i/%s" % (a['oldid'], a['jour'], mois, a[u'année'])
                 appel = u'{{Traduit de|%s|%s%s}}\n' % (langue, article, plus)
