@@ -140,11 +140,13 @@ class Infolettre:
                 self.newsboy(boiteauxlettres, msg)
 
 def main():
+    site = pywikibot.getSite()
+    if BeBot.blocage(site):
+        sys.exit(7)
     if len(sys.argv) != 2:
         lettre = u"wikimag"
     else:
         lettre = sys.argv[1].lower()
-    site = pywikibot.getSite()
     bw = Infolettre(site, lettre)
     bw.run()
 

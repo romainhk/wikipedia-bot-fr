@@ -544,6 +544,9 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 pywikibot.error(u"Erreur l'hors de l'envoie du mail : %s" % errno.errorcode[errno])
 
 def main():
+    site = pywikibot.getSite()
+    if BeBot.blocage(site):
+        sys.exit(7)
     epreuve = False
     if len(sys.argv) in (2, 3):
         fichier_conf = sys.argv[1]
@@ -552,7 +555,6 @@ def main():
     else:
         fichier_conf = u''
     if os.path.exists(fichier_conf):
-        site = pywikibot.getSite()
         mw = MailWikimag(site, fichier_conf, epreuve)
         mw.run()
     else:

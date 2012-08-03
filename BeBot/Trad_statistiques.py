@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, locale
+import re, datetime, locale, sys
 import BeBot
 import pywikibot
 locale.setlocale(locale.LC_ALL, '')
@@ -82,6 +82,8 @@ class Stats_ProjetTraduction:
 
 def main():
     site = pywikibot.getSite()
+    if BeBot.blocage(site):
+        sys.exit(7)
     spt = Stats_ProjetTraduction(site)
     spt.run()
 

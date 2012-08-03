@@ -162,6 +162,9 @@ class Trad_maintenance:
                         self.stats['liste'] += 1
 
 def main():
+    site = pywikibot.getSite()
+    if BeBot.blocage(site):
+        sys.exit(7)
     debug = False
     if len(sys.argv) == 2 and sys.argv[1] == "debug":
         debug = True

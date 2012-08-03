@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import pywikibot
+import pywikibot, sys, BeBot
 
 class CategorieMasquee:
     """ Categorie Masquée
@@ -22,6 +22,8 @@ class CategorieMasquee:
 
 def main():
     site = pywikibot.getSite()
+    if BeBot.blocage(site):
+        sys.exit(7)
     cm = CategorieMasquee(site, u'Catégorie:Numéro du Wikimag')
     cm.run()
 

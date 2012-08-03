@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, locale
+import re, datetime, locale, sys
 import BeBot
 import pywikibot
 locale.setlocale(locale.LC_ALL, '')
@@ -232,6 +232,8 @@ class PreparationWikimag:
 
 def main():
     site = pywikibot.getSite()
+    if BeBot.blocage(site):
+        sys.exit(7)
     pw = PreparationWikimag(site)
     pw.run()
 

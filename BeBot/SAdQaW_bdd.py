@@ -258,6 +258,8 @@ class ContenuDeQualite:
                 % (len(self.nouveau), len(self.connaitdeja), len(connus)) )
 
 def main():
+    if BeBot.blocage(pywikibot.getSite()):
+        sys.exit(7)
     try:
         opts, args = getopt.getopt(sys.argv[1:], "s")
     except getopt.GetoptError, err:

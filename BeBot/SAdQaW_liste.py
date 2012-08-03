@@ -283,6 +283,8 @@ class ListageQualite:
                 + len(self.label_deux) + len(self.label_trad)
 
 def main():
+    if BeBot.blocage(pywikibot.getSite()):
+        sys.exit(7)
     try:
         opts, args = getopt.getopt(sys.argv[1:], "")
     except getopt.GetoptError, err:

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, locale
+import re, datetime, locale, sys
 import BeBot
 import pywikibot
 from pywikibot import pagegenerators
@@ -191,6 +191,8 @@ class TraductionDeQualite:
 
 def main():
     site = pywikibot.getSite()
+    if BeBot.blocage(site):
+        sys.exit(7)
     log = u'Utilisateur:BeBot/Traduction de qualité'
 
     tdq = TraductionDeQualite(site, log)

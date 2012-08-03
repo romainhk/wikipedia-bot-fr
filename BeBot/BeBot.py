@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, urllib2, MySQLdb, simplejson
+import re, datetime, urllib2, MySQLdb, simplejson, sys
 from MySQLdb.constants import ER
 import pywikibot
 
@@ -14,11 +14,12 @@ Rassemble plusieurs fonctions génériques :
 * page de traduction associée
 * consultation mensuelle d'une page
 * dire si un wiki possède un wikiprojet ou s'il donne la date de labellisation
-* récupérer une table dans un bdd
+* récupérer une table dans une bdd
 * lire un fichier de configuration
-* retourner une chaine de caractère...
+* renverse une chaine de caractère
 * sauvegarde une page
 * supprime une page
+* vérifie qu'il n'y ait pas de blocage par un utilisateur
 """
 
 BeginBotSection = u'<!-- BEGIN BOT SECTION -->'
@@ -260,4 +261,17 @@ def modeletodic(modele):
                     r[pos] = b
                     pos +=1
     return r
+
+def blocage(site):
+    """ Vérifie que BeBot n'a pas eu d'alerte bloquante de la part des utilisateurs
+    """
+    page = pywikibot.Page(site, u'Utilisateur:BeBot/Blocage')
+    if len(page.text) > 0:
+        last = page.getVersionHistory()[0]
+        user = last[2]
+        time = last[1]
+        pywikibot.output(u'BeBot a été bloqué par %s (timestamp:%s)' % (user, time))
+        pywikibot.output(u'Message : %s' % page.text)
+        return True
+    return False
 

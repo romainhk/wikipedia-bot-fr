@@ -65,6 +65,8 @@ class TraduitDe:
 
 def main():
     site = pywikibot.getSite()
+    if BeBot.blocage(site):
+        sys.exit(7)
     td = TraduitDe(site)
     td.run()
 
