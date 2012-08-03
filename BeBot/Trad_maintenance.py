@@ -24,7 +24,7 @@ class Trad_maintenance:
         self.re_statut = re.compile('\|\s*status\s*=\s*(\d{1})', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_traduitde = re.compile('\{\{Traduit de.+?\}\}\s*', re.IGNORECASE)
         #self.re_suivi = re.compile("\{\{(Traduction/Suivi|Translation/Information)\s*\|(\w+)\|([^\|]+)\|", re.LOCALE|re.UNICODE|re.IGNORECASE)
-        silf.re_suivi = re.compile("\{\{((Traduction/Suivi|Translation/Information).+)\}\}<noinclude", re.LOCALE|re.IGNORECASE|re.MULTILINE|re.DOTALL)
+        self.re_suivi = re.compile("\{\{((Traduction/Suivi|Translation/Information).+)\}\}<noinclude", re.LOCALE|re.IGNORECASE|re.MULTILINE|re.DOTALL)
 
         self.suppressions = []
         self.les_statuts = [ 'Demandes', 'En cours', 'A relire', 'En relecture', u'Terminée' ]
@@ -83,17 +83,21 @@ class Trad_maintenance:
         if not l and not m:
             n = self.re_suivi.search(page.text)
             if n:
-                a = BeBot.modeletodic()
+                a = BeBot.modeletodic(n.group(0))
                 if not a.has_key(1) or not a.has_key(2):
-                    pywikibot.warning(u'Impossible de trouver les infos de traduction pour %s' % page.title())
+                    pywikibot.warning(u"Impossible de trouver le nom ou la langue d'origine pour %s" % page.title())
                     return False
                 langue = a[1]
                 article = a[2].replace('_', ' ')
                 plus = u''
                 if a.has_key(u'oldid') and a.has_key(u'jour') and a.has_key(u'mois') and a.has_key(u'année') :
                     # TODO : utiliser le oldid pour retrouver sa date
-                    mois = BeBot.moistoin(a['mois'])
-                    plus = u"|%s|%s/%i/%s" % (a['oldid'], a['jour'], mois, a[u'année'])
+                    oldid = a['oldid']
+                    jour = a['jour']
+                    mois = BeBot.moistoint(a['mois'])
+                    annee = a[u'année'])
+                    if oldid != u'' and jour != u'' and mois != 0 and annee != u'':
+                        plus = u"|%s|%s/%i/%s" % (a['oldid'], a['jour'], mois, a[u'année'])
                 appel = u'{{Traduit de|%s|%s%s}}\n' % (langue, article, plus)
                 pywikibot.output(appel)
                 disc.text = appel + disc.text
@@ -116,7 +120,7 @@ class Trad_maintenance:
             if not m:
                 continue
             annee = int(m.group(1))
-            for p in c.articles(total=10, content=True): # Pour chaque traduction
+            for p in c.articles(total=9, content=True): # Pour chaque traduction
                 mois = u"" # Recherche du mois
                 for d in p.categories():
                     m = re_mois.search(d.title())
