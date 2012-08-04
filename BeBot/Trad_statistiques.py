@@ -46,7 +46,7 @@ class Stats_ProjetTraduction:
         stats = re.compile(u"^== Statistiques ==[^=]*", re.DOTALL|re.MULTILINE)
         res.text = stats.sub(r'', res.text)
         res.text = res.text + msg
-        BeBot.save(res, comment=self.resume)
+        BeBot.save(res, commentaire=self.resume)
 
     def run(self):
         bot = re.compile('bot', re.IGNORECASE)

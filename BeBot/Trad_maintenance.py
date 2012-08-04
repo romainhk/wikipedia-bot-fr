@@ -49,7 +49,7 @@ class Trad_maintenance:
         """ Retire le {{Traduction}} d'une page
         """
         page.text = self.re_trad.sub(r'', page.text)
-        BeBot.save(page, comment=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True, debug=self.debug)
+        BeBot.save(page, commentaire=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True, debug=self.debug)
         
     def supprimer(self, page):
         """ Supprime la page et nettoie les pages liées
@@ -60,7 +60,7 @@ class Trad_maintenance:
             #b.text = self.re_trad.sub(r'', b.text) #-> prise ne charge par retirer_le_modele_Traduction
             b.text = self.re_appel.sub(r'', b.text)
             #pywikibot.output(b.text)
-            BeBot.save(b, comment=self.resume+u' : Traduction abandonnée', debug=self.debug)
+            BeBot.save(b, commentaire=self.resume+u' : Traduction abandonnée', debug=self.debug)
         BeBot.delete(page, self.resume+u' : Traduction abandonnée', debug=self.debug)
         self.stats['suppr'] += 1
         
@@ -70,7 +70,7 @@ class Trad_maintenance:
         pywikibot.output(u"&&& clore : %s" % page.title())
         page.text = self.re_statut.sub('|status=5', page.text)
         #pywikibot.output(page.text)
-        BeBot.save(page, comment=self.resume+u' : Clôture de la traduction', debug=self.debug)
+        BeBot.save(page, commentaire=self.resume+u' : Clôture de la traduction', debug=self.debug)
         self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page))
         self.stats['cloture'] += 1
 
@@ -102,7 +102,7 @@ class Trad_maintenance:
                 pywikibot.output(appel)
                 disc.text = appel + disc.text
                 #pywikibot.output(disc.text)
-                BeBot.save(disc, comment=self.resume+u' : Ajout du bandeau de licence', debug=self.debug)
+                BeBot.save(disc, commentaire=self.resume+u' : Ajout du bandeau de licence', debug=self.debug)
                 self.stats['traduitde'] += 1
             else:
                 pywikibot.warning(u'Impossible de trouver les infos de traduction pour %s' % page.title())

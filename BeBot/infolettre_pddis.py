@@ -55,7 +55,7 @@ class Infolettre:
                 + u'\n{{colonnes|nombre=3|\n' + propositions  + u'\n}}\n' \
                 + u'<noinclude>\n[[Catégorie:Wikipédia:Atelier de lecture|Lumière sur...]]\n</noinclude>'
         pywikibot.output(u"# Publication sur l'Atelier de lecture")
-        BeBot.save(lumiere, comment=u'Maj hebdomadaire de la liste')
+        BeBot.save(lumiere, commentaire=u'Maj hebdomadaire de la liste')
 
     def wikimag(self):
         """ Wikimag """
@@ -114,7 +114,7 @@ class Infolettre:
             lecteur = lecteur.getRedirectTarget()
         self.rm_old(lecteur)
         lecteur.text += msg
-        BeBot.save(lecteur, comment=self.resume)
+        BeBot.save(lecteur, commentaire=self.resume)
 
     def run(self):
         if   self.infolettre == u"wikimag":

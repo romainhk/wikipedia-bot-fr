@@ -124,7 +124,7 @@ class TraductionDeQualite:
         #pywikibot.Page(self.site, u'Projet:Suivi des articles de qualité des autres wikipédias/Traduction/' + souspage).put(retour, comment=self.resumeListing)
         p = pywikibot.Page(self.site, u'Projet:Suivi des articles de qualité des autres wikipédias/Traduction/' + souspage)
         p.text = retour
-        BeBot.save(p, comment=self.resumeListing)
+        BeBot.save(p, commentaire=self.resumeListing)
         
     def run(self):
         ##################################
@@ -200,7 +200,7 @@ def main():
     
     p = pywikibot.Page(site, log)
     p.text = unicode(tdq)
-    BeBot.save(p, comment=tdq.resume)
+    BeBot.save(p, commentaire=tdq.resume)
 
 if __name__ == "__main__":
     try:

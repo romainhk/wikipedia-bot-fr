@@ -305,7 +305,7 @@ def main():
             continue
         lq.run()
         lq.page_projet.text = lq.publier()
-        BeBot.save(lq.page_projet, comment=u'Mise à jour mensuelle des listings')
+        BeBot.save(lq.page_projet, commentaire=u'Mise à jour mensuelle des listings')
         log += unicode(lq)
     pywikibot.Page(pywikibot.Site('fr'), \
             u'Utilisateur:BeBot/Listage qualité').put(log, \

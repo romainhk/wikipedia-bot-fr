@@ -20,6 +20,7 @@ Rassemble plusieurs fonctions génériques :
 * sauvegarde une page
 * supprime une page
 * vérifie qu'il n'y ait pas de blocage par un utilisateur
+* nombre de contribs d'un utilisateur
 """
 
 BeginBotSection = u'<!-- BEGIN BOT SECTION -->'
@@ -202,14 +203,14 @@ def retirer(exprs, text):
         text = a.sub(r'', text)
     return text
 
-def save(page, comment=u'', minor=False, debug=False):
+def save(page, commentaire=u'', minor=False, debug=False):
     """ Sauvegarde la page
     """
     if debug:
         pywikibot.output(u'Sav -> %s' % page.title())
     else:
         try:
-            page.save(page, comment=comment, minor=minor)
+            page.save(page, comment=commentaire, minor=minor)
         except pywikibot.EditConflict:
             pywikibot.warning(u"Passe %s à cause d'un conflit d'édition"
                               % (page,))
@@ -275,3 +276,17 @@ def blocage(site):
         return True
     return False
 
+def userdailycontribs(site, user, days=1):
+    """ Nombre de modifications qu'un utilisateur à fait depuis 'days' jours à partir d'aujourd'hui
+        Ainsi que la date de la dernière
+    # TODO : à partir d'un autre jour
+    """
+    contrib = 0
+    last = u''
+    ajd = site.getcurrenttime()
+    fin = ajd - datetime.timedelta(days=days)
+    for c in site.usercontribs(user, start=ajd, end=fin):
+        contrib += 1
+        if contrib == 1:
+            last = c['timestamp']
+    return [contrib, last]

@@ -39,7 +39,7 @@ class GraphiqueEvaluations:
     def run(self):
         # Dénombrement
         l = {}
-        cat = pywikibot.Category(self.site, u"Catégorie:Article par importance"):
+        cat = pywikibot.Category(self.site, u"Catégorie:Article par importance")
         for c in cat.subcategories(recurse=False):
             nom = c.title().split(' ')[-1]
             l[nom] = 0

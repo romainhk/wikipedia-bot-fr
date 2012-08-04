@@ -192,7 +192,7 @@ class PreparationWikimag:
                     redac.append(redacteur)
                     pywikibot.output(redacteur.title())
                     redacteur.text += msg
-                    BeBot.save(redacteur, comment=resume)
+                    BeBot.save(redacteur, commentaire=resume)
 
     def run(self):
         pywikibot.output(u"Préparation du wikimag débutant le " + self.lasemaine)

@@ -18,7 +18,7 @@ class CategorieMasquee:
                 if p.exists() and not p.isRedirectPage():
                     #pywikibot.output(p.title())
                     p.text += self.categorie
-                    BeBot.save(p, comment=self.resume, minor=True)
+                    BeBot.save(p, commentaire=self.resume, minor=True)
 
 def main():
     site = pywikibot.getSite()
