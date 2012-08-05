@@ -210,7 +210,7 @@ def save(page, commentaire=u'', minor=False, debug=False):
         pywikibot.output(u'Sav -> %s' % page.title())
     else:
         try:
-            page.save(page, comment=commentaire, minor=minor)
+            page.save(comment=commentaire, minor=minor)
         except pywikibot.EditConflict:
             pywikibot.warning(u"Passe %s à cause d'un conflit d'édition"
                               % (page,))
