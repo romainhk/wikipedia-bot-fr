@@ -37,7 +37,7 @@ class TraductionDeQualite:
         tmp = []
         c1 = pywikibot.Category(self.site, u"Catégorie:Traduction d'un Article de Qualité")
         cats.append(pagegenerators.CategorizedPageGenerator(c1))
-        c2 = pywikibot.Category(self.site, u"Catégorie:Traduction d'un Bon Article")))
+        c2 = pywikibot.Category(self.site, u"Catégorie:Traduction d'un Bon Article")
         cats.append(pagegenerators.CategorizedPageGenerator(c2))
         gen = pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats))
         gen = pagegenerators.PreloadingGenerator(gen, step=125)
@@ -129,23 +129,25 @@ class TraductionDeQualite:
     def run(self):
         ##################################
         #####     Candidatures
-        cats = []
-        cats.append(pagegenerators.ReferringPageGenerator(pywikibot.Page(self.site, u"Modèle:Lien AdQ"), followRedirects=True, withTemplateInclusion=True))
-        cats.append(pagegenerators.ReferringPageGenerator(pywikibot.Page(self.site, u"Modèle:Lien BA"), followRedirects=True, withTemplateInclusion=True))
-        gen = pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats))
-        gen = pagegenerators.PreloadingGenerator(gen, step=125)
-        for m in gen:
-            if m.namespace() == 0 and m.title() not in self.ignor_list: # ... alors prendre la page de trad
-                tradpage = BeBot.togglePageTrad(m)
-                for t in self.traductions:
-                   if t.title() == tradpage.title():
-                        #Vérification de la correspondance des langues cibles
-                        cibleTrad = self.langueCible(tradpage)[0]
-                        for cible in self.langueCible(m):
-                            if cibleTrad == cible:
-                                self.candidats.append([tradpage, cibleTrad])
-                                break;
-                        break;
+        #cats = []
+        #cats.append(pagegenerators.ReferringPageGenerator(pywikibot.Page(self.site, u"Modèle:Lien AdQ"), followRedirects=True, withTemplateInclusion=True))
+        #cats.append(pagegenerators.ReferringPageGenerator(pywikibot.Page(self.site, u"Modèle:Lien BA"), followRedirects=True, withTemplateInclusion=True))
+        #gen = pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats))
+        #gen = pagegenerators.PreloadingGenerator(gen, step=125)
+        cats = [ pywikibot.Page(self.site, u"Modèle:Lien AdQ"), pywikibot.Page(self.site, u"Modèle:Lien BA") ]
+        for c in cats:
+            for m in c.backlinks(namespaces=0):
+                if m.title() not in self.ignor_list: # ... alors prendre la page de trad
+                    tradpage = BeBot.togglePageTrad(m)
+                    for t in self.traductions:
+                       if t.title() == tradpage.title():
+                            #Vérification de la correspondance des langues cibles
+                            cibleTrad = self.langueCible(tradpage)[0]
+                            for cible in self.langueCible(m):
+                                if cibleTrad == cible:
+                                    self.candidats.append([tradpage, cibleTrad])
+                                    break;
+                            break;
 
         ##################################
         #####     Mise à jour du suivi
