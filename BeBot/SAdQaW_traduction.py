@@ -129,11 +129,6 @@ class TraductionDeQualite:
     def run(self):
         ##################################
         #####     Candidatures
-        #cats = []
-        #cats.append(pagegenerators.ReferringPageGenerator(pywikibot.Page(self.site, u"Modèle:Lien AdQ"), followRedirects=True, withTemplateInclusion=True))
-        #cats.append(pagegenerators.ReferringPageGenerator(pywikibot.Page(self.site, u"Modèle:Lien BA"), followRedirects=True, withTemplateInclusion=True))
-        #gen = pagegenerators.DuplicateFilterPageGenerator(pagegenerators.CombinedPageGenerator(cats))
-        #gen = pagegenerators.PreloadingGenerator(gen, step=125)
         cats = [ pywikibot.Page(self.site, u"Modèle:Lien AdQ"), pywikibot.Page(self.site, u"Modèle:Lien BA") ]
         for c in cats:
             for m in c.backlinks(namespaces=0):

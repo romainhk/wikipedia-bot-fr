@@ -13,16 +13,16 @@ class MailWikimag:
         Publie le wikimag par mail
 
         Nécessite en argument l'adresse d'un fichier de configuration du type :
-mailinglist=    # sur laquel on va publier le mag (mode debug si omis)
+mailinglist=    # sur laquel on va publier le mag (mode debug si omis -> stdout)
 epreuve=        # adresse mail des relecteurs
 from=           # adresse de l'expédieur, truc@toto.fr
 #mode=          # (facultatif) format d'envoi : text (*), html ou multi
-#semaine=       # (facultatif) forcer l'usage d'une semaine en particulier ; pratique pour le debug
+#semaine=       # (facultatif) forcer l'usage d'une semaine en particulier
         L'option finale -e permet de faire une épreuve (tirage limité aux relecteurs)
 
         TODO
         gérer les interlangues
-        crochet / accolade : traitement récurssif ? 
+        crochet / accolade : traitement récursif ? 
  exp : {{guil|[[Wikipédia:Sondage/Discussion pages liées|Avis sur une proposition de changement de message système concernant les liens « pages liées » et « Suivi des pages liées »]]}}
     """
     def __init__(self, site, fichier_conf, epreuve):
@@ -42,7 +42,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
         self.annee = self.lundi_pre.strftime("%Y")
         if 'semaine' in self.conf:
             self.semaine = self.conf['semaine']
-            self.debug = True
         else:
             self.semaine = self.lundi_pre.strftime("%W").lstrip('0')
         self.mag = pywikibot.Page(site, u'Wikipédia:Wikimag/%s/%s' % \

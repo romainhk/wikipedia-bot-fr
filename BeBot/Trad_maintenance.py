@@ -23,7 +23,6 @@ class Trad_maintenance:
         self.re_appel = re.compile('[\[\{]{2}Discussion:[\w/ ]+?/Traduction[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_statut = re.compile('\|\s*status\s*=\s*(\d{1})', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_traduitde = re.compile('\{\{Traduit de.+?\}\}\s*', re.IGNORECASE)
-        #self.re_suivi = re.compile("\{\{(Traduction/Suivi|Translation/Information)\s*\|(\w+)\|([^\|]+)\|", re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_suivi = re.compile("\{\{((Traduction/Suivi|Translation/Information).+)\}\}<noinclude", re.LOCALE|re.IGNORECASE|re.MULTILINE|re.DOTALL)
 
         self.suppressions = []
@@ -48,16 +47,20 @@ class Trad_maintenance:
     def retirer_le_modele_Traduction(self, page):
         """ Retire le {{Traduction}} d'une page
         """
-        page.text = self.re_trad.sub(r'', page.text)
-        BeBot.save(page, commentaire=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True, debug=self.debug)
+        text = self.re_trad.sub(r'', page.text)
+        if text != page.text:
+            page.text = text
+            BeBot.save(page, commentaire=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True, debug=self.debug)
+            pywikibot.output(u"& retirer {{Traduction}} : %s" % page.title())
         
     def supprimer(self, page):
         """ Supprime la page et nettoie les pages liées
         """
         pywikibot.output(u"&& supprimer : %s" % page.title())
-        self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page)) # si traduction active
+        #self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page)) # si traduction active
         for b in page.backlinks():
-            #b.text = self.re_trad.sub(r'', b.text) #-> prise ne charge par retirer_le_modele_Traduction
+            #b.text = self.re_trad.sub(r'', b.text) #-> prise en charge par retirer_le_modele_Traduction
+            self.retirer_le_modele_Traduction(b) # si traduction active
             b.text = self.re_appel.sub(r'', b.text)
             #pywikibot.output(b.text)
             BeBot.save(b, commentaire=self.resume+u' : Traduction abandonnée', debug=self.debug)
