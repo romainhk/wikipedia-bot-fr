@@ -51,7 +51,7 @@ class Trad_maintenance:
         if text != page.text:
             page.text = text
             BeBot.save(page, commentaire=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True, debug=self.debug)
-            pywikibot.output(u"& retirer {{Traduction}} : %s" % page.title())
+            #pywikibot.output(u"& retirer {{Traduction}} : %s" % page.title())
         
     def supprimer(self, page):
         """ Supprime la page et nettoie les pages liées
@@ -93,14 +93,15 @@ class Trad_maintenance:
                 langue = a[1]
                 article = a[2].replace('_', ' ')
                 plus = u''
-                if a.has_key(u'oldid'):
+                if a.has_key(u'oldid') and a['oldid'] != u'':
                     # On utilise le oldid pour retrouver la date
                     oldid = a['oldid']
-                    si = pywikibot.BaseSite(langue)
-                    orig = pywikibot.Page(si, article)
+                    sit  = pywikibot.Site(langue)
+                    orig = pywikibot.Page(sit, article)
                     date = u''
                     for o in orig.fullVersionHistory():
-                        if o[0] == oldid:
+                        revis = unicode(o[0])
+                        if revis == oldid:
                             date = o[1]
                             break;
                     if date != u'':
