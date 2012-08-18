@@ -84,7 +84,7 @@ class Trad_maintenance:
         l = self.re_trad.search(disc.text)
         m = self.re_traduitde.search(disc.text)
         if not l and not m:
-            n = self.re_suivi.search(page.text)
+            n = self.re_suivi.search(page.text) # Récupération des infos de traduction
             if n:
                 a = BeBot.modeletodic(n.group(0))
                 if not a.has_key(1) or not a.has_key(2):
@@ -93,22 +93,32 @@ class Trad_maintenance:
                 langue = a[1]
                 article = a[2].replace('_', ' ')
                 plus = u''
-                if a.has_key(u'oldid') and a.has_key(u'jour') and a.has_key(u'mois') and a.has_key(u'année') :
-                    # TODO : utiliser le oldid pour retrouver sa date
+                if a.has_key(u'oldid'):
+                    # On utilise le oldid pour retrouver la date
                     oldid = a['oldid']
-                    jour = a['jour']
-                    mois = BeBot.moistoint(a['mois'])
-                    annee = a[u'année']
-                    if oldid != u'' and jour != u'' and mois != 0 and annee != u'':
-                        plus = u"|%s|%s/%i/%s" % (a['oldid'], a['jour'], mois, a[u'année'])
+                    si = pywikibot.BaseSite(langue)
+                    orig = pywikibot.Page(si, article)
+                    date = u''
+                    for o in orig.fullVersionHistory():
+                        if o[0] == oldid:
+                            date = o[1]
+                            break;
+                    if date != u'':
+                        jour  = date[8:10].lstrip('0')
+                        mois  = date[5:7].lstrip('0')
+                        annee = date[0:4]
+                        plus = u"|%s|%s/%s/%s" % (oldid, jour, mois, annee)
+                    else:
+                        pywikibot.warning(u"Ne peut dater une ancienne révision pour %s" % page.title())
                 appel = u'{{Traduit de|%s|%s%s}}\n' % (langue, article, plus)
-                pywikibot.output(appel)
+                pywikibot.output(u'TD: '+appel)
                 disc.text = appel + disc.text
                 #pywikibot.output(disc.text)
                 BeBot.save(disc, commentaire=self.resume+u' : Ajout du bandeau de licence', debug=self.debug)
                 self.stats['traduitde'] += 1
             else:
                 pywikibot.warning(u'Impossible de trouver les infos de traduction pour %s' % page.title())
+        return False
         
     def run(self):
         if self.debug:
@@ -145,6 +155,7 @@ class Trad_maintenance:
                     elif statut == 3 or statut == 4: # Relecture abandonnée
                         statut = 5
                         self.clore_traduction(p)
+                        self.traduit_de(p)
                 else:
                     # Vérifier simplement le {{Traduit de}}
                     self.traduit_de(p)
