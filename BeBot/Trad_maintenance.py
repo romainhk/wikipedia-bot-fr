@@ -35,6 +35,7 @@ class Trad_maintenance:
             self.listes[s] = {}
             for a in range(2006, self.date.year+1):
                 self.listes[s][a] = les_mois.copy()
+        self.sites = {} # les wikipedia étranger visités
         
     def __str__(self):
         r  = u"== Rapport d'exécution ==\n"
@@ -96,8 +97,13 @@ class Trad_maintenance:
                 if a.has_key(u'oldid') and a['oldid'] != u'':
                     # On utilise le oldid pour retrouver la date
                     oldid = a['oldid']
-                    sit  = pywikibot.Site(langue)
+                    if self.sites.has_key(langue):
+                        sit = self.sites[langue]
+                    else:
+                        sit = pywikibot.Site(langue)
+                        self.sites[langue] = sit
                     orig = pywikibot.Page(sit, article)
+
                     date = u''
                     for o in orig.fullVersionHistory():
                         revis = unicode(o[0])
@@ -110,11 +116,10 @@ class Trad_maintenance:
                         annee = date[0:4]
                         plus = u"|%s|%s/%s/%s" % (oldid, jour, mois, annee)
                     else:
-                        pywikibot.warning(u"Ne peut dater une ancienne révision pour %s" % page.title())
+                        pywikibot.warning(u"Ne peut dater une ancienne révision de %s" % page.title())
                 appel = u'{{Traduit de|%s|%s%s}}\n' % (langue, article, plus)
                 pywikibot.output(u'TD: '+appel)
                 disc.text = appel + disc.text
-                #pywikibot.output(disc.text)
                 BeBot.save(disc, commentaire=self.resume+u' : Ajout du bandeau de licence', debug=self.debug)
                 self.stats['traduitde'] += 1
             else:
