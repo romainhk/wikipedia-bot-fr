@@ -20,7 +20,7 @@ class Trad_maintenance:
         self.stats = { 'suppr': 0, 'cloture' : 0, 'traduitde': 0,  'liste' : 0 }
 
         self.re_trad = re.compile(r'{{Traduction}}\s*', re.IGNORECASE)
-        self.re_appel = re.compile('[\[\{]{2}Discussion:[\w/ ]+?/Traduction[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE)
+        self.re_appel = re.compile('[\[\{]{2}Discussion:[^\]\}]+?/Traduction[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_statut = re.compile('\|\s*status\s*=\s*(\d{1})', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_traduitde = re.compile('\{\{Traduit de.+?\}\}\s*', re.IGNORECASE)
         self.re_suivi = re.compile("\{\{((Traduction/Suivi|Translation/Information).+)\}\}<noinclude", re.LOCALE|re.IGNORECASE|re.MULTILINE|re.DOTALL)
@@ -58,9 +58,10 @@ class Trad_maintenance:
         """ Supprime la page et nettoie les pages liées
         """
         pywikibot.output(u"&& supprimer : %s" % page.title())
+        appel = re.compile('[\[\{]{2}Discussion:%s/Traduction[\]\}]{2}\s*' % page.title(), re.LOCALE|re.UNICODE|re.IGNORECASE)
         for b in page.backlinks():
             self.retirer_le_modele_Traduction(b) # si traduction active
-            b.text = self.re_appel.sub(r'', b.text)
+            b.text = appel.sub(r'', b.text)
             BeBot.save(b, commentaire=self.resume+u' : Traduction abandonnée', debug=self.debug)
         BeBot.delete(page, self.resume+u' : Traduction abandonnée', debug=self.debug)
         self.stats['suppr'] += 1
@@ -111,7 +112,7 @@ class Trad_maintenance:
                         jour  = date[8:10].lstrip('0')
                         mois  = date[5:7].lstrip('0')
                         annee = date[0:4]
-                        plus = u"|%s|%s/%s/%s" % (oldid, jour, mois, annee)
+                        plus = u"|%s/%s/%s|%s" % (jour, mois, annee, oldid)
                     else:
                         pywikibot.warning(u"Ne peut dater une ancienne révision de %s" % page.title())
                 appel = u'{{Traduit de|%s|%s%s}}\n' % (langue, article, plus)

@@ -234,7 +234,7 @@ def delete(page, raison, debug=False):
         pywikibot.output(u'Del -> %s%s' % (page.title(), redir))
     else:
         try:
-            page.delete(page, reason=raison, prompt=False)
+            page.delete(reason=raison, prompt=False)
         except pywikibot.NoUsername, e:
             pywikibot.warning(u'Delete %s is impossible - User unknown' % (page,))
 
