@@ -58,15 +58,18 @@ class Trad_maintenance:
         """ Supprime la page et nettoie les pages liées
         """
         pywikibot.output(u"&& supprimer : %s" % page.title())
-        titre = page.title()
         for b in page.backlinks():
-            self.retirer_le_modele_Traduction(b) # si traduction active
-            #b.text = self.re_appel.sub(r'', b.text)
-            for a in re.finditer(self.re_appel, b.text):
-                pywikibot.output(a.group(1))
-                if a.group(1) == titre:
-                    b.text = b.text[:a.start()] + b.text[a.end():]
-            BeBot.save(b, commentaire=self.resume+u' : Traduction abandonnée', debug=self.debug)
+            if b.isRedirectPage():
+                self.supprimer(b)
+            else:
+                titre = page.title()
+                self.retirer_le_modele_Traduction(b) # si traduction active
+                #b.text = self.re_appel.sub(r'', b.text)
+                for a in re.finditer(self.re_appel, b.text):
+                    pywikibot.output(a.group(1))
+                    if a.group(1) == titre:
+                        b.text = b.text[:a.start()] + b.text[a.end():]
+                BeBot.save(b, commentaire=self.resume+u' : Traduction abandonnée', debug=self.debug)
         BeBot.delete(page, self.resume+u' : Traduction abandonnée', debug=self.debug)
         self.stats['suppr'] += 1
         
@@ -192,7 +195,7 @@ def main():
     elif len(sys.argv) != 1:
         pywikibot.warning(u"Nombre de paramètres incorrectes")
         sys.exit(1)
-    site = pywikibot.getSite()
+    site.login()
     tm = Trad_maintenance(site, debug)
     tm.run()
     pywikibot.output(tm)
