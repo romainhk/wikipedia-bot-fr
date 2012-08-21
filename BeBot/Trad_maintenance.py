@@ -58,12 +58,9 @@ class Trad_maintenance:
         """ Supprime la page et nettoie les pages liées
         """
         pywikibot.output(u"&& supprimer : %s" % page.title())
-        #self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page)) # si traduction active
         for b in page.backlinks():
-            #b.text = self.re_trad.sub(r'', b.text) #-> prise en charge par retirer_le_modele_Traduction
             self.retirer_le_modele_Traduction(b) # si traduction active
             b.text = self.re_appel.sub(r'', b.text)
-            #pywikibot.output(b.text)
             BeBot.save(b, commentaire=self.resume+u' : Traduction abandonnée', debug=self.debug)
         BeBot.delete(page, self.resume+u' : Traduction abandonnée', debug=self.debug)
         self.stats['suppr'] += 1
@@ -166,7 +163,6 @@ class Trad_maintenance:
                     # Vérifier simplement le {{Traduit de}}
                     self.traduit_de(p)
 
-        # Application des suppressions
         pywikibot.output(u"------ Pages à supprimer ------")
         for p in self.suppressions:
             self.supprimer(p)
@@ -178,7 +174,7 @@ class Trad_maintenance:
                 for mois, nb in m.items():
                     if nb == 0:
                         lis = pywikibot.Page(self.site, u'Projet:Traduction/*/%s/%s %i' % (statut, mois, annee))
-                        #BeBot.delete(lis, self.resume+u' : Liste mensuelle périmée', debug=self.debug)
+                        BeBot.delete(lis, self.resume+u' : Liste mensuelle périmée', debug=self.debug)
                         self.stats['liste'] += 1
 
 def main():
