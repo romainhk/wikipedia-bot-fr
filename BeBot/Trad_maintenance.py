@@ -52,21 +52,19 @@ class Trad_maintenance:
         if text != page.text:
             page.text = text
             BeBot.save(page, commentaire=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True, debug=self.debug)
-            #pywikibot.output(u"& retirer {{Traduction}} : %s" % page.title())
         
     def supprimer(self, page):
         """ Supprime la page et nettoie les pages liées
         """
         pywikibot.output(u"&& supprimer : %s" % page.title())
         titres = [ page.title() ]
-        for b in page.backlinks(fiterRedirects=True): # On trouve les différents noms de la page
+        for b in page.backlinks(filterRedirects=True): # On trouve les différents noms de la page
             titres.append(b.title())
         for b in page.backlinks(followRedirects=True):
             if b.isRedirectPage():
-                BeBot.delete(b, self.resume+u' : Traduction abandonnée', debug=self.debug)
+                BeBot.delete(b, self.resume+u" : Redirection d'une traduction abandonnée", debug=self.debug)
             else:
                 self.retirer_le_modele_Traduction(b) # si traduction active
-                #b.text = self.re_appel.sub(r'', b.text)
                 for a in re.finditer(self.re_appel, b.text):
                     if a.group(1) in titres:
                         b.text = b.text[:a.start()] + b.text[a.end():]
@@ -79,7 +77,6 @@ class Trad_maintenance:
         """
         pywikibot.output(u"&&& clore : %s" % page.title())
         page.text = self.re_statut.sub('|status=5', page.text)
-        #pywikibot.output(page.text)
         BeBot.save(page, commentaire=self.resume+u' : Clôture de la traduction', debug=self.debug)
         self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page))
         self.stats['cloture'] += 1
@@ -145,7 +142,7 @@ class Trad_maintenance:
             if not m:
                 continue
             annee = int(m.group(1))
-            for p in c.articles(total=9, content=True): # Pour chaque traduction
+            for p in c.articles(total=10, content=True): # Pour chaque traduction
                 mois = u"" # Recherche du mois
                 for d in p.categories():
                     m = re_mois.search(d.title())
