@@ -20,7 +20,7 @@ class Trad_maintenance:
         self.stats = { 'suppr': 0, 'cloture' : 0, 'traduitde': 0,  'liste' : 0 }
 
         self.re_trad = re.compile(r'{{Traduction}}\s*', re.IGNORECASE)
-        self.re_appel = re.compile('[\[\{]{2}Discussion:([^\]\}]+?)/Traduction[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE)
+        self.re_appel = re.compile('[\[\{]{2}(Discussion:[^\]\}]+?/Traduction)[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_statut = re.compile('\|\s*status\s*=\s*(\d{1})', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_traduitde = re.compile('\{\{Traduit de.+?\}\}\s*', re.IGNORECASE)
         self.re_suivi = re.compile("\{\{((Traduction/Suivi|Translation/Information).+)\}\}<noinclude", re.LOCALE|re.IGNORECASE|re.MULTILINE|re.DOTALL)
@@ -58,16 +58,17 @@ class Trad_maintenance:
         """ Supprime la page et nettoie les pages liées
         """
         pywikibot.output(u"&& supprimer : %s" % page.title())
-        for b in page.backlinks():
+        titres = [ page.title() ]
+        for b in page.backlinks(fiterRedirects=True): # On trouve les différents noms de la page
+            titres.append(b.title())
+        for b in page.backlinks(followRedirects=True):
             if b.isRedirectPage():
-                self.supprimer(b)
+                BeBot.delete(b, self.resume+u' : Traduction abandonnée', debug=self.debug)
             else:
-                titre = page.title()
                 self.retirer_le_modele_Traduction(b) # si traduction active
                 #b.text = self.re_appel.sub(r'', b.text)
                 for a in re.finditer(self.re_appel, b.text):
-                    pywikibot.output(a.group(1))
-                    if a.group(1) == titre:
+                    if a.group(1) in titres:
                         b.text = b.text[:a.start()] + b.text[a.end():]
                 BeBot.save(b, commentaire=self.resume+u' : Traduction abandonnée', debug=self.debug)
         BeBot.delete(page, self.resume+u' : Traduction abandonnée', debug=self.debug)
