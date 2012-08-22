@@ -16,11 +16,11 @@ Rassemble plusieurs fonctions génériques :
 * dire si un wiki possède un wikiprojet ou s'il donne la date de labellisation
 * récupérer une table dans une bdd
 * lire un fichier de configuration
-* renverse une chaine de caractère
-* sauvegarde une page
-* supprime une page
-* vérifie qu'il n'y ait pas de blocage par un utilisateur
-* nombre de contribs d'un utilisateur
+* renverser une chaine de caractère
+* sauvegarder une page
+* supprimer une page
+* vérifier qu'il n'y ait pas de blocage par un utilisateur
+* nombre de contribs d'un utilisateur, date de dernière modif
 """
 
 BeginBotSection = u'<!-- BEGIN BOT SECTION -->'
@@ -31,8 +31,7 @@ RE_Comment = re.compile("(<!--.*?-->)", re.MULTILINE|re.DOTALL) # commentaire ht
 RE_Pipe = re.compile("\[\[((.+?)\|.+?)\]\]", re.LOCALE|re.MULTILINE|re.DOTALL) # lien avec pipe
 
 def moistoint(mois):
-    """
-    Convertit un mois sous forme de chaîne de caractères, en son entier i associé (1≤i≤12).
+    """ Convertit une chaine mois, en entier entre 1 et 12.
     """
     mois = mois.lower()
     if mois in  'janvier    january  januar':   return 1
@@ -52,8 +51,7 @@ def moistoint(mois):
     return 0
 
 def page_ligne_par_ligne(site, nompage):
-    """
-    Lit une wikipage ligne par ligne
+    """ Lit une wikipage ligne par ligne
     """
     try:
         page = pywikibot.Page(site, nompage).get()
@@ -64,8 +62,7 @@ def page_ligne_par_ligne(site, nompage):
         yield ligne
 
 def taille_page(page, ordre=1000):
-    """
-    Retourne la taille d'une page en millier de caractères/signes
+    """ Retourne la taille d'une page en millier de caractères/signes
     """
     try:
         p = page.get()
@@ -74,8 +71,7 @@ def taille_page(page, ordre=1000):
     return len(p)/ordre
 
 def togglePageTrad(page):
-    """
-    Retourne la page de traduction associée à un page, ou la page associée à une traduction
+    """ Retourne la page de traduction associée à un article, ou l'article associée à une traduction
     """
     site = page.site
     if not site.language() == 'fr':
@@ -91,8 +87,7 @@ def togglePageTrad(page):
         return pywikibot.Page(site, page.toggleTalkPage().title()+"/Traduction")
 
 def stat_consultations(page, codelangue=u'fr', date=False):
-    """
-    Donne le nombre de consultation d'un article au mois donné (mois précédant par défaut)
+    """ Nombre de consultation d'un article au mois donné (mois précédant par défaut)
     """
     if not date:
         date = datetime.date.today()
@@ -119,8 +114,7 @@ def hasWikiprojet(langue):
         return False
 
 def charger_bdd(db, nom_base, champs="*", cond=None, lim=None, ordre=None):
-    """
-    Charger une table depuis une base de données
+    """ Charger une table depuis une base de données
     """
     curseur = db.cursor()
     req = "SELECT %s FROM %s" % (champs, nom_base)
@@ -138,8 +132,7 @@ def charger_bdd(db, nom_base, champs="*", cond=None, lim=None, ordre=None):
     return curseur.fetchall()
 
 def info_wikiprojet(page, ER, nom_groupe, tab_elimination):
-    """
-    Donne l'info Wikiprojet (avancement ou importance) selon un ordre de suppression
+    """ Donne l'info Wikiprojet (avancement ou importance) selon un ordre de suppression
     """
     rep = None
     if ER:
@@ -181,7 +174,7 @@ def fichier_conf(fichier):
     with open(fichier, "r") as f:
         for l in f.xreadlines():
             a = l.split('#', 1)
-            if len(a) == 1:
+            if len(a) == 1: #TODO: si a non vide, prendre a[0]
                 b = a[0].split('=', 1)
                 conf[b[0].strip()] = b[1].strip()
     return conf
@@ -278,7 +271,7 @@ def blocage(site):
 
 def userdailycontribs(site, user, days=1):
     """ Nombre de modifications qu'un utilisateur à fait depuis 'days' jours à partir d'aujourd'hui
-        Ainsi que la date de la dernière
+        + Date de la dernière
     # TODO : à partir d'un autre jour
     """
     contrib = 0
@@ -290,3 +283,4 @@ def userdailycontribs(site, user, days=1):
         if contrib == 1:
             last = c['timestamp']
     return [contrib, last]
+

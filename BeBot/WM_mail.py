@@ -230,7 +230,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
                     td += '<td>%s</td>\n' % c
                 tr += '\t<tr>%s</tr>\n' % td
             ret = '<table>\n%s</table>' % tr
-        #pywikibot.output(ret)
         return ret
 
     def lien_externe(self, lien):
@@ -269,7 +268,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
             cible = langue + '.' + cible
 
         lien_externe_associe = u'http://' + cible.replace(' ', '_')
-        #pywikibot.output('|'.join(sep) + ' : ' + lien_externe_associe)
         return self.lien_externe(u'[%s %s]' % (lien_externe_associe, nom))
 
     def remplacer_les_liens(self, text):

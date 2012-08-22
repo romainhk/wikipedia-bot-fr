@@ -56,7 +56,7 @@ class Trad_maintenance:
     def supprimer(self, page):
         """ Supprime la page et nettoie les pages liées
         """
-        pywikibot.output(u"&& supprimer : %s" % page.title())
+        #pywikibot.output(u"&& supprimer : %s" % page.title())
         titres = [ page.title() ]
         for b in page.backlinks(filterRedirects=True): # On trouve les différents noms de la page
             titres.append(b.title())
@@ -75,7 +75,7 @@ class Trad_maintenance:
     def clore_traduction(self, page):
         """ Clôt une relecture : statut 3/4 -> 5
         """
-        pywikibot.output(u"&&& clore : %s" % page.title())
+        #pywikibot.output(u"&&& clore : %s" % page.title())
         page.text = self.re_statut.sub('|status=5', page.text)
         BeBot.save(page, commentaire=self.resume+u' : Clôture de la traduction', debug=self.debug)
         self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page))
@@ -121,7 +121,6 @@ class Trad_maintenance:
                     else:
                         pywikibot.warning(u"Ne peut dater une ancienne révision de %s" % page.title())
                 appel = u'{{Traduit de|%s|%s%s}}\n' % (langue, article, plus)
-                pywikibot.output(u'TD: '+appel)
                 disc.text = appel + disc.text
                 BeBot.save(disc, commentaire=self.resume+u' : Ajout du bandeau de licence', debug=self.debug)
                 self.stats['traduitde'] += 1
@@ -142,7 +141,7 @@ class Trad_maintenance:
             if not m:
                 continue
             annee = int(m.group(1))
-            for p in c.articles(total=10, content=True): # Pour chaque traduction
+            for p in c.articles(content=True): # Pour chaque traduction
                 mois = u"" # Recherche du mois
                 for d in p.categories():
                     m = re_mois.search(d.title())
