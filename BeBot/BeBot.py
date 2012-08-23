@@ -240,7 +240,7 @@ def modeletodic(modele):
     if m:
         chaine = m.group(1).replace('\n', '')
         chaine = RE_Comment.sub(r'', chaine)
-        chaine = RE_Pipe.sub(r'[[\2]]', chaine)
+        chaine = RE_Pipe.sub(r'[[\2]]', chaine) #pour le split après
         pos = 0
         for l in chaine.split("|"):
             if pos == 0:

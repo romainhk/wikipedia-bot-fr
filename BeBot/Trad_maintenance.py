@@ -108,11 +108,14 @@ class Trad_maintenance:
                     orig = pywikibot.Page(sit, article)
 
                     date = u''
-                    for o in orig.fullVersionHistory():
-                        revis = unicode(o[0])
-                        if revis == oldid:
-                            date = o[1]
-                            break;
+                    try:
+                        for o in orig.fullVersionHistory():
+                            revis = unicode(o[0])
+                            if revis == oldid:
+                                date = o[1]
+                                break;
+                    except: #Nopage
+                        pywikibot.warning(u"Impossible de lire l'historique pour %s" % page.title())
                     if date != u'':
                         jour  = date[8:10].lstrip('0')
                         mois  = date[5:7].lstrip('0')
@@ -159,7 +162,7 @@ class Trad_maintenance:
 
                 if annee <= ancien: # critère d'ancienneté
                     if statut == 1:  # Vieille demande
-                        self.suppressions.append(p)
+                        self.suppressions.append(p.title())
                     elif statut == 3 or statut == 4: # Relecture abandonnée
                         statut = 5
                         self.clore_traduction(p)
@@ -168,12 +171,12 @@ class Trad_maintenance:
                     # Vérifier simplement le {{Traduit de}}
                     self.traduit_de(p)
 
-        pywikibot.output(u"------ Pages à supprimer ------")
+        pywikibot.output(u"\n------ Pages à supprimer ------")
         for p in self.suppressions:
-            self.supprimer(p)
+            self.supprimer(pywikibot.Page(self.site, p))
 
         # Nettoyage des listes mensuelles
-        pywikibot.output(u"------ Listes à supprimer ------")
+        pywikibot.output(u"\n------ Listes à supprimer ------")
         for statut, l in self.listes.items():
             for annee, m in l.items():
                 for mois, nb in m.items():
