@@ -11,6 +11,7 @@ class Trad_maintenance:
       * supprimer les anciennes demandes sans suite
       * clore les relectures anciennes
       * supprimer les listes mensuelles devenues inutiles (et qui ne se vident pas)
+      TODO: vérifier que les demandes récentes n'aient pas de {{Traduit de}}
     """
     def __init__(self, site, debug):
         self.site = site
@@ -85,6 +86,8 @@ class Trad_maintenance:
         """ Vérifie et ajoute le {{Traduit de}} à la page de discussion
         """
         disc = pywikibot.Page(self.site, page.title().replace('/Traduction', ''))
+        if disc.isRedirectPage():
+            disc = disc.getRedirectTarget()
         l = self.re_trad.search(disc.text)
         m = self.re_traduitde.search(disc.text)
         if not l and not m:
@@ -116,6 +119,7 @@ class Trad_maintenance:
                                 break;
                     except: #Nopage
                         pywikibot.warning(u"Impossible de lire l'historique pour %s" % page.title())
+                        return False
                     if date != u'':
                         jour  = date[8:10].lstrip('0')
                         mois  = date[5:7].lstrip('0')
@@ -127,6 +131,7 @@ class Trad_maintenance:
                 disc.text = appel + disc.text
                 BeBot.save(disc, commentaire=self.resume+u' : Ajout du bandeau de licence', debug=self.debug)
                 self.stats['traduitde'] += 1
+                return True
             else:
                 pywikibot.warning(u'Impossible de trouver les infos de traduction pour %s' % page.title())
         return False
@@ -167,7 +172,7 @@ class Trad_maintenance:
                         statut = 5
                         self.clore_traduction(p)
                         self.traduit_de(p)
-                else:
+                elif statut != 1:
                     # Vérifier simplement le {{Traduit de}}
                     self.traduit_de(p)
 
