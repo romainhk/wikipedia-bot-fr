@@ -230,6 +230,8 @@ def delete(page, raison, debug=False):
             page.delete(reason=raison, prompt=False)
         except pywikibot.NoUsername, e:
             pywikibot.warning(u'Suppression de %s impossible - Utilisateur inconnu' % page)
+        except:
+            pywikibot.warning(u'Suppression de %s impossible' % page)
 
 def modeletodic(modele):
     """ Transforme un chaine "modèle" en tableau

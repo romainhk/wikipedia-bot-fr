@@ -185,8 +185,8 @@ class Trad_maintenance:
         for statut, l in self.listes.items():
             for annee, m in l.items():
                 for mois, nb in m.items():
-                    if nb == 0:
-                        lis = pywikibot.Page(self.site, u'Projet:Traduction/*/%s/%s %i' % (statut, mois, annee))
+                    lis = pywikibot.Page(self.site, u'Projet:Traduction/*/%s/%s %i' % (statut, mois, annee))
+                    if nb == 0 and lis.exists():
                         BeBot.delete(lis, self.resume+u' : Liste mensuelle périmée', debug=self.debug)
                         self.stats['liste'] += 1
 
