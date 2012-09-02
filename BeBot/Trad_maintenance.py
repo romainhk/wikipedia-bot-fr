@@ -107,7 +107,7 @@ class Trad_maintenance:
                 langue = a[1]
                 article = a[2].replace('_', ' ')
                 plus = u''
-                if a.has_key(u'oldid') and a['oldid'] != u'':
+                if a.has_key(u'oldid') and a['oldid'] != u'' and a['oldid'] != u'830165' :
                     # On utilise le oldid pour retrouver la date
                     oldid = a['oldid']
                     if self.sites.has_key(langue):
