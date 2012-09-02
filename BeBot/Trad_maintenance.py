@@ -73,12 +73,19 @@ class Trad_maintenance:
         BeBot.delete(page, self.resume+u' : Traduction abandonnée', debug=self.debug)
         self.stats['suppr'] += 1
         
-    def clore_traduction(self, page):
+    def clore_traduction(self, page, statut):
         """ Clôt une relecture : statut 3/4 -> 5
         """
         #pywikibot.output(u"&&& clore : %s" % page.title())
         page.text = self.re_statut.sub('|status=5', page.text)
-        BeBot.save(page, commentaire=self.resume+u' : Clôture de la traduction', debug=self.debug)
+        com = self.resume
+        if   statut == 2:
+            com += u' : Traduction abandonnée'
+        elif statut == 3:
+            com += u' : Relecture jamais pris en charge'
+        elif statut == 4:
+            com += u' : Relecture abandonnée'
+        BeBot.save(page, commentaire=com, debug=self.debug)
         self.retirer_le_modele_Traduction(BeBot.togglePageTrad(page))
         self.stats['cloture'] += 1
 
@@ -139,7 +146,6 @@ class Trad_maintenance:
     def run(self):
         if self.debug:
             pywikibot.warning(u"== Mode débuggage actif ; aucunes modifications effectuées ==")
-        ancien = self.date.year - 2
         re_annee = re.compile('Traduction de (\d{4})')
         re_mois  = re.compile('Traduction du mois de ([\w\xe9\xfb]+)', re.UNICODE|re.LOCALE) # éû
         parannee = pywikibot.Category(self.site, u"Catégorie:Traduction par année")
@@ -162,16 +168,18 @@ class Trad_maintenance:
                     continue
                 statut = int(statut.group(1))
                 if mois != u'':
-                    # Dénombrement global
+                    # Dénombrement global des traductions par mois/année
                     self.listes[self.les_statuts[statut-1]][annee][mois] += 1
 
-                if annee <= ancien: # critère d'ancienneté
-                    if statut == 1:  # Vieille demande
-                        self.suppressions.append(p.title())
-                    elif statut == 3 or statut == 4: # Relecture abandonnée
-                        statut = 5
-                        self.clore_traduction(p)
-                        self.traduit_de(p)
+                diff = self.date.year - annee
+                if self.date.month - BeBot.moistoint(mois) < 0:
+                    diff -= 1
+                if   statut == 1 and diff>=2: # Vieille demande
+                    self.suppressions.append(p.title())
+                elif (statut == 2 and diff>=3) or (statut == 3 and diff>=1) or (statut == 4 and diff>=2):
+                    # Traduction abandonnée, Relecture absente ou abandonnée
+                    self.clore_traduction(p, statut)
+                    self.traduit_de(p)
                 elif statut != 1:
                     # Vérifier simplement le {{Traduit de}}
                     self.traduit_de(p)
