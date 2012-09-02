@@ -26,7 +26,7 @@ Rassemble plusieurs fonctions génériques :
 BeginBotSection = u'<!-- BEGIN BOT SECTION -->'
 EndBotSection   = u'<!-- END BOT SECTION -->'
 ER_BotSection = re.compile("%s(.*)%s" % (BeginBotSection, EndBotSection), re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
-RE_Modele = re.compile('\{\{([^\}]+)\}\}', re.IGNORECASE|re.LOCALE|re.UNICODE|re.MULTILINE)
+RE_Modele = re.compile('\{\{(.+?)\}\}', re.IGNORECASE|re.LOCALE|re.DOTALL|re.MULTILINE)
 RE_Comment = re.compile("(<!--.*?-->)", re.MULTILINE|re.DOTALL) # commentaire html
 RE_Pipe = re.compile("\[\[((.+?)\|.+?)\]\]", re.LOCALE|re.MULTILINE|re.DOTALL) # lien avec pipe
 
@@ -256,6 +256,8 @@ def modeletodic(modele):
                 else:
                     r[pos] = b
                     pos +=1
+    else:
+        pywikibot.warning(u"BeBot.modeletodic() ; il a été impossible de lire le modèle suivant\n%s" % modele)
     return r
 
 def blocage(site):
