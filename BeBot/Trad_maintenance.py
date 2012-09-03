@@ -182,7 +182,7 @@ class Trad_maintenance:
                     # Traduction abandonnée, Relecture absente ou abandonnée
                     self.clore_traduction(p, statut)
                     self.traduit_de(p)
-                elif statut != 1:
+                elif statut != 1 and statut != 5:
                     # Vérifier simplement le {{Traduit de}}
                     self.traduit_de(p)
 
