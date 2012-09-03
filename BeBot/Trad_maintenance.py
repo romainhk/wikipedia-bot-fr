@@ -116,6 +116,8 @@ class Trad_maintenance:
                         sit = pywikibot.Site(langue)
                         self.sites[langue] = sit
                     orig = pywikibot.Page(sit, article)
+                    if orig.isRedirectPage():
+                        orig = orig.getRedirectTarget()
 
                     date = u''
                     try:
@@ -125,7 +127,7 @@ class Trad_maintenance:
                                 date = o[1]
                                 break;
                     except: #Nopage
-                        pywikibot.warning(u"Impossible de lire l'historique pour %s" % page.title())
+                        pywikibot.warning(u"Impossible de lire l'historique pour %s:%s" % (langue, orig.title()))
                         return False
                     if date != u'':
                         jour  = date[8:10].lstrip('0')
