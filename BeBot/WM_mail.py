@@ -290,7 +290,12 @@ from=           # adresse de l'expédieur, truc@toto.fr
 
         pagetmp.text = modele.sub(u'{{subst:%s|' % modele_de_presentation, self.mag.text)
         pagetmp.text = BeBot.retirer( [self.exps['noinclude']], pagetmp.text ) # retrait de la catégorie
-        BeBot.save(pagetmp, commentaire=u'Préparation pour le mail du Wikimag')
+        if len(pagetmp.text) > 0:
+            BeBot.save(pagetmp, commentaire=u'Préparation pour le mail du Wikimag')
+        else:
+            pywikibot.warning(u"Il n'y a rien à préparer ! %s est vide" % pagetmp.title())
+            return u''
+
         text = pywikibot.Page(self.site, self.tmp).text + self.disclaimer
         if self.epreuve: text = u'CE MAIL EST UNE ÉPREUVE DU PROCHAIN MAG.\n' + text
         text = self.exps['User'].sub(r'{{u|\1}}', text)
