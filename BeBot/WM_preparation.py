@@ -139,7 +139,7 @@ class PreparationWikimag:
                 re.LOCALE|re.MULTILINE)
         articles = []
         extremum = self.date_fin - datetime.timedelta(days=1)
-        cetteSemaine = unicode(extremum.strftime("%e#%B#%Y"), errors='ignore')
+        cetteSemaine = unicode(extremum.strftime("%e#%B#%Y").strip(), errors='ignore')
         trouve = False
         for ligne in BeBot.page_ligne_par_ligne(self.site, nompage):
             s = semRE.search(ligne)
