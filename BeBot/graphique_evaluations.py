@@ -150,7 +150,7 @@ Legend = left:70 top:295"""[1:] % (largeur, width, maxi, graduation, graduation/
         # Publication
         page = pywikibot.Page(self.site, u'Projet:Wikipédia_1.0/Évolution')
         page.text = BeBot.ER_BotSection.sub(self.BotSectionEdit, page.text)
-        BeBot.save(page, comment=self.resume)
+        BeBot.save(page, commentaire=self.resume)
 
 def main():
     site = pywikibot.getSite()
