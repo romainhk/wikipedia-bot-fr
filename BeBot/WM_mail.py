@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, locale, sys, os, urllib
+import re, datetime, locale, sys, os, urllib, smtplib
 from email.MIMEText import MIMEText
 from email.MIMEMultipart import MIMEMultipart
 from email.Utils import formatdate
@@ -50,7 +50,6 @@ from=           # adresse de l'expédieur, truc@toto.fr
         if self.mag.isRedirectPage():
             self.mag = self.mag.getRedirectTarget()
 
-        self.fichier_mail = u'./mail_wikimag.tmp' # Fichier temporaire pour le mail
         self.mode = u'' # Mode de génération en cours : text ou html
         self.sommaire_jocker = '###141### SOMMAIRE ###592###'
         self.exps = {
@@ -484,8 +483,8 @@ from=           # adresse de l'expédieur, truc@toto.fr
         if 'mailinglist' not in conf:
             conf['mailinglist'] = u'a@a.com'
             self.debug = True
-        if 'from' not in conf:
-            pywikibot.error(u"fichier de configuration incomplet ; manque l'expéditeur d'origine")
+        if 'from' not in conf or 'from-pass' not in conf:
+            pywikibot.error(u"veuillez préciser l'expéditeur d'origine (from) et/ou son mot de passe gmail")
             sys.exit(3)
         if 'mode' not in conf:
             conf['mode'] = 'text'
@@ -533,17 +532,17 @@ from=           # adresse de l'expédieur, truc@toto.fr
         if self.epreuve:
             Subject += u' # EPREUVE'
         msg['Subject'] = Subject
-        f = open(self.fichier_mail, "w")
-        f.write(msg.as_string())
-        f.close()
-        if not self.debug:
-            pywikibot.output(u"# Publication sur la mailing list")
-            try:
-                cmd = u'cat %s | mail -s "%s" %s' % (self.fichier_mail, msg['Subject'], msg['To'])
-                pywikibot.output(u'Cmd > ' + cmd)
-                os.system(cmd)
-            except os.error as errno:
-                pywikibot.error(u"Erreur l'hors de l'envoie du mail : %s" % errno.errorcode[errno])
+
+        server = smtplib.SMTP('smtp.gmail.com',587) #port 465 or 587
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+        try:
+            server.login(msg['From'], conf['from-pass'])
+            server.sendmail(msg['From'], msg['To'], msg)
+        except:
+            pywikibot.error(u"Erreur l'hors de l'envoie du mail")
+        server.close()
 
 def main():
     site = pywikibot.getSite()
