@@ -1,8 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, locale, MySQLdb, math
+import re, datetime, locale, math, sqlite3
 import BeBot
-from MySQLdb.constants import ER
 import pywikibot
 from textwrap import dedent
 locale.setlocale(locale.LC_ALL, '')
@@ -17,12 +16,11 @@ class GraphiqueEvaluations:
         self.date = datetime.date.today()
         self.resume = u'Mise à jour mensuelle du graphique des évaluations'
         #DB
-        self.db = MySQLdb.connect(db="u_romainhk_transient", \
-                                read_default_file="/home/romainhk/.my.cnf", \
-                                use_unicode=True, charset='utf8')
+        self.conn = sqlite3.connect("historique_evaluations.sqlite")
+        self.conn.row_factory = sqlite3.Row
         self.nom_base = u'historique_des_evaluations'
     def __del__(self):
-        self.db.close()
+        self.conn.close()
 
     def BotSectionEdit(self, match):
         return u'%s\n%s\n%s' % (BeBot.BeginBotSection, self.msg, BeBot.EndBotSection)
@@ -50,7 +48,7 @@ class GraphiqueEvaluations:
         for a in l.values():
             total += a
         # Sauvegarde
-        curseur = self.db.cursor()
+        curseur = self.conn.cursor()
         req = u'INSERT INTO %s' % self.nom_base \
             + u'(date, maximum, élevée, moyenne, faible, inconnue, total) ' \
             + u'VALUES ("%s", %d, %d, %d, %d, %d, %d)' \
@@ -60,13 +58,14 @@ class GraphiqueEvaluations:
             curseur.execute(req)
         except MySQLdb.Error, e:
             pywikibot.error(u"INSERT error %d: %s.\nRequête : %s" % (e.args[0], e.args[1], req))
+        self.conn.commit()
         
         # Dessin
         limite = 20 #nombre max de colonnes
         largeur = 600 #largeur du graphique
         maxi = 0 #valeur max en hauteur
         nb_bande = 6
-        res = BeBot.charger_bdd(self.db, self.nom_base, lim=limite, ordre='"date" ASC')
+        res = BeBot.charger_bdd(self.conn, self.nom_base, lim=limite, ordre='"date" ASC')
         nb_enregistrement = len(res)
         if nb_enregistrement > nb_bande:
             # Tri des résultats sur les 6 derniers mois
