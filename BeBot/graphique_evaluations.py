@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, locale, math, sqlite3
-import BeBot
+import re, datetime, locale, math, sqlite3, sys
 import pywikibot
+import BeBot
 from textwrap import dedent
 locale.setlocale(locale.LC_ALL, '')
 
@@ -11,12 +11,16 @@ class GraphiqueEvaluations:
         Génère un graphique à barres sur l'évolution du nombre des évaluations :
         nombre d'articles d'importance maximum ou élevée et total
     """
-    def __init__(self, site):
+    def __init__(self, site, bddsqlite):
         self.site = site
         self.date = datetime.date.today()
         self.resume = u'Mise à jour mensuelle du graphique des évaluations'
         #DB
-        self.conn = sqlite3.connect("historique_evaluations.sqlite")
+        try:
+            self.conn = sqlite3.connect(bddsqlite)
+        except:
+            pywikibot.output("Imposible d'ouvrir la base sqlite {0}".format(bddsqlite))
+            exit(2)
         self.conn.row_factory = sqlite3.Row
         self.nom_base = u'historique_des_evaluations'
     def __del__(self):
@@ -56,8 +60,8 @@ class GraphiqueEvaluations:
                     l['moyenne'], l['faible'], l['inconnue'], total)
         try:
             curseur.execute(req)
-        except MySQLdb.Error, e:
-            pywikibot.error(u"INSERT error %d: %s.\nRequête : %s" % (e.args[0], e.args[1], req))
+        except:
+            pywikibot.error(u"INSERT error pendant la requête :\n%s" % (req))
         self.conn.commit()
         
         # Dessin
@@ -153,8 +157,13 @@ Legend = left:70 top:295"""[1:] % (largeur, width, maxi, graduation, graduation/
 
 def main():
     site = pywikibot.getSite()
-    ge = GraphiqueEvaluations(site)
-    ge.run()
+    if len(sys.argv) == 2:
+        bddsqlite = sys.argv[1]
+        ge = GraphiqueEvaluations(site, bddsqlite)
+        ge.run()
+    else:
+        pywikibot.output("Erreur de paramètres : il faut spécifier la base sqlite")
+        exit(1)
 
 if __name__ == "__main__":
     try:
