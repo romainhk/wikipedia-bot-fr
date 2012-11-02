@@ -33,8 +33,8 @@ class GraphiqueEvaluations:
         # Retrouve l'enregistrement d'un mois en particulier
         for i in range(0, len(ressource)):
             d = ressource[i]['date'].split('-')
-            month = d[1]
-            year  = d[0]
+            month = int(d[1])
+            year  = int(d[0])
             if year == annee and month == mois:
                 return ressource[i]
         return [ datetime.date(day=1,month=mois,year=annee),0,0,0,0,0,0 ]
@@ -91,8 +91,8 @@ class GraphiqueEvaluations:
 
         width = math.ceil(largeur/nb_enregistrement) #largeur d'une bande
         for r in range(0, nb_enregistrement):
-            if maxi < res[r][6]:
-                maxi = res[r][6] # point le plus haut
+            if maxi < res[r]['total']:
+                maxi = res[r]['total'] # point le plus haut
         #Majoration du maximum
         t = maxi
         rang = 0
@@ -129,25 +129,26 @@ Legend = left:70 top:295"""[1:] % (largeur, width, maxi, graduation, graduation/
         for r in range(0, nb_enregistrement):
             p = ''
             if r % 2 == 1:
-                p = res[r][0].strftime("%m/%y")
+                spl = res[r]['date'].split('-')
+                p = spl[1] + '/' + spl[0][2:]
             self.msg += '  bar:%d text:%s\n' % (r+1, p)
         #Valeurs : total
         self.msg += '\nPlotData=\n  color:barra width:$width align:left\n\n'
         for r in range(0, nb_enregistrement):
-            p = res[r][6]
+            p = res[r]['total']
             self.msg += '  bar:%d from:0 till: %d\n' % (r+1, p)
         #Valeurs : importants
         self.msg += '\nPlotData=\n  color:rouge width:$width align:left\n\n'
         for r in range(0, nb_enregistrement):
-            p = res[r][1] + res[r][2]
+            p = res[r]['maximum'] + res[r][2] # 2 = élevée
             self.msg += '  bar:%d from:0 till: %d\n' % (r+1, p)
         #Labels
         self.msg += '\nPlotData=\n'
         for r in range(0, nb_enregistrement):
             if r % 2 == 1:
-                p = res[r][6]
+                p = res[r]['total']
                 self.msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r+1, p, p)
-                q = res[r][1] + res[r][2]
+                q = res[r]['maximum'] + res[r][2]
                 self.msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r+1, q, q)
         self.msg += '</timeline>'
 
