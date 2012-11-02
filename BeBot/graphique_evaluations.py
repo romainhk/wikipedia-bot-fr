@@ -7,7 +7,7 @@ from textwrap import dedent
 locale.setlocale(locale.LC_ALL, '')
 
 class GraphiqueEvaluations:
-    """ GraphiqueEvaluations
+    """ Graphique Évaluations
         Génère un graphique à barres sur l'évolution du nombre des évaluations :
         nombre d'articles d'importance maximum ou élevée et total
     """
@@ -19,10 +19,10 @@ class GraphiqueEvaluations:
         try:
             self.conn = sqlite3.connect(bddsqlite)
         except:
-            pywikibot.output("Imposible d'ouvrir la base sqlite {0}".format(bddsqlite))
+            pywikibot.output("Impossible d'ouvrir la base sqlite {0}".format(bddsqlite))
             exit(2)
         self.conn.row_factory = sqlite3.Row
-        self.nom_base = u'historique_des_evaluations'
+        self.nom_base = u'graphique_evaluations'
     def __del__(self):
         self.conn.close()
 
@@ -32,8 +32,9 @@ class GraphiqueEvaluations:
     def trouver_stat_mens(self, ressource, mois, annee):
         # Retrouve l'enregistrement d'un mois en particulier
         for i in range(0, len(ressource)):
-            month = ressource[i][0].month
-            year = ressource[i][0].year
+            d = ressource[i]['date'].split('-')
+            month = d[1]
+            year  = d[0]
             if year == annee and month == mois:
                 return ressource[i]
         return [ datetime.date(day=1,month=mois,year=annee),0,0,0,0,0,0 ]

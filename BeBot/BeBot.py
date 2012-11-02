@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, urllib2, MySQLdb, simplejson, sys
+import re, datetime, urllib2, MySQLdb, simplejson, sys, sqlite3
 from MySQLdb.constants import ER
 import pywikibot
 
@@ -126,8 +126,8 @@ def charger_bdd(db, nom_base, champs="*", cond=None, lim=None, ordre=None):
         req += " LIMIT 0,%i" % lim
     try:
         curseur.execute(req)
-    except MySQLdb.Error, e:
-        pywikibot.error(u"SELECT error %d: %s.\nRequête : %s" % (e.args[0], e.args[1], req))
+    except:
+        pywikibot.error(u"Erreur lors du chargement de la BDD - Requête : {0}\n".format(req))
 
     return curseur.fetchall()
 
