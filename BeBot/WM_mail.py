@@ -539,9 +539,9 @@ from=           # adresse de l'expédieur, truc@toto.fr
         server.ehlo()
         try:
             server.login(msg['From'], conf['from-pass'])
-            server.sendmail(msg['From'], msg['To'], msg)
-        except:
-            pywikibot.error(u"Erreur l'hors de l'envoie du mail")
+            server.sendmail(msg['From'], msg['To'], msg.as_string())
+        except Exception, exc:
+            pywikibot.error(u"probleme l'hors de l'envoie : {0}".format(str(exc)))
         server.close()
 
 def main():
