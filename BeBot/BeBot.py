@@ -28,7 +28,7 @@ EndBotSection   = u'<!-- END BOT SECTION -->'
 ER_BotSection = re.compile("%s(.*)%s" % (BeginBotSection, EndBotSection), re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
 RE_Modele = re.compile('\{\{(.+?)\}\}', re.IGNORECASE|re.LOCALE|re.DOTALL|re.MULTILINE)
 RE_Comment = re.compile("(<!--.*?-->)", re.MULTILINE|re.DOTALL) # commentaire html
-RE_Pipe = re.compile("\[\[((.+?)\|.+?)\]\]", re.LOCALE|re.MULTILINE|re.DOTALL) # lien avec pipe
+RE_Pipe = re.compile("\[\[((.+?)\|[^\]]+?)\]\]", re.LOCALE|re.MULTILINE|re.DOTALL) # lien avec pipe
 
 def moistoint(mois):
     """ Convertit une chaine mois, en entier entre 1 et 12.
@@ -246,7 +246,7 @@ def modeletodic(modele):
         pos = 0
         for l in chaine.split("|"):
             if pos == 0:
-                r[0] = l
+                r[0] = l.strip()
                 pos += 1
             else:
                 a = l.split("=")
