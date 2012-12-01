@@ -12,6 +12,7 @@ class ListageQualite:
         
         TODO : supporter l'italien
         TODO : propositions d'apposition de Lien AdQ|Lien BA => à part
+        TODO : se reposer sur sql pour faire les recoupements
     """
     def __init__(self, site):
         self.resume = u'Listage des articles de qualité du ' + datetime.date.today().strftime("%Y-%m-%d")

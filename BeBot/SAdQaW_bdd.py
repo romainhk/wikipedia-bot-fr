@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-#$ -m ae
 import re, datetime, MySQLdb, getopt, sys, locale
 from MySQLdb.constants import ER
 import pywikibot
@@ -25,6 +24,7 @@ class ContenuDeQualite:
 
         TODO : les intentions de proposition au label -> pas de catégorie associée
         TODO : les portails/themes de qualité
+        TODO : passer à sqlite
     """
     def __init__(self, site):
         self.site = site
