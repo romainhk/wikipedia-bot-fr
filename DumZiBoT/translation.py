@@ -73,7 +73,8 @@ languages = [
         [ 'wa', 'wallon',   "le&nbsp;" ],
         [ 'oc', 'occitan',   "l'" ],
         [ 'sq', 'albanais',   "l'" ],
-        [ 'wuu', 'wu',      "le&nbsp;" ]
+        [ 'wuu', 'wu',      "le&nbsp;" ],
+        [ 'mk', u'macédonien', "le&nbsp;" ]
     ]
 
 cats = [ [u'Article à traduire', 'Demande de traduction',        'Demandes', 'Demandes de traduction'],
