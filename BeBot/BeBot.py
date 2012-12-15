@@ -288,3 +288,35 @@ def userdailycontribs(site, user, days=1):
             last = c['timestamp']
     return [contrib, last]
 
+def WM_verif_feneantise(site, semaine, annee):
+    """ Vérifie qu'un wikimag a bien été rédigé
+    """
+    num = u"%s/%s" % (annee, semaine)
+    wm = pywikibot.Page(site, u"Wikipédia:Wikimag/%s" % num)
+    #pywikibot.output(taille_page(wm, 1))
+    #NB: Wikipédia:Wikimag/pre fait 522 signes
+    if not wm.exists() or taille_page(wm, 1) < 566 :
+        return True
+    return False
+
+def WM_prevenir_redacteurs(site, message):
+    """ Prévient les rédacteurs du wikimag
+    """
+    redac = [] # les rédacteurs déjà prévenus
+    cat = pywikibot.Category(site, u'Utilisateur rédacteur Wikimag')
+    for r in cat.articles():
+        can = r.title().split('/')
+        if len(can) > 0:
+            can = can[0]
+        redacteur = pywikibot.Page(site, can)
+        if not redacteur.isTalkPage():
+            redacteur = redacteur.toggleTalkPage()
+        if redacteur.isRedirectPage():
+            redacteur = redacteur.getRedirectTarget()
+        # Avertissement avec dédoublonnage
+        if not redacteur in redac:
+            pywikibot.output(redacteur.title())
+            redac.append(redacteur)
+            redacteur.text += message
+            save(redacteur, commentaire="Wikimag : alerte de rédaction", debug=False)
+

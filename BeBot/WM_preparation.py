@@ -34,6 +34,8 @@ class PreparationWikimag:
         while jour != self.date_fin:
             self.jours.append(jour)
             jour = jour + unjour
+        self.semaine = self.date.strftime("%W").lstrip('0')
+        self.annee = self.date.year
 
         self.resume = u'BeBot : Préparation du wikimag débutant le ' + self.lasemaine
         pywikibot.setAction(self.resume)
@@ -159,41 +161,6 @@ class PreparationWikimag:
                     articles.append([s.group(1), icone])
         return articles    # Impossible ; en cas de foirage complet
 
-    def verif_feneantise(self):
-        """ Prévient les rédacteurs si le mag n'a même pas été commencé !
-        """
-        if not self.date.strftime("%w") == 0:
-            return False        # Alerte uniquement le dimanche
-        semaine = self.date.strftime("%W").lstrip('0')
-        annee = self.date.year
-        num = u"%s/%s" % (annee, semaine)
-        msg  = u"\n\n== Wikimag - Semaine %s ==\n" % semaine
-        msg += u"Attention, le [[WP:WM|wikimag]] ''[[Wikipédia:Wikimag/%s|de cette semaine]]'' n'est pas encore rédigé. Dépéchez vous ! (Aide: [[Utilisateur:BeBot/Préparation Wikimag]]) ~~~~\n" % num
-        msg += u"\n{{Petit|Ce message a été déposé automatiquement grâce à [[:Catégorie:Utilisateur rédacteur Wikimag]]}}" # A supprimer un jour
-
-        wm = pywikibot.Page(self.site, u"Wikipédia:Wikimag/%s" % num)
-        #pywikibot.output(BeBot.taille_page(wm, 1))
-        #NB: Wikipédia:Wikimag/pre fait 522 signes
-        if not wm.exists() or BeBot.taille_page(wm, 1) < 566 :
-            resume = u"Wikimag : alerte rédaction"
-            redac = []
-            cat = pywikibot.Category(self.site, u'Utilisateur rédacteur Wikimag')
-            for r in cat.articles():
-                can = r.title().split('/')
-                if len(can) > 0:
-                    can = can[0]
-                redacteur = pywikibot.Page(self.site, can)
-                if not redacteur.isTalkPage():
-                    redacteur = redacteur.toggleTalkPage()
-                if redacteur.isRedirectPage():
-                    redacteur = redacteur.getRedirectTarget()
-                # Avertissement avec dédoublonnage
-                if not redacteur in redac:
-                    redac.append(redacteur)
-                    pywikibot.output(redacteur.title())
-                    redacteur.text += msg
-                    BeBot.save(redacteur, commentaire=resume)
-
     def run(self):
         pywikibot.output(u"Préparation du wikimag débutant le " + self.lasemaine)
            
@@ -228,7 +195,12 @@ class PreparationWikimag:
         self.propositions_ba  = self.articles_propositions( \
                 u'Wikipédia:Bons articles/Propositions', modeleRE)
 
-        self.verif_feneantise()
+        if (BeBot.WM_verif_feneantise(self.site, self.semaine, self.annee) and self.date.strftime("%w") == 0):
+            #NB: que le dimanche
+            msg  = u"\n\n== Wikimag - Semaine %s ==\n" % self.semaine
+            msg += u"Attention, le [[WP:WM|wikimag]] ''[[Wikipédia:Wikimag/%s|de cette semaine]]'' n'est pas encore rédigé. Dépéchez vous ! (Aide: [[Utilisateur:BeBot/Préparation Wikimag]]) ~~~~\n" % self.annee
+            msg += u"\n{{Petit|Ce message a été déposé automatiquement grâce à [[:Catégorie:Utilisateur rédacteur Wikimag]]}}" # A supprimer un jour
+            BeBot.WM_prevenir_redacteurs(self.site, msg, resume)
 
 def main():
     site = pywikibot.getSite()
@@ -238,7 +210,8 @@ def main():
     pw.run()
 
     page_resultat = pywikibot.Page(site, u'Utilisateur:BeBot/Préparation Wikimag')
-    page_resultat.put(unicode(pw))
+    page_resultat.text = unicode(pw)
+    BeBot.save(page_resultat, debug=False)
 
 if __name__ == "__main__":
     try:

@@ -478,6 +478,14 @@ from=           # adresse de l'expédieur, truc@toto.fr
         return u'<p'+style+'>'+text+u'</p>\n'
 
     def run(self):
+        # Vérification que le mag a bien été rédigé
+        if (BeBot.WM_verif_feneantise(self.site, self.semaine, self.annee)):
+            msg  = u"\n\n== Wikimag - Semaine %s ==\n" % self.semaine
+            msg += u"Ohlala, le [[WP:WM|wikimag]] [[Wikipédia:Wikimag/%s/%s|de cette semaine]] n'est pas prêt. La publication a été abandonnée. ~~~~\n" % (self.annee, self.semaine)
+            msg += u"\n{{Petit|Ce message a été déposé automatiquement grâce à [[:Catégorie:Utilisateur rédacteur Wikimag]]}}" # A supprimer un jour
+            BeBot.WM_prevenir_redacteurs(self.site, msg)
+            sys.exit(5)
+
         # Fichier de configuration
         conf = self.conf
         if 'mailinglist' not in conf:
@@ -521,7 +529,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
             pywikibot.error(u"mode d'envoi du mail inconnu (text, html ou multi)")
             sys.exit(4)
 
-        # Publication
+        # Envoie du mail
         msg['From'] = conf['from']
         if self.epreuve:
             msg['To'] = conf['epreuve']
