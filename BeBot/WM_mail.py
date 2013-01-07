@@ -41,7 +41,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         self.debug = False # Mode de débugage actif ?
         self.annee = self.lundi_pre.isocalendar()[0]
         if 'semaine' in self.conf:
-            self.semaine = self.conf['semaine']
+            self.semaine = int(self.conf['semaine'])
         else:
             self.semaine = self.lundi_pre.isocalendar()[1]
         self.mag = pywikibot.Page(site, u'Wikipédia:Wikimag/%s/%s' % \
@@ -378,7 +378,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         r += u'<h1>' + self.html_lien( \
                 u'http://fr.wikipedia.org/wiki/%s' % (self.mag.title()), \
                 'Wikimag '+str(self.numero)) \
-                + u' (semaine ' + self.semaine + u')</h1>\n'
+                + u' (semaine ' + str(self.semaine) + u')</h1>\n'
         r += self.html_paragraphe(u'Du lundi ' + self.lundi.strftime("%e %B %Y").lstrip(' ').decode('utf-8') \
                 + u' au dimanche ' + (self.lundi + datetime.timedelta(days=6)).strftime("%e %B %Y").lstrip(' ').decode('utf-8'))
         r += '<div style="float:right;"><img src="http://upload.wikimedia.org/wikipedia/commons/7/72/Wikimag-fr.svg" alt="Logo Wikimag" width="120px" /></div>\n'
