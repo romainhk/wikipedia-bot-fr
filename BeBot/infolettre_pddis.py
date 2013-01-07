@@ -16,8 +16,8 @@ class Infolettre:
         self.date = datetime.date.today()
         self.lundi = self.date - datetime.timedelta(days=self.date.weekday())
         self.lundi_pre = self.lundi - datetime.timedelta(weeks=1)
-        self.semaine = self.lundi_pre.strftime("%W").lstrip('0')
-        self.annee = self.lundi_pre.strftime("%Y")
+        self.semaine = self.lundi_pre.isocalendar()[1]
+        self.annee = self.lundi_pre.isocalendar()[0]
         self.abn = {
                 "wikimag" : u"Wikipédia:Wikimag/Abonnement",
                 "raw"     : u"Wikipédia:Regards sur l'actualité de la Wikimedia/Inscription" }
@@ -82,8 +82,8 @@ class Infolettre:
 
     def raw(self):
         """ Regards sur l'actualité de la Wikimedia """
-        self.semaine = self.lundi.strftime("%W").lstrip('0')
-        self.resume = u"Regards sur l'actualité de la Wikimedia - semeine %s de %s" % (self.semaine, self.annee)
+        self.semaine = self.lundi.isocalendar()[1]
+        self.resume = u"Regards sur l'actualité de la Wikimedia - semaine %s de %s" % (self.semaine, self.annee)
         msg  = u"\n\n== Regards sur l'actualité de la Wikimedia - Semaine %s ==\n" % (self.semaine)
         msg += u"{{Regards sur l'actualité de la Wikimedia/PdD|%s|%s}}\n~~~~" % (self.annee, self.semaine)
         return msg

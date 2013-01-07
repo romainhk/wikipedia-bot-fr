@@ -39,11 +39,11 @@ from=           # adresse de l'expédieur, truc@toto.fr
             self.lundi_pre = self.lundi
             self.lundi = self.lundi_pre + datetime.timedelta(weeks=1)
         self.debug = False # Mode de débugage actif ?
-        self.annee = self.lundi_pre.strftime("%Y")
+        self.annee = self.lundi_pre.isocalendar()[0]
         if 'semaine' in self.conf:
             self.semaine = self.conf['semaine']
         else:
-            self.semaine = self.lundi_pre.strftime("%W").lstrip('0')
+            self.semaine = self.lundi_pre.isocalendar()[1]
         self.mag = pywikibot.Page(site, u'Wikipédia:Wikimag/%s/%s' % \
                 (self.annee, self.semaine) )
         self.numero = 0
