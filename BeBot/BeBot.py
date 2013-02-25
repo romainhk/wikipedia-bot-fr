@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, urllib2, MySQLdb, simplejson, sys, sqlite3
+import re, datetime, urllib, MySQLdb, simplejson, sys, sqlite3
 from MySQLdb.constants import ER
 import pywikibot
 
@@ -96,10 +96,10 @@ def stat_consultations(page, codelangue=u'fr', date=False):
         else:
             date = datetime.date(date.year-1, 12, date.day)
     url = 'http://stats.grok.se/json/%s/%s/%s' \
-            % ( codelangue, date.strftime('%Y%m'), urllib2.quote(page.title().encode('utf-8')) )
+            % ( codelangue, date.strftime('%Y%m'), urllib.quote(page.title().encode('utf-8')) )
     try:
-        res = simplejson.load(urllib2.urlopen(url))
-    except urllib2.URLError, urllib2.HTTPError:
+        res = simplejson.load(urllib.urlopen(url))
+    except (urllib.URLError, urllib.HTTPError):
         pywikibot.warning(u"impossible de récupérer les stats à l'adresse %s" % url)
         return 0
     return res['total_views']
@@ -207,14 +207,14 @@ def save(page, commentaire=u'', minor=False, debug=False):
         except pywikibot.EditConflict:
             pywikibot.warning(u"Abandonne la modification de %s à cause d'un conflit d'édition"
                               % (page,))
-        except pywikibot.SpamfilterError, e:
+        except pywikibot.SpamfilterError as e:
             pywikibot.warning(u"Ne peut pas modifier %s à cause d'un blacklistage %s"
                               % (page, e.url))
-        except pywikibot.PageNotSaved, error:
+        except pywikibot.PageNotSaved as error:
             pywikibot.warning(u"Erreur lors de l'écriture de %s" % error)
         except pywikibot.LockedPage:
             pywikibot.warning(u'Abandonne la modification de %s (page verrouillée)' % (page,))
-        except pywikibot.ServerError, e:
+        except pywikibot.ServerError as e:
             pywikibot.warning(u'Erreur Serveur : %s' % e)
         except:
             pywikibot.warning(u'Erreur inconnue lors du traitement de %s' % page.title())
@@ -230,7 +230,7 @@ def delete(page, raison, debug=False):
     else:
         try:
             page.delete(reason=raison, prompt=False)
-        except pywikibot.NoUsername, e:
+        except pywikibot.NoUsername as e:
             pywikibot.warning(u'Suppression de %s impossible - Utilisateur inconnu' % page)
         except:
             pywikibot.warning(u'Suppression de %s impossible' % page)
