@@ -9,9 +9,10 @@ class Infolettre:
     """ Infolettre
         Publie une infolettre sur la page de discussion des abonnées (wikimag et RAW)
     """
-    def __init__(self, site, infolettre):
+    def __init__(self, site, infolettre, debug):
         self.site = site
         self.infolettre = infolettre
+        self.debug = debug
         pywikibot.output("# Publication de l'infolettre %s" % self.infolettre)
         self.date = datetime.date.today()
         self.lundi = self.date - datetime.timedelta(days=self.date.weekday())
@@ -55,7 +56,7 @@ class Infolettre:
                 + u'\n{{colonnes|nombre=3|\n' + propositions  + u'\n}}\n' \
                 + u'<noinclude>\n[[Catégorie:Wikipédia:Atelier de lecture|Lumière sur...]]\n</noinclude>'
         pywikibot.output(u"# Publication sur l'Atelier de lecture")
-        BeBot.save(lumiere, commentaire=u'Maj hebdomadaire de la liste')
+        BeBot.save(lumiere, commentaire=u'Maj hebdomadaire de la liste', debug=self.debug)
 
     def wikimag(self):
         """ Wikimag """
@@ -99,12 +100,10 @@ class Infolettre:
         for f in oldmag.finditer(page.text):
             if len(f.groups()) == 2:
                 sem = int(f.group(2))
-                #pywikibot.output("%d -- %d ++ %d"%(int(self.semaine),sem,abs(int(self.semaine)-sem)))
                 if abs(int(self.semaine)-sem) > 1:
                     page.text = page.text.replace(f.group(0), '==')
-            else:
-                #Ancien format, sans la semaine
-                page.text = page.text.replace(f.group(0), '==')
+                    # en cas de remplacement, on recommence pour être sûre qu'il n'y en ai pas d'autres à faire
+                    self.rm_old(page)
         return True
 
     def newsboy(self, lecteur, msg):
@@ -114,7 +113,7 @@ class Infolettre:
             lecteur = lecteur.getRedirectTarget()
         self.rm_old(lecteur)
         lecteur.text += msg
-        BeBot.save(lecteur, commentaire=self.resume)
+        BeBot.save(lecteur, commentaire=self.resume, debug=self.debug)
 
     def run(self):
         if   self.infolettre == u"wikimag":
@@ -132,6 +131,7 @@ class Infolettre:
             m = r.search(i)
             if m is not None:
                 liste.append(m.group(1))
+        liste = ["Romainhk"]
 
         # Distribution
         if hasattr(self, "resume"):
@@ -143,11 +143,15 @@ def main():
     site = pywikibot.getSite()
     if BeBot.blocage(site):
         sys.exit(7)
-    if len(sys.argv) != 2:
-        lettre = u"wikimag"
-    else:
-        lettre = sys.argv[1].lower()
-    bw = Infolettre(site, lettre)
+    debug = False
+    nbarg = len(sys.argv)
+    infolettre = "wikimag"
+    for par in sys.argv:
+        if par=="debug":
+            debug = True
+        else:
+            lettre = sys.argv[1].lower()
+    bw = Infolettre(site, lettre, debug)
     bw.run()
 
 if __name__ == "__main__":
