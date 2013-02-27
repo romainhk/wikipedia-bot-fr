@@ -131,7 +131,6 @@ class Infolettre:
             m = r.search(i)
             if m is not None:
                 liste.append(m.group(1))
-        liste = ["Romainhk"]
 
         # Distribution
         if hasattr(self, "resume"):
@@ -143,11 +142,14 @@ def main():
     site = pywikibot.getSite()
     if BeBot.blocage(site):
         sys.exit(7)
+    if len(sys.argv) <= 1:
+        pywikibot.output("Syntaxe: infolettre_pddis.py MAGAZINE [DEBUG]")
+        sys.exit(1)
     debug = False
     nbarg = len(sys.argv)
-    infolettre = "wikimag"
-    for par in sys.argv:
-        if par=="debug":
+    infolettre = ""
+    for par in sys.argv.lower():
+        if par == "debug":
             debug = True
         else:
             lettre = sys.argv[1].lower()
