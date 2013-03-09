@@ -148,8 +148,8 @@ def main():
     debug = False
     nbarg = len(sys.argv)
     infolettre = ""
-    for par in sys.argv.lower():
-        if par == "debug":
+    for par in sys.argv:
+        if par.lower() == "debug":
             debug = True
         else:
             lettre = sys.argv[1].lower()
