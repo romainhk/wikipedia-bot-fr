@@ -191,7 +191,7 @@ class PreparationWikimag:
         # Propositions
         modeleRE = re.compile("^\* \d+ : \{\{Sous-page:a2\|Discuter\|([^\|\}]+)\|.+?\}\}.*?(\{\{Icône wikiconcours\|.*?\}\})?.*?$", re.LOCALE|re.MULTILINE)
         self.propositions_adq = self.articles_propositions( \
-                u'Wikipédia:Contenus de qualité/Propositions', modeleRE)
+                u'Wikipédia:Articles de qualité/Propositions', modeleRE)
         self.propositions_ba  = self.articles_propositions( \
                 u'Wikipédia:Bons articles/Propositions', modeleRE)
 
