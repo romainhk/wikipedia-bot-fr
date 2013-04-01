@@ -37,7 +37,7 @@ class GraphiqueEvaluations:
             year  = int(d[0])
             if year == annee and month == mois:
                 return ressource[i]
-        return [ datetime.date(day=1,month=mois,year=annee),0,0,0,0,0,0 ]
+        return ( datetime.date(day=1,month=mois,year=annee).strftime(u"%Y-%m-%d"),0,0,0,0,0,0 )
 
     def run(self):
         # Dénombrement
@@ -61,8 +61,8 @@ class GraphiqueEvaluations:
                     l['moyenne'], l['faible'], l['inconnue'], total)
         try:
             curseur.execute(req)
-        except:
-            pywikibot.error(u"INSERT error pendant la requête :\n%s" % (req))
+        except sqlite3.Error as e:
+            pywikibot.error(u"Erreur lors de l'INSERT :\n%s" % (e.args[0]))
         self.conn.commit()
         
         # Dessin
@@ -70,7 +70,7 @@ class GraphiqueEvaluations:
         largeur = 600 #largeur du graphique
         maxi = 0 #valeur max en hauteur
         nb_bande = 6
-        res = BeBot.charger_bdd(self.conn, self.nom_base, lim=limite, ordre='"date" ASC')
+        res = BeBot.charger_bdd(self.conn, self.nom_base, lim=limite, ordre='"date" DESC')
         nb_enregistrement = len(res)
         if nb_enregistrement > nb_bande:
             # Tri des résultats sur les 6 derniers mois
@@ -155,7 +155,7 @@ Legend = left:70 top:295"""[1:] % (largeur, width, maxi, graduation, graduation/
         # Publication
         page = pywikibot.Page(self.site, u'Projet:Wikipédia_1.0/Évolution')
         page.text = BeBot.ER_BotSection.sub(self.BotSectionEdit, page.text)
-        BeBot.save(page, commentaire=self.resume)
+        BeBot.save(page, commentaire=self.resume, debug=False)
 
 def main():
     site = pywikibot.getSite()
