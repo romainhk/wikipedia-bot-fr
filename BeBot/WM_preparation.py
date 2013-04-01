@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, locale, sys
+import re, datetime, locale, sys, feedparser
 import BeBot
 import pywikibot
 locale.setlocale(locale.LC_ALL, '')
@@ -8,7 +8,7 @@ locale.setlocale(locale.LC_ALL, '')
 class PreparationWikimag:
     """ Préparation d'un wikimag : 
         annonces, images, promotions AdQ/BA de la semaine courante ; alerte si pas de mag.
-    TODO : problème de reconnaissance des dates: {{Article de qualité|...|date=1{{er}} février 2011}}
+    TODO: problème de reconnaissance des dates: {{Article de qualité|...|date=1{{er}} février 2011}}
     """
     def __init__(self, site):
         self.site = site
@@ -18,6 +18,7 @@ class PreparationWikimag:
         self.propositions_adq = []
         self.propositions_ba = []
         self.inconnu = []
+        self.planete = []
 
         #Dates
         self.date = datetime.date.today()
@@ -77,6 +78,11 @@ class PreparationWikimag:
             resultat += u"\n=== Inconnus ===\n"
             for a in self.inconnu:
                 resultat += u'* [[' + a + u']]\n'
+
+        resultat += u"\n== Planète ==\n"
+        for u, t in self.planete:
+            resultat += u'* [{url} {titre}]\n'.format(url=u, titre=t)
+
         return resultat+u'\n'
 
     def articles_promus(self, nompage, RE):
@@ -163,7 +169,6 @@ class PreparationWikimag:
 
     def run(self):
         pywikibot.output(u"Préparation du wikimag débutant le " + self.lasemaine)
-           
         # Annonces
         moisRE = re.compile("==== *(.+) *====", re.LOCALE)
         annonceRE = re.compile("\{\{[aA]nnonce[^\|]*\|(\d+)\|")
@@ -180,7 +185,6 @@ class PreparationWikimag:
                 date_annonce = datetime.date(day=val, month=mois_courant, year=self.date.year)
                 if self.date <= date_annonce < self.date_fin:
                     self.annonces.append(ligne)
-
         # AdQ, BA
         modeleRE = re.compile("\{\{[aA]rticle de qualit[^\}]*\| *date *=([^\|\}]+)", re.LOCALE)
         self.adq= self.articles_promus(u'Wikipédia:Articles de qualité/Justification de leur promotion/%i' \
@@ -194,6 +198,19 @@ class PreparationWikimag:
                 u'Wikipédia:Articles de qualité/Propositions', modeleRE)
         self.propositions_ba  = self.articles_propositions( \
                 u'Wikipédia:Bons articles/Propositions', modeleRE)
+        # Planète wikimedia
+        feed = feedparser.parse('http://fr.planet.wikimedia.org/atom.xml')
+        for ent in feed.entries:
+            if 'published_parsed' in ent:
+                pub = ent.published_parsed
+            else:
+                pub = ent.updated_parsed
+            if pub < self.date_fin.timetuple() and pub >= self.date.timetuple():
+                for l in ent.links:
+                    if l.rel == "alternate":
+                        self.planete.append( (l.href, ent.title) )
+                        break
+        self.planete.reverse() # ordre chronologique
 
         if (BeBot.WM_verif_feneantise(self.site, self.semaine, self.annee) and self.date.strftime("%w") == 0):
             #NB: que le dimanche
