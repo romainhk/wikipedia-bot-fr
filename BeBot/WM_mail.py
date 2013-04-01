@@ -24,6 +24,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         gérer les interlangues
         crochet / accolade : traitement récursif ? 
  exp : {{guil|[[Wikipédia:Sondage/Discussion pages liées|Avis sur une proposition de changement de message système concernant les liens « pages liées » et « Suivi des pages liées »]]}}
+        transclusion des actualités : traiter aussi les modèles
     """
     def __init__(self, site, fichier_conf, epreuve):
         self.site = site
@@ -80,7 +81,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
                 'quote'     : re.compile("(?P<quote>'{2,5})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
                 'b'         : re.compile("(?P<quote>'{3})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
                 'i'         : re.compile("(?P<quote>'{2})(.*?)(?P=quote)", re.LOCALE|re.UNICODE),
-                'liste'     : re.compile("\*+\s?([^\*]*)", re.LOCALE|re.UNICODE),
+                'liste'     : re.compile("^\*+\s?(.*?)$", re.LOCALE|re.UNICODE|re.DOTALL|re.MULTILINE),
                 'User'      : re.compile("\[\[Utilisateur:(\w+)(\|\w+)?\]\]", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'User talk' : re.compile("\[\[Discussion utilisateur:(\w+)(\|\w+)?\]\]", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'W___'      : re.compile("__[A-Z]+__\s*", re.LOCALE),
@@ -325,7 +326,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         text = text[:-2]
         parametres = {
                 u'éditorial'    : ['paragraphe',    u'Éditorial'],
-                u'actualités'   : ['actualites', u'Actualités'],
+                u'actualités'   : ['actualites',    u'Actualités'],
                 u'médias'       : ['liste',         'Revue de presse',      2],
                 'entretien'     : ['trans',         'Entretien'],###
                 'tribune'       : ['signe',         'Tribune',              'signature tribune'],
@@ -413,11 +414,9 @@ from=           # adresse de l'expédieur, truc@toto.fr
                     r += self.exps[p].sub(r'\1 : \2', tmp)
                 elif action == 'actualites':
                     r += self.html_chapitre(titre)
-                    q = params[p]
-                    if self.exps['W_liste'].search(q):
-                        r += self.html_liste(q)
-                    else:
-                        r += self.html_paragraphe(q)
+                    # Transclusion des actualités
+                    actu = pywikibot.Page(self.site, self.mag.title()+u'/Actualités')
+                    r += self.html_paragraphe(self.exps['noinclude'].sub('', actu.text))
                 elif action == 'trans':
                     if titre == 'Entretien':
                         r += self.html_chapitre(titre)
