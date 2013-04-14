@@ -81,6 +81,8 @@ class PreparationWikimag:
 
         resultat += u"\n== Planète ==\n"
         for u, t in self.planete:
+            # Remplacement des crochets dans le titre (pas un lien externe)
+            t = t.replace('[', '&#x5B;').replace(']', '&#x5D;')
             resultat += u'* [{url} {titre}]\n'.format(url=u, titre=t)
 
         return resultat+u'\n'
