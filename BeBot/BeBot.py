@@ -295,9 +295,7 @@ def WM_verif_feneantise(site, semaine, annee):
     """
     num = u"%s/%s" % (annee, semaine)
     wm = pywikibot.Page(site, u"Wikipédia:Wikimag/%s" % num)
-    #pywikibot.output(taille_page(wm, 1))
-    #NB: Wikipédia:Wikimag/pre fait 522 signes
-    if not wm.exists() or taille_page(wm, 1) < 566 :
+    if not wm.exists() or taille_page(wm, 1) < 500 :
         return True
     return False
 
@@ -321,4 +319,17 @@ def WM_prevenir_redacteurs(site, message):
             redac.append(redacteur)
             redacteur.text += message
             save(redacteur, commentaire="Wikimag : alerte de rédaction", debug=False)
+
+def duree_depuis_derniere_modif(site, page):
+    """ Renvoie le nombre de jours depuis la dernière modification de la page
+    """
+    lr = page.latestRevision()
+    versions = page.getVersionHistory()
+    pop = versions.pop()
+    while lr != pop[0]:
+        # On cherche la dernière modif
+        pop = versions.pop()
+    date = datetime.datetime.strptime(pop[1], '%Y-%m-%dT%H:%M:%SZ')
+    ajd = site.getcurrenttime()
+    return (ajd-date).days
 
