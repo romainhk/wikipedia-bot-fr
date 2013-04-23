@@ -178,7 +178,7 @@ class Trad_maintenance:
                     diff -= 1
                 if   statut == 1 and diff>=2: # Vieille demande
                     self.suppressions.append(p.title())
-                elif (statut == 2 and diff>=3) or (statut == 3 and diff>=1) or (statut == 4 and diff>=2):
+                elif (statut == 2 and diff>=2) or (statut == 3 and diff>=1) or (statut == 4 and diff>=2):
                     # Traduction abandonnée, Relecture absente ou abandonnée
                     self.clore_traduction(p, statut)
                     self.traduit_de(p)
