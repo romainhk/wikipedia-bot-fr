@@ -13,7 +13,7 @@ if len(sys.argv) != 2:
     pywikibot.warning(u"Nombre de paramètres incorrectes")
     sys.exit(1)
 nom = sys.argv[1]
-renom = re.compile('{{'+nom+'\|?[^}/]*?}}$', re.IGNORECASE|re.MULTILINE)
+renom = re.compile('{{'+nom+'\|?[^}/]*?}}$?', re.IGNORECASE|re.MULTILINE)
 modele = pywikibot.Page(site, u'Modèle:'+nom)
 if not modele.exists():
     pywikibot.error(u"Le modèle {nom} n'existe pas".format(nom=nom))
@@ -24,7 +24,7 @@ for b in modele.getReferences(follow_redirects=False, onlyTemplateInclusion=True
     a = renom.sub(r'', b.text)
     b.text = a
     BeBot.save(b, commentaire=u'Retrait du modèle "{nom}"'.format(nom=nom), debug=False)
-BeBot.delete(b, u'Retrait du modèle "{nom}"'.format(nom=nom), debug=True)
+BeBot.delete(modele, u'Retrait du modèle "{nom}"'.format(nom=nom), debug=True)
 
 """
 renom  = re.compile(u'\[\[Modèle:'+nom+'([^\}]*?)\]\]', re.UNICODE)
