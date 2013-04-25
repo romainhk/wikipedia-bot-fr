@@ -43,7 +43,7 @@ class Trad_maintenance:
         r += u'* Nb de pages supprimées: %i\n' % self.stats['suppr']
         r += u'* Nb de traductions closes: %i\n' % self.stats['cloture']
         r += u'* Nb de {{Traduit de}} ajoutés: %i\n' % self.stats['traduitde']
-        r += u'* Listes périmées : %i\n' % self.stats['liste']
+        #r += u'* Listes périmées : %i\n' % self.stats['liste']
         return r
 
     def retirer_le_modele_Traduction(self, page):
@@ -190,6 +190,7 @@ class Trad_maintenance:
         for p in self.suppressions:
             self.supprimer(pywikibot.Page(self.site, p))
 
+        """
         # Nettoyage des listes mensuelles
         pywikibot.output(u"\n------ Listes à supprimer ------")
         for statut, l in self.listes.items():
@@ -199,6 +200,7 @@ class Trad_maintenance:
                     if nb == 0 and lis.exists():
                         BeBot.delete(lis, self.resume+u' : Liste mensuelle périmée', debug=self.debug)
                         self.stats['liste'] += 1
+        """
 
 def main():
     site = pywikibot.getSite()
