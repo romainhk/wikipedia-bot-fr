@@ -28,5 +28,4 @@ def suppr_cat(cat):
     BeBot.delete(cat, comment.format(nom=cat.title()), debug=debug)
 
 suppr_cat(cat)
-BeBot.delete(cat, comment.format(nom=cat.title()), debug=debug)
 
