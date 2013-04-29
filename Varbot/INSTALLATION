@@ -1,10 +1,10 @@
-Varbot : compatible Linux uniquement.
-		 nécessite gunzip et wget
+ï»¿Varbot : compatible Linux uniquement.
+		 nÃ©cessite gunzip et wget
 
 
-Pour l'installation, vous devez télécharger le dossier Varbot. 
+Pour l'installation, vous devez tÃ©lÃ©charger le dossier Varbot. 
 1) A l'aide la console, positionnez-vous dans le dossier Varbot/dev
 2) Lancez la commande make
 3) Lancez la commande make clean
-4) Positionnez-vous dans le répertoire Varbot
-5) Lancez l'executable grâce à la commande ./Bot
+4) Positionnez-vous dans le rÃ©pertoire Varbot
+5) Lancez l'executable grÃ¢ce Ã  la commande ./Bot
