@@ -2,7 +2,7 @@
 
 #ifndef H_VARBOT_CONSTANTES_2013
 #define H_VARBOT_CONSTANTES_2013
-
+#define DEBUG 1
 
 
 /* includes ============================================================ */

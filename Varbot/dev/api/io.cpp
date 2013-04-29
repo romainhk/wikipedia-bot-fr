@@ -8,6 +8,12 @@
 
 /* macros ============================================================== */
 
+#if DEBUG == 1
+#define localUsername() "DEBUG"
+#elif DEBUG == 0
+#define localUsername() getenv("USER")
+#endif
+
 using namespace std;
 
 /* types =============================================================== */
@@ -17,7 +23,7 @@ using namespace std;
 /* internal public functions =========================================== */
 /* private variables =================================================== */
 
-private time_t heureCur;
+time_t heureCur;
 
 /* private functions =================================================== */
 /* entry points ======================================================== */
@@ -87,12 +93,13 @@ void viderBuffer(void)
 void logs(const char* adresse, const char* req)
 {
 	char format[256];
+    
 	FILE* fichier = fopen(adresse,"r+");
 	fseek(fichier,0,SEEK_END);
 
 	time(&heureCur);
 	strftime(format,256,formatDate,localtime(&heureCur));
-	fprintf(fichier,"%s\t%s\t%s", format, getenv("USER"), req);
+	fprintf(fichier,"%s\t%s\t%s", format, localUsername(), req);
 	fclose(fichier);
 }
 
