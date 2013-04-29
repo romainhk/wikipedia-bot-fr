@@ -3,7 +3,7 @@
 
 
 Pour l'installation, vous devez télécharger le dossier Varbot. 
-1) A l'aide la console, positionnez-vous dans le dossier Varbot/dev
+1) A l'aide du terminal, positionnez-vous dans le dossier Varbot/dev
 2) Lancez la commande make
 3) Lancez la commande make clean
 4) Positionnez-vous dans le répertoire Varbot
