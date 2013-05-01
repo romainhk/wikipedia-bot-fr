@@ -49,7 +49,9 @@ int main(void)
 		fgets(req,256,stdin);
 		logs(fichierLogs, req);
 		analyse(req);
-		
+#if DEBUGNORM==1
+        getchar();
+#endif
 		/*Nettoyage des requetes wget*/
 		system("rm -rf fr.wikipedia.org/");
 		system("rm -f *.php*");

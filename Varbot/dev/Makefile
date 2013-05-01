@@ -38,3 +38,6 @@ help.o: lib/help.cpp $(HEADERS)
 #Autres fonctions
 clean:
 	rm *.o
+	
+svn:
+	rm ../logs/*.log

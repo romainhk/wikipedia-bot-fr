@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string.h>
+#include <cctype>
 #include <time.h>
 #include <termios.h>
 #include <sys/ioctl.h>

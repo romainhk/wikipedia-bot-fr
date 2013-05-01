@@ -58,6 +58,9 @@ void login(char* req)
 				sprintf(requete,"wget %s --quiet -O login.gz --load-cookies cookies.txt --save-cookies cookies.txt --keep-session-cookies --post-data 'lgname=%s&lgpassword=%s&lgtoken=%s' http://fr.wikipedia.org/w/api.php?action=login", usragent,arg, chaine,variable("token=&quot;",entree, var));
 				system(requete);
 				fclose(reponse);
+#if DEBUGNORM==1
+        getchar();
+#endif
 				system("rm -f login");
 				system("gunzip login.gz");
 				FILE *reponse = fopen("login","r+");
@@ -81,6 +84,9 @@ void login(char* req)
 			}
 		}
 		fclose(reponse);
+#if DEBUGNORM==1
+        getchar();
+#endif
 		system("rm -f login");
 	}
 

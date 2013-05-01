@@ -33,6 +33,7 @@ void analyse (char* req)
 	    {
 	        logout();
 	    }
+	    system("rm -f cookies.txt");
 		exit(0);
 	}
 	else if(strncmp(req, "help",4) == 0)
