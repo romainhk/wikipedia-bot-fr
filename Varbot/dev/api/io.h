@@ -34,13 +34,20 @@
 /* public variables ==================================================== */
 /* constants =========================================================== */
 /* internal public functions =========================================== */
+
+void viderBuffer(void);
+/**
+ *@fn viderBuffer(void);
+ *@brief permet de vider le buffer après une entrée utilisateur (stdin)
+ */
+ 
 /* inline public functions  ============================================ */
 /* entry points ======================================================== */
 
 char* argument(const char* nom, char* req, char* arg, bool obligatoire);
 /**
  * @fn argument(const char* nom, char* req, char* arg, bool obligatoire);
- * @brief Permet de récupérer la valeur d'un argument passée en paramètre
+ * @brief permet de récupérer la valeur d'un argument passée en paramètre
  * @param nom : le nom du paramètre
  * @param req : la chaîne dans laquelle la fonction doit extraire la valeur du paramètre
  * @param arg : la chaîne dans laquelle la fonction doit copier la valeur du paramètre
@@ -52,7 +59,7 @@ char* argument(const char* nom, char* req, char* arg, bool obligatoire);
 
 
 void ecrireFichier(const char* adresse, const char* str);
-void viderBuffer(void);
+
 void saisieHidden(char* str);
 void logs(const char* adresse, const char* req);
 

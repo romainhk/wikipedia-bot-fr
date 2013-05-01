@@ -1,7 +1,7 @@
 /*location: dev/lib/fonctions.h*/
 
-#ifndef H_VARBOT_FILE_YEAR
-#define H_VARBOT_FILE_YEAR
+#ifndef H_VARBOT_FONCTIONS_2013
+#define H_VARBOT_FONCTIONS_2013
 
 
 

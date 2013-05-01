@@ -13,15 +13,25 @@ using namespace std;
 /* types =============================================================== */
 /* structures ========================================================== */
 /* public variables ==================================================== */
-/* constants =========================================================== */
-/* internal public functions =========================================== */
-/* private variables =================================================== */
 
 time_t heureCur;
 
+/* constants =========================================================== */
+/* internal public functions =========================================== */
+
+//io.h
+void viderBuffer(void)
+{
+	int c = 0;
+    while (c != '\n' && c != EOF)
+        c = getchar();
+}
+
+/* private variables =================================================== */
 /* private functions =================================================== */
 /* entry points ======================================================== */
 
+//io.h
 char* argument(const char* nom, char* req, char* arg, bool obligatoire)
 {
 	char entree[1024];
@@ -71,13 +81,6 @@ char* variable(const char* nom, const char* req, char* var)
 	}
 	var[i] = '\0';
 	return var;
-}
-
-void viderBuffer(void)
-{
-	int c = 0;
-    while (c != '\n' && c != EOF)
-        c = getchar();
 }
 
 
