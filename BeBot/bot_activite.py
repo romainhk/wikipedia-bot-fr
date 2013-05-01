@@ -5,6 +5,13 @@ from operator import itemgetter
 import BeBot
 import pywikibot
 
+"""
+    Analyse l'activité des comptes pour bot
+
+TODO:
+    * statistiques mensuelles ; tableau des meilleurs scores
+"""
+
 site = pywikibot.getSite()
 classement = {} # classement par nb de modifs
 last = {} # date de dernière modif
