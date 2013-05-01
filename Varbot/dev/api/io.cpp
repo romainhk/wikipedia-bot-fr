@@ -22,10 +22,6 @@ time_t heureCur;
 /* private functions =================================================== */
 /* entry points ======================================================== */
 
-
-
-
-
 char* argument(const char* nom, char* req, char* arg, bool obligatoire)
 {
 	char entree[1024];
@@ -57,6 +53,7 @@ char* argument(const char* nom, char* req, char* arg, bool obligatoire)
 	arg[i-1] = '\0';
 	return arg;
 }
+
 
 char* variable(const char* nom, const char* req, char* var)
 {

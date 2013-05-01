@@ -37,6 +37,16 @@
 /* inline public functions  ============================================ */
 /* entry points ======================================================== */
 
+char* argument(const char* nom, char* req, char* arg, bool obligatoire);
+/**
+ * @fn argument(const char* nom, char* req, char* arg, bool obligatoire);
+ * @brief Permet de récupérer la valeur d'un argument passée en paramètre
+ * @param nom : le nom du paramètre
+ * @param req : la chaîne dans laquelle la fonction doit extraire la valeur du paramètre
+ * @param arg : la chaîne dans laquelle la fonction doit copier la valeur du paramètre
+ * @param obligatoire : si cette valeur est à true, la fonction demande à l'utilisateur de saisir la valeur du paramètre s'il n'est pas contenu dans la requête
+ * @return l'adresse de la chaîne arg
+ */
 
 #endif
 
@@ -45,7 +55,7 @@ void ecrireFichier(const char* adresse, const char* str);
 void viderBuffer(void);
 void saisieHidden(char* str);
 void logs(const char* adresse, const char* req);
-char* argument(const char* nom, char* req, char* arg, bool obligatoire);
+
 char* variable(const char* nom, const char* req, char*  var);
 time_t completerDate(char* chaine);
 bool confirmation(char* message);
