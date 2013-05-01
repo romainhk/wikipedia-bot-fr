@@ -13,7 +13,7 @@ nom = "Utilisateur Traduction"
 renom = re.compile('{{'+nom+'}}', re.IGNORECASE)
 nom2 = "Traduction"
 #renom2 = re.compile(u'(\{\{Bo(î|i)te\s*(utilisateur|babel)[^\}]*?)\|\s*'+nom2+u'(\s*|/\w{2})([^\}]*\}\})', re.IGNORECASE|re.UNICODE|re.MULTILINE)
-renom2 = re.compile(u'(\{\{Bo(î|i)te\s*(utilisateur|babel)[^\}]*?)\|\s*'+nom2+u'\s*([^\}]*?\}\})', re.IGNORECASE|re.UNICODE|re.MULTILINE)
+renom2 = re.compile(u'(\{\{Bo(î|i)te\s*(utilisateur|babel)[^\}]*?)\|\s*'+nom2+u'\s*([^\}/]?[^\}]*?\}\})', re.IGNORECASE|re.UNICODE|re.MULTILINE)
 modele = pywikibot.Page(site, u'Modèle:'+nom)
 if not modele.exists():
     pywikibot.error(u"La BU {nom} n'existe pas".format(nom=nom))
