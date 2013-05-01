@@ -338,6 +338,6 @@ def diff(t1, t2):
     """
     diff = difflib.ndiff(t1.splitlines(1), t2.splitlines(1))
     for ligne in diff:
-        if ligne[0] in "-+?":
-            pywikibot.output(ligne)
+        if ligne[0] in "-+":
+            pywikibot.output(ligne.rstrip('\n'))
 
