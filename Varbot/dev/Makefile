@@ -6,6 +6,7 @@ LINKS=main.o analyse.o io.o  login.o logout.o sendNAM.o help.o
 Bot: $(LINKS)
 	g++ -o Bot $(LINKS)
 	mv Bot ../
+	touch ../logs/terminal.log
 	
 #Sources
 
