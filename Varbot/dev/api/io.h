@@ -1,4 +1,4 @@
-/*location: dev/api/io.h*/
+ï»¿/*location: dev/api/io.h*/
 
 #ifndef H_VARBOT_IO_2013
 #define H_VARBOT_IO_2013
@@ -25,7 +25,7 @@
 #endif
 /**
  * @fn localUsername();
- * @brief Permet de récupérer le nom de la session sur laquelle est ouvert le programme
+ * @brief Permet de rÃ©cupÃ©rer le nom de la session sur laquelle est ouvert le programme
  * @return char : le nom de la session
  */
 
@@ -38,22 +38,36 @@
 void viderBuffer(void);
 /**
  *@fn viderBuffer(void);
- *@brief permet de vider le buffer après une entrée utilisateur (stdin)
+ *@brief permet de vider le buffer aprÃ¨s une entrÃ©e utilisateur (stdin)
  */
  
 /* inline public functions  ============================================ */
 /* entry points ======================================================== */
 
+
 char* argument(const char* nom, char* req, char* arg, bool obligatoire);
 /**
  * @fn argument(const char* nom, char* req, char* arg, bool obligatoire);
- * @brief permet de récupérer la valeur d'un argument passée en paramètre
- * @param nom : le nom du paramètre
- * @param req : la chaîne dans laquelle la fonction doit extraire la valeur du paramètre
- * @param arg : la chaîne dans laquelle la fonction doit copier la valeur du paramètre
- * @param obligatoire : si cette valeur est à true, la fonction demande à l'utilisateur de saisir la valeur du paramètre s'il n'est pas contenu dans la requête
- * @return l'adresse de la chaîne arg
+ * @brief permet de rÃ©cupÃ©rer la valeur d'un argument passÃ©e en paramÃ¨tre
+ * @param const char* : le nom du paramÃ¨tre
+ * @param char* : la chaÃ®ne dans laquelle la fonction doit extraire la valeur du paramÃ¨tre
+ * @param char* : la chaÃ®ne dans laquelle la fonction doit copier la valeur du paramÃ¨tre
+ * @param bool : si cette valeur est Ã  true, la fonction demande Ã  l'utilisateur de saisir la valeur du paramÃ¨tre s'il n'est pas contenu dans la requÃªte
+ * @return char* l'adresse de la chaÃ®ne arg
  */
+
+ 
+bool confirmation(char* message, char lettre);
+/**
+ *@fn confirmation(char* message);
+ @brief permet de demander une confirmation Ã  l'utilisateur sous forme d'une lettre pour confirmer (Y par exemple), toutes les autres lettres servant Ã  signifier une infirmation7
+	 la confirmation ne tient pas compte de la casse ni des lettres suivant la premiÃ¨re, ainsi Y,y,Yes auront la mÃªme valeur pour la fonction
+ @param char* : le message Ã  afficher pour demander confirmation
+ @param char : la lettre ayant pour valeur confirmation (par dÃ©faut Ã  Y si une valeur autre qu'alphanumÃ©rique est spÃ©cifiÃ©e)
+ @return bool : true si l'utilisateur a confirmÃ©, false sinon
+ */
+
+
 
 #endif
 
@@ -65,4 +79,4 @@ void logs(const char* adresse, const char* req);
 
 char* variable(const char* nom, const char* req, char*  var);
 time_t completerDate(char* chaine);
-bool confirmation(char* message);
+

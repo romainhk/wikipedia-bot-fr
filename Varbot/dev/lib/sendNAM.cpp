@@ -1,4 +1,4 @@
-/*location: dev/lib/sendNAM.cpp*/
+﻿/*location: dev/lib/sendNAM.cpp*/
 
 /* includes ============================================================ */
 
@@ -62,7 +62,7 @@ void sendNAM(char* req)
 							pseudoDest[j+1] = '\0';
 						}
 						sprintf(chaine,"\tSending n° %s to %s (y/n) : ", arg, pseudoDest);
-						if(confirmation(chaine) == true)
+						if(confirmation(chaine, 'Y') == true)
 						{
 							sprintf(requete,"wget --quiet --load-cookies cookies.txt --save-cookies cookies.txt --keep-session-cookies -O token.gz %s \"http://fr.wikipedia.org/w/api.php?action=query&prop=info&intoken=edit&titles=Discussion_utilisateur:%s\"", usragent, pseudoDest);
 							system(requete);

@@ -1,4 +1,4 @@
-/*location: dev/api/api.h*/
+﻿/*location: dev/api/api.h*/
 
 #ifndef H_VARBOT_API_2013
 #define H_VARBOT_API_2013
@@ -24,6 +24,7 @@
 /* internal public functions =========================================== */
 /* inline public functions  ============================================ */
 /* entry points ======================================================== */
+
 
 void analyse(char*);
 /**

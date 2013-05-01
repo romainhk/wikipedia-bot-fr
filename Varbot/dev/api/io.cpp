@@ -1,4 +1,4 @@
-/*location: dev/api/io.cpp*/
+﻿/*location: dev/api/io.cpp*/
 
 /* includes ============================================================ */
 
@@ -31,6 +31,7 @@ void viderBuffer(void)
 /* private functions =================================================== */
 /* entry points ======================================================== */
 
+
 //io.h
 char* argument(const char* nom, char* req, char* arg, bool obligatoire)
 {
@@ -62,6 +63,20 @@ char* argument(const char* nom, char* req, char* arg, bool obligatoire)
 	}
 	arg[i-1] = '\0';
 	return arg;
+}
+
+//io.h
+bool confirmation(char* message, char lettre)
+{
+	char entree[1024];
+	if(!isalnum(lettre))
+		lettre = 'Y';
+	printf("%s",message);
+	ecrireFichier(fichierLogs, message);
+	fgets(entree, 1024, stdin);
+	if(toupper(entree[0]) == toupper(lettre))
+		return true;
+	return false;
 }
 
 
@@ -170,15 +185,4 @@ time_t completerDate(char* chaine)
 	return temps;
 }
 
-
-bool confirmation(char* message)
-{
-	char entree[1024];
-	printf("%s",message);
-	ecrireFichier(fichierLogs, message);
-	fgets(entree, 1024, stdin);
-	if(entree[0] == 'y')
-		return true;
-	return false;
-}
 

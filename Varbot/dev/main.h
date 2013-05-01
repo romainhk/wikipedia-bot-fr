@@ -1,4 +1,4 @@
-/*location: dev/main.h*/
+﻿/*location: dev/main.h*/
 
 #ifndef H_VARBOT_MAIN_2013
 #define H_VARBOT_MAIN_2013

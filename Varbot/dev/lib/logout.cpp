@@ -1,4 +1,4 @@
-/*location: dev/lib/logout.cpp*/
+﻿/*location: dev/lib/logout.cpp*/
 
 /* includes ============================================================ */
 

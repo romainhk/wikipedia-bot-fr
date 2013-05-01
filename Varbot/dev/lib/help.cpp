@@ -1,4 +1,4 @@
-/*location: dev/lib/help.cpp*/
+﻿/*location: dev/lib/help.cpp*/
 
 /* includes ============================================================ */
 

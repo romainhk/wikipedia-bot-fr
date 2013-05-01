@@ -1,4 +1,4 @@
-/*location: dev/lib/fonctions.h*/
+﻿/*location: dev/lib/fonctions.h*/
 
 #ifndef H_VARBOT_FONCTIONS_2013
 #define H_VARBOT_FONCTIONS_2013
@@ -41,7 +41,7 @@ void login(char* req);
 /**
  * @fn login(char* req);
  * @command login
- * @brief Permet de se connecter sur fr.wikipedia.org
+ * @brief permet de se connecter sur fr.wikipedia.org
  * @param --login char* : le login de l'utilisateur
  * @return ne renvoie rien
  */
@@ -51,7 +51,7 @@ void logout(void);
 /**
  * @fn logout(void);
  * @command logout
- * @brief Permet de se déconnecter sur fr.wikipedia.org
+ * @brief permet de se déconnecter sur fr.wikipedia.org
  * @return ne renvoie rien
  */
 
@@ -60,7 +60,7 @@ void sendNAM(char* req);
 /**
  * @fn sendNAM(char* req);
  * @command sendNAM
- * @brief Permet d'envoyer le mensuel du projet:Arménie nommé "Des nouvelles d'Arménie"
+ * @brief permet d'envoyer le mensuel du projet:Arménie nommé "Des nouvelles d'Arménie"
  * @param --number char* : le numéro (sous forme d'entier) du mois
  * @return ne renvoie rien
  */

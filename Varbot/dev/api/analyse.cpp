@@ -1,4 +1,4 @@
-/*location: dev/api/analyse.cpp*/
+﻿/*location: dev/api/analyse.cpp*/
 
 /* includes ============================================================ */
 

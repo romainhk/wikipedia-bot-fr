@@ -1,4 +1,4 @@
-/*location: dev/constantes.h*/
+﻿/*location: dev/constantes.h*/
 
 #ifndef H_VARBOT_CONSTANTES_2013
 #define H_VARBOT_CONSTANTES_2013
