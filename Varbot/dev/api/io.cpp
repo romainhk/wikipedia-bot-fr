@@ -8,12 +8,6 @@
 
 /* macros ============================================================== */
 
-#if DEBUG == 1
-#define localUsername() "DEBUG"
-#elif DEBUG == 0
-#define localUsername() getenv("USER")
-#endif
-
 using namespace std;
 
 /* types =============================================================== */
