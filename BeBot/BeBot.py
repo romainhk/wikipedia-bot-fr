@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, urllib, MySQLdb, simplejson, sys, sqlite3
+import re, datetime, urllib, MySQLdb, simplejson, sys, sqlite3, difflib
 from MySQLdb.constants import ER
 import pywikibot
 
@@ -332,4 +332,12 @@ def duree_depuis_derniere_modif(site, page):
     date = datetime.datetime.strptime(pop[1], '%Y-%m-%dT%H:%M:%SZ')
     ajd = site.getcurrenttime()
     return (ajd-date).days
+
+def diff(t1, t2):
+    """ Affiche un diff entre deux chaînes (par exemple une page et sa version altérée)
+    """
+    diff = difflib.ndiff(t1.splitlines(1), t2.splitlines(1))
+    for ligne in diff:
+        if ligne[0] in "-+?":
+            pywikibot.output(ligne)
 
