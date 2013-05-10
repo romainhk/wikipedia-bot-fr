@@ -9,7 +9,8 @@ import pywikibot
 """
 
 site = pywikibot.getSite()
-nom = u"Traduction à relire"
+nom = u"Demande de traduction"
+#renom = re.compile('{{'+nom+'}}', re.IGNORECASE|re.MULTILINE)
 renom = re.compile('{{'+nom+'\|?[^}/]*?}}', re.IGNORECASE|re.MULTILINE)
 #renom = re.compile('{{'+nom+'}}', re.IGNORECASE)
 modele = pywikibot.Page(site, u'Modèle:'+nom)
@@ -20,8 +21,8 @@ if not modele.exists():
 # Retrait des transclusions
 for b in modele.getReferences(follow_redirects=False, onlyTemplateInclusion=True, content=True, total=9):
     a = renom.sub(r'', b.text)
-    BeBot.diff(b.text, a)
+    pywikibot.output(BeBot.diff(b.text, a))
     b.text = a
-    BeBot.save(b, commentaire=u'Retrait du modèle "{nom}"'.format(nom=nom), debug=False)
+    BeBot.save(b, commentaire=u'Retrait du modèle "{nom}"'.format(nom=nom), debug=True)
 BeBot.delete(modele, u'Retrait du modèle "{nom}"'.format(nom=nom), debug=True)
 

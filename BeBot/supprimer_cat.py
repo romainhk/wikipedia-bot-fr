@@ -18,8 +18,8 @@ if not cat.exists():
     pywikibot.error(u"La catégorie {nom} n'existe pas".format(nom=nom))
     sys.exit(2)
 
-comment = u'Suppression de la catégorie "{nom}"'
-debug=True
+comment = u'Suppression de la catégorie "{nom}" suite à la restructuration du Projet:Traduction'
+debug=False
 
 # Retrait des transclusions
 def suppr_cat(cat):
