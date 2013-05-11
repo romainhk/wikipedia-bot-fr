@@ -54,7 +54,7 @@ from=           # adresse de l'expédieur, truc@toto.fr
         self.mode = u'' # Mode de génération en cours : text ou html
         self.sommaire_jocker = '###141### SOMMAIRE ###592###'
         self.exps = {
-                'split'     : re.compile("^\|([\w \xe9\xe8]+?)\s*=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
+                'split'     : re.compile("^\|([\w \xe9\xe8\xe0]+?)\s*=", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'style'     : re.compile("\s*(style|valign|width|rowspan|colspan)=\".+?\"\s*", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'crochet'   : re.compile("\[\[[^(\[\[)]*\]\]", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'accolade'  : re.compile("\{\{[^(\{\{)]*\}\}", re.LOCALE|re.UNICODE|re.IGNORECASE),
