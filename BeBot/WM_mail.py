@@ -480,8 +480,10 @@ from=           # adresse de l'expédieur, truc@toto.fr
         # Vérification que le mag a bien été rédigé
         if (BeBot.WM_verif_feneantise(self.site, self.semaine, self.annee)):
             msg  = u"\n\n== Wikimag - Semaine %s ==\n" % self.semaine
-            msg += u"Ohlala, le [[WP:WM|wikimag]] [[Wikipédia:Wikimag/%s/%s|de cette semaine]] n'est pas prêt. La publication a été abandonnée. ~~~~\n" % (self.annee, self.semaine)
-            msg += u"\n{{Petit|Ce message a été déposé automatiquement grâce à [[:Catégorie:Utilisateur rédacteur Wikimag]]}}" # A supprimer un jour
+            msg += u"Chère [[:Catégorie:Utilisateur rédacteur Wikimag|rédacteur]], le [[WP:WM|wikimag]] [[Wikipédia:Wikimag/%s/%s|de cette semaine]] n'est pas prêt. " % (self.annee, self.semaine)
+            if not self.debug: # Version finale !
+                msg += u"La publication du mag est abandonnée pour cette semaine ; veuillez [[Discussion utilisateur:Romainhk|contacter mon dresseur]] pour demander un nouvel envoie. "
+            msg += u"~~~~\n"
             BeBot.WM_prevenir_redacteurs(self.site, msg)
             sys.exit(5)
 
