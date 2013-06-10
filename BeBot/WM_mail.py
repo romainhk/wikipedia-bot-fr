@@ -16,6 +16,7 @@ class MailWikimag:
 mailinglist=    # sur laquel on va publier le mag (mode debug si omis -> stdout)
 epreuve=        # adresse mail des relecteurs
 from=           # adresse de l'expédieur, truc@toto.fr
+from-pass=      # mot de passe du mail de l'expédieur
 #mode=          # (facultatif) format d'envoi : text (*), html ou multi
 #semaine=       # (facultatif) forcer l'usage d'une semaine en particulier
         L'option finale -e permet de faire une épreuve (tirage limité aux relecteurs)
