@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, locale, math, sqlite3, sys
+import re, datetime, dateutil, locale, math, sqlite3, sys
+from dateutil.relativedelta import relativedelta
 import pywikibot
 import BeBot
 from textwrap import dedent
@@ -15,6 +16,7 @@ class GraphiqueEvaluations:
         self.site = site
         self.date = datetime.date.today()
         self.resume = u'Mise à jour mensuelle du graphique des évaluations'
+        self.groupe = re.compile('(.*\d)(\d{3}.*)', re.IGNORECASE|re.LOCALE)
         #DB
         try:
             self.conn = sqlite3.connect(bddsqlite)
@@ -29,15 +31,16 @@ class GraphiqueEvaluations:
     def BotSectionEdit(self, match):
         return u'%s\n%s\n%s' % (BeBot.BeginBotSection, self.msg, BeBot.EndBotSection)
 
-    def trouver_stat_mens(self, ressource, mois, annee):
-        # Retrouve l'enregistrement d'un mois en particulier
-        for i in range(0, len(ressource)):
-            d = ressource[i]['date'].split('-')
-            month = int(d[1])
-            year  = int(d[0])
-            if year == annee and month == mois:
-                return ressource[i]
-        return ( datetime.date(day=1,month=mois,year=annee).strftime(u"%Y-%m-%d"),0,0,0,0,0,0 )
+    def nombreverschaine(self, nombre):
+        """ Convertit un grand nombre en une chaine "par paquets"
+            ex: 1489321 => 1 489 321
+        """
+        s = unicode(nombre)
+        m = self.groupe.search(s)
+        while m:
+            s = m.group(1) + u" " + m.group(2)
+            m = self.groupe.search(s)
+        return s
 
     def run(self):
         # Dénombrement
@@ -66,33 +69,35 @@ class GraphiqueEvaluations:
         self.conn.commit()
         
         # Dessin
-        limite = 20 #nombre max de colonnes
         largeur = 600 #largeur du graphique
         maxi = 0 #valeur max en hauteur
-        nb_bande = 6
-        res = BeBot.charger_bdd(self.conn, self.nom_base, lim=limite, ordre='"date" DESC')
-        nb_enregistrement = len(res)
-        if nb_enregistrement > nb_bande:
-            # Tri des résultats sur les 6 derniers mois
-            res2 = []
-            ajd = datetime.date.today()
-            month = ajd.month
-            year = ajd.year
-            res2.append(self.trouver_stat_mens(res, month, year))
-            for d in range(1,nb_bande):
-                month = month-1
-                if month <= 0:
-                    year = year-1
-                    month = 12
-                res2.append(self.trouver_stat_mens(res, month, year))
-            res2.reverse()
-            res = res2
-            nb_enregistrement = len(res)
+        nb_bande = 6 #nombre max de colonnes
+        #on suppose ici un enregistrement par mois
+        res = BeBot.charger_bdd(self.conn, self.nom_base, lim=nb_bande, ordre='"date" DESC')
+        width = math.ceil(largeur/nb_bande) #largeur d'une bande
 
-        width = math.ceil(largeur/nb_enregistrement) #largeur d'une bande
-        for r in range(0, nb_enregistrement):
-            if maxi < res[r]['total']:
-                maxi = res[r]['total'] # point le plus haut
+        # Liste des mois à traiter
+        mois = []
+        for j in range(0, nb_bande):
+            d = self.date + relativedelta(months=-j)
+            mois.append(d.strftime(u"%Y-%m"))
+        # Récupération et tri des valeurs
+        vals = []
+        ri = 0 # ressource index : index sur les enregistrements utilisés
+        for m in mois:
+            val = {}
+            if m != res[ri]['date'][0:7]:
+                for k in res[ri].keys():
+                    val[k] = 0
+                val['date'] = m + u"-02"
+            else:
+                for k in res[ri].keys():
+                    val[k] = res[ri][k]
+                if maxi < val['total']:
+                    maxi = val['total'] # point le plus haut
+                ri += 1
+            vals.append(val)
+        vals.reverse()
         #Majoration du maximum
         t = maxi
         rang = 0
@@ -102,6 +107,7 @@ class GraphiqueEvaluations:
         graduation = pow(10, rang-2)
         maxi = maxi + math.floor(graduation/2)
         maxi = int(math.floor(maxi*pow(10,3-rang))*pow(10,rang-3)) # 3 premiers chiffre significatifs
+
         self.msg = dedent(u"""
 <timeline>
 Colors=
@@ -126,30 +132,32 @@ BackgroundColors = canvas:sfondo
 Legend = left:70 top:295"""[1:] % (largeur, width, maxi, graduation, graduation/2) )
         #Nom des bars
         self.msg += '\nBarData=\n'
-        for r in range(0, nb_enregistrement):
+        for r in range(0, nb_bande):
             p = ''
             if r % 2 == 1:
-                spl = res[r]['date'].split('-')
+                spl = vals[r]['date'].split('-')
                 p = spl[1] + '/' + spl[0][2:]
             self.msg += '  bar:%d text:%s\n' % (r+1, p)
         #Valeurs : total
         self.msg += '\nPlotData=\n  color:barra width:$width align:left\n\n'
-        for r in range(0, nb_enregistrement):
-            p = res[r]['total']
+        for r in range(0, nb_bande):
+            p = vals[r]['total']
             self.msg += '  bar:%d from:0 till: %d\n' % (r+1, p)
         #Valeurs : importants
         self.msg += '\nPlotData=\n  color:rouge width:$width align:left\n\n'
-        for r in range(0, nb_enregistrement):
-            p = res[r]['maximum'] + res[r][2] # 2 = élevée
+        for r in range(0, nb_bande):
+            p = vals[r]['maximum'] + vals[r]['\xc3\xa9lev\xc3\xa9e'] # = élevée
             self.msg += '  bar:%d from:0 till: %d\n' % (r+1, p)
         #Labels
         self.msg += '\nPlotData=\n'
-        for r in range(0, nb_enregistrement):
+        for r in range(0, nb_bande):
             if r % 2 == 1:
-                p = res[r]['total']
-                self.msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r+1, p, p)
-                q = res[r]['maximum'] + res[r][2]
-                self.msg += '  bar:%d at: %d fontsize:S text: %d shift:(-10,5)\n' % (r+1, q, q)
+                p = vals[r]['total']
+                s = self.nombreverschaine(p)
+                self.msg += '  bar:%d at: %d fontsize:S text:"%s" shift:(-20,5)\n' % (r+1, p, s)
+                q = vals[r]['maximum'] + vals[r]['\xc3\xa9lev\xc3\xa9e']
+                s = self.nombreverschaine(q)
+                self.msg += '  bar:%d at: %d fontsize:S text:"%s" shift:(-20,5)\n' % (r+1, q, s)
         self.msg += '</timeline>'
 
         # Publication
