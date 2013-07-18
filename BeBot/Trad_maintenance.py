@@ -21,10 +21,13 @@ class Trad_maintenance:
         self.stats = { 'suppr': 0, 'cloture' : 0, 'traduitde': 0 }
 
         self.re_trad = re.compile(r'{{(Demande de t|T)raduction[^\}/]*}}\s*', re.LOCALE|re.IGNORECASE)
-        self.re_appel = re.compile('[\[\{]{2}(Discu(ssion|ter):[^\]\}]+?/Traduction)[^\]\}]*[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE|re.DOTALL)
+        #self.re_appel = re.compile('[\[\{]{2}(Discu(ssion|ter):[^\]\}]+?/Traduction)[^\]\}]*[\]\}]{2}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE|re.DOTALL)
+        self.re_appel = re.compile('{{(Discu(ssion|ter):[^\]\}]+?/Traduction)[^\]\}]*}}\s*', re.LOCALE|re.UNICODE|re.IGNORECASE|re.DOTALL)
         self.re_statut = re.compile('\|\s*status\s*=\s*(\d{1})', re.LOCALE|re.UNICODE|re.IGNORECASE)
         self.re_traduitde = re.compile('\{\{Traduit de.+?\}\}\s*', re.IGNORECASE)
         self.re_suivi = re.compile("\{\{((Traduction/Suivi|Translation/Information).+?\}\})", re.LOCALE|re.IGNORECASE|re.MULTILINE|re.DOTALL)
+
+        self.re_discus = re.compile("== *Discussion *==(.*?)^==", re.LOCALE|re.IGNORECASE|re.MULTILINE|re.DOTALL)
 
         self.les_statuts = [ 'Demandes', 'En cours', 'A relire', 'En relecture', u'Terminée' ]
         les_mois = { 'janvier' : 0,    u'février' : 0,     'mars' : 0,        'avril' : 0,
@@ -36,12 +39,16 @@ class Trad_maintenance:
             for a in range(2006, self.date.year+1):
                 self.listes[s][a] = les_mois.copy()
         self.sites = {} # les wikipedia étranger visités
+        self.gros_suivi = [] # page de suivi grosse, contenu à transférer ?
         
     def __str__(self):
         r  = u"== Rapport d'exécution ==\n"
         r += u'* Nb de pages supprimées: %i\n' % self.stats['suppr']
         r += u'* Nb de traductions closes: %i\n' % self.stats['cloture']
         r += u'* Nb de {{Traduit de}} ajoutés: %i\n' % self.stats['traduitde']
+        r += u"\nPage de suivi trop grande (les supprimer ?)\n"
+        for a in self.gros_suivi:
+            r += u"* [[%s]]\n" % a
         return r
 
     def retirer_le_modele_Traduction(self, page):
@@ -53,40 +60,47 @@ class Trad_maintenance:
             BeBot.save(page, commentaire=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True, debug=self.debug)
         
     def suppr_mod(self, b, titres):
-        if b.isRedirectPage():
-            BeBot.delete(b, self.resume+u" : Redirection d'une traduction abandonnée", debug=self.debug)
-        elif b.namespace() != 102:
-            self.retirer_le_modele_Traduction(b) # si traduction active
-            pywikibot.output(u'>><<>>*** %s ***<<>><<' % b.title())
-            for a in re.finditer(self.re_appel, b.text):
-                trouve = a.group(1).encode('ascii', 'ignore')
-                if trouve in titres:
-                    #pywikibot.output(u'!!! REMPLACEMENT %s !!!' % trouve)
-                    c = b.text[:a.start()] + b.text[a.end():]
-                    #BeBot.diff(b.text, c)
-                    b.text = c
-            BeBot.save(b, commentaire=self.resume+u' : Traduction abandonnée', debug=self.debug)
+        self.retirer_le_modele_Traduction(b) # si traduction active
+        for a in re.finditer(self.re_appel, b.text):
+            trouve = a.group(1).encode('ascii', 'ignore')
+            if trouve in titres:
+                c = b.text[:a.start()] + b.text[a.end():]
+                #BeBot.diff(b.text, c)
+                b.text = c
+        BeBot.save(b, commentaire=self.resume+u' : Traduction abandonnée', debug=self.debug)
 
     def supprimer(self, page):
         """ Supprime la page et nettoie les pages liées
         """
-        #pywikibot.output(u"&& supprimer : %s" % page.title())
         t = page.title().encode('ascii', 'ignore')
         titres = [ t ]
         titres.append(t.replace('Discussion:', 'Discuter:'))
-        #pywikibot.output('\n')
-        pywikibot.output(titres)
         for b in page.backlinks(filterRedirects=True): # On trouve les différents noms de la page
             t = b.title().encode('ascii', 'ignore')
             titres.append(t)
             titres.append(t.replace('Discussion:', 'Discuter:'))
         # PdDis
         disc = pywikibot.Page(self.site, page.title().replace('/Traduction', ''))
-        self.suppr_mod(disc, titres)
-        for b in page.backlinks(followRedirects=True):
-            self.suppr_mod(b, titres)
+        if disc.exists(): # Nettoyage de PdDis
+            self.suppr_mod(disc, titres)
 
-        BeBot.delete(page, self.resume+u' : Traduction abandonnée', debug=self.debug)
+        for b in page.embeddedin(): # nettoyage des inclusions
+            self.suppr_mod(b, titres)
+        for b in page.backlinks(followRedirects=True): # Nettoyage des redirections
+            if b.isRedirectPage():
+                BeBot.delete(b, self.resume+u" : Redirection d'une traduction abandonnée", debug=self.debug)
+                self.stats['suppr'] += 1
+
+        #taille = BeBot.taille_page(page, 1) # < 2800
+        taille = 7777
+        m = self.re_discus.search(page.text)
+        if m:
+            taille = len(m.group(1))
+        if taille < 260:
+            BeBot.delete(page, self.resume+u' : Traduction abandonnée', debug=self.debug)
+        else:
+            pywikibot.output(u"><> Vérifier contenu : http://fr.wikipedia.org/wiki/%s -- %d" % (page.title(), taille))
+            self.gros_suivi.append(page.title())
         self.stats['suppr'] += 1
         
     def clore_traduction(self, page):
@@ -142,7 +156,10 @@ class Trad_maintenance:
                     except: #Nopage
                         pywikibot.warning(u"Impossible de lire l'historique pour %s:%s" % (langue, orig.title()))
                         return False
+                    #pywikibot.output(date.__str__()[8:10])
+                    date = date.__str__()
                     if date != u'':
+                        pywikibot.output(date)
                         jour  = date[8:10].lstrip('0')
                         mois  = date[5:7].lstrip('0')
                         annee = date[0:4]
