@@ -12,7 +12,6 @@ Rassemble plusieurs fonctions génériques :
 * taille d'une page
 * page de traduction associée
 * consultation mensuelle d'une page
-* dire si un wiki possède un wikiprojet ou s'il donne la date de labellisation
 * récupérer une table dans une bdd
 * lire un fichier de configuration
 * renverser une chaine de caractère
@@ -104,15 +103,6 @@ def stat_consultations(page, codelangue=u'fr', date=False):
         return 0
     return res['total_views']
 
-def hasWikiprojet(langue):
-    """ Dit si un wiki possède un wikiprojet
-    """
-    # Le projet sur DE à l'air en sommeil
-    if langue in "fr en":
-        return True
-    else:
-        return False
-
 def charger_bdd(db, nom_base, champs="*", cond=None, lim=None, ordre=None):
     """ Charger une table depuis une base de données
     """
@@ -154,17 +144,6 @@ def info_wikiprojet(page, ER, nom_groupe, tab_elimination):
             rep = info[0]
     return rep
 
-def stou(statut):
-    """ Convertit un entier "Statut" (1 <= s <= 5) en message unicode
-    """
-    stat = [ u'Statut inconnu', \
-            u'Demande de traduction',   u'Traduction', \
-            u'Demande de relecture',    u'Relecture', \
-            u'Traduction terminé' ]
-    if statut >= 1 and statut <= 5:
-        return stat[statut]
-    return stat[0]
-
 def fichier_conf(fichier):
     """ Lit un fichier de configuration et retourne un dictionnaire des valeurs
     Format du fichier de conf : "clé=valeur"
@@ -188,13 +167,6 @@ def reverse(chaine):
         i -= 1
         rep += chaine[i]
     return rep
-
-def retirer(exprs, text):
-    """ Retire les ER de la liste 'exprs' du text
-    """
-    for a in exprs:
-        text = a.sub(r'', text)
-    return text
 
 def save(page, commentaire=u'', minor=False, debug=False):
     """ Sauvegarde la page

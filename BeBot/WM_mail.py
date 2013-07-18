@@ -151,6 +151,13 @@ from-pass=      # mot de passe du mail de l'expédieur
         p.text = self.exps['noinclude'].sub(r'', p.text)
         return p.text
 
+    def retirer(exprs, text):
+        """ Retire les ER de la liste 'exprs' du text
+        """
+        for a in exprs:
+            text = a.sub(r'', text)
+        return text
+
     def modele(self, match):
         """ Traitement spécifiques pour les modèles (à paramètres ou non)
         """
@@ -290,7 +297,7 @@ from-pass=      # mot de passe du mail de l'expédieur
         modele = re.compile("\{\{composition wikimag[0-9]?", re.LOCALE|re.IGNORECASE)
 
         pagetmp.text = modele.sub(u'{{subst:%s|' % modele_de_presentation, self.mag.text)
-        pagetmp.text = BeBot.retirer( [self.exps['noinclude']], pagetmp.text ) # retrait de la catégorie
+        pagetmp.text = self.retirer( [self.exps['noinclude']], pagetmp.text ) # retrait de la catégorie
         if len(pagetmp.text) > 0:
             BeBot.save(pagetmp, commentaire=u'Préparation pour le mail du Wikimag')
         else:
@@ -307,7 +314,7 @@ from-pass=      # mot de passe du mail de l'expédieur
         text = self.exps['modele'].sub(self.modele, text)
 
         text = self.exps['ref'].sub(r' (\1)', text)
-        text = BeBot.retirer( [self.exps['comment'], self.exps['br'], \
+        text = self.retirer( [self.exps['comment'], self.exps['br'], \
                 self.exps['image_seule'], self.exps['image'], self.exps['W___'], \
                 self.exps['noinclude']], text)
         text = self.exps['hr'].sub(r'-----  -----  -----', text)
@@ -323,7 +330,7 @@ from-pass=      # mot de passe du mail de l'expédieur
         """
         self.mode = u'html'
         text = self.mag.text[2:] # - les {{ }} de Composition WIkimag
-        text = BeBot.retirer( [self.exps['noinclude']], text) # retrait de la catégorie
+        text = self.retirer( [self.exps['noinclude']], text) # retrait de la catégorie
         text = text[:-2]
         parametres = {
                 u'éditorial'    : ['paragraphe',    u'Éditorial'],
@@ -357,7 +364,7 @@ from-pass=      # mot de passe du mail de l'expédieur
         text = self.exps['modele'].sub(self.modele, text)
 
         text = self.exps['ref'].sub(r' (\1)', text)
-        text = BeBot.retirer( [self.exps['comment'], self.exps['image_seule'], \
+        text = self.retirer( [self.exps['comment'], self.exps['image_seule'], \
                 self.exps['image'], self.exps['W___'], self.exps['noinclude']], text)
         text = self.exps['W_br'].sub(r'<br />\n', text)
         text = self.exps['b'].sub(r'<b>\2</b>', text)
@@ -436,7 +443,7 @@ from-pass=      # mot de passe du mail de l'expédieur
                     r += self.html_chapitre(titre)
                     p = self.exps['html'].sub(r'\2', params[p])
                     r += self.html_paragraphe(u'Les membres de la rédaction pour ce numéro : '+ \
-                            BeBot.retirer([self.exps['User talk']], p) )
+                            self.retirer([self.exps['User talk']], p) )
         r += self.html_paragraphe(self.disclaimer)
 
         r = self.remplacer_les_liens(r)
