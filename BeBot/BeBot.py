@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re, datetime, urllib, MySQLdb, simplejson, sys, sqlite3, difflib
-from MySQLdb.constants import ER
+import re, datetime, urllib, simplejson, sys, sqlite3, difflib
 import pywikibot
 
 """
@@ -21,6 +20,7 @@ Rassemble plusieurs fonctions génériques :
 * supprimer une page
 * vérifier qu'il n'y ait pas de blocage par un utilisateur
 * nombre de contribs d'un utilisateur, date de dernière modif
+* diff 
 """
 
 BeginBotSection = u'<!-- BEGIN BOT SECTION -->'

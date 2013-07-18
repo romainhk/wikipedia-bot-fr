@@ -8,6 +8,7 @@ locale.setlocale(locale.LC_ALL, '')
 class Stats_ProjetTraduction:
     """ Stats_ProjetTraduction
         Analyse toutes les pages de suivi du Projet:Traduction pour en donner qq stats
+        TODO : à recycle avec le nouveau système de traduction
     """
     def __init__(self, site):
         self.site = site
