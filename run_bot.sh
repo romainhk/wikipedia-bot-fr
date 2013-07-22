@@ -5,7 +5,7 @@
 export PYTHONPATH=$PYTHONPATH:$HOME/pywikibot/core
 export LC_ALL="fr_FR.UTF-8"
 
-WPBOTFR=`readlink -f $0 | sed -E "s/(.*\/)[^\/]*/\\1/"`
+WPBOTFR=`readlink -f $0 | sed -E "s/(.*)\/[^\/]*/\\1/"`
 BOT=`echo $1|cut -d'/' -f1`
 SCRIPT=`echo $1 | sed -E "s/.*\/(.*).py/\\1/"`
 export LOG="$HOME/$BOT.log"

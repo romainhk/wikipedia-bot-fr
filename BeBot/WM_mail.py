@@ -61,7 +61,7 @@ from-pass=      # mot de passe du mail de l'expédieur
                 'accolade'  : re.compile("\{\{[^(\{\{)]*\}\}", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'sommaire'  : re.compile(self.sommaire_jocker, re.LOCALE|re.UNICODE),
                 'W_liste'   : re.compile("^\s*\*", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
-                'http'      : re.compile("(http)%3A", re.LOCALE|re.UNICODE|re.MULTILINE),
+                'http'      : re.compile("(https?)%3A", re.LOCALE|re.UNICODE|re.MULTILINE),
                 'html'      : re.compile("<(?P<balise>\w+)[^<>]*>(.*?)</(?P=balise)>", re.LOCALE|re.UNICODE|re.DOTALL),
                 'comment'   : re.compile("<!--(.*?)-->", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 'center'    : re.compile("<center>(.*?)</center>", re.LOCALE|re.UNICODE|re.DOTALL),
@@ -71,7 +71,7 @@ from-pass=      # mot de passe du mail de l'expédieur
                 'annonces'  : re.compile("\*? ?\{\{Annonce[ \w\xe9]*\|(\d+)\|(.+)\}\}", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'image'     : re.compile("\[\[(?:Image|File|Fichier):([^\]]+)\]\]\s*", re.LOCALE|re.UNICODE|re.IGNORECASE),
                 'image_seule' : re.compile("^\[\[(?:Image|File|Fichier):(.*)\]\]$\s?", re.LOCALE|re.UNICODE|re.IGNORECASE|re.MULTILINE),
-                'lien_ext'  : re.compile("(\[http:[^\] ]+ +[^\]]*\])", re.LOCALE|re.UNICODE),
+                'lien_ext'  : re.compile("(\[https?:[^\] ]+ +[^\]]*\])", re.LOCALE|re.UNICODE),
                 'lien_int'  : re.compile("(\[\[.+?\]\])", re.LOCALE|re.UNICODE),
                 'modele'    : re.compile("\{\{(.+?)\}\}", re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL),
                 #'modele'    : re.compile("\{\{([^\|\}:=]*?)\|?([^\}:]*)\}\}", re.LOCALE|re.UNICODE),
@@ -151,7 +151,7 @@ from-pass=      # mot de passe du mail de l'expédieur
         p.text = self.exps['noinclude'].sub(r'', p.text)
         return p.text
 
-    def retirer(exprs, text):
+    def retirer(self, exprs, text):
         """ Retire les ER de la liste 'exprs' du text
         """
         for a in exprs:
@@ -329,7 +329,7 @@ from-pass=      # mot de passe du mail de l'expédieur
         """ Génération au format Html
         """
         self.mode = u'html'
-        text = self.mag.text[2:] # - les {{ }} de Composition WIkimag
+        text = self.mag.text[2:] # - les {{ }} de Composition Wikimag
         text = self.retirer( [self.exps['noinclude']], text) # retrait de la catégorie
         text = text[:-2]
         parametres = {
