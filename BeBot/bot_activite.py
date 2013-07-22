@@ -6,10 +6,7 @@ import BeBot
 import pywikibot
 
 """
-    Analyse l'activité des comptes pour bot
-
-TODO:
-    * statistiques mensuelles ; tableau des meilleurs scores
+    Analyse l'activité des bots
 """
 
 site = pywikibot.getSite()
@@ -21,7 +18,7 @@ peuactifs = {} # bots peu actifs
 lim_peu = 10 # limite de modifications pour les bots peu actifs
 
 bots = pywikibot.Category(site, u'Catégorie:Wikipédia:Bot/Autorisé')
-for b in bots.articles(total=10):
+for b in bots.articles():
     nb, derniere = BeBot.userdailycontribs(site, b.title(), days=lim_jours)
     nom = b.title(withNamespace=False)
     if nb > lim_peu:
@@ -33,12 +30,16 @@ for b in bots.articles(total=10):
 classement = sorted(classement.items(), key=itemgetter(1), reverse=True)
 
 # Affichage des résultats
-t = u'{|class=\"wikitable sortable\"\n!Nom!!Contribs ces %i derniers jours' % lim_jours
+t = u'{|class=\"wikitable sortable\"\n!Nom!!Contribs ces %i derniers jours!!Date de dernière activitée' % lim_jours
 for nom, nb in classement:
-    t = t + u'\n|-\n|{{u|%s}}||%d||%s' % (nom, nb, last[nom])
-t = t + u'\n|}'
+    t += u'\n|-\n|{{u|%s}}||%d||%s' % (nom, nb, last[nom])
+t += u'\n|}'
 
-t = t + u'\n== Les bots peu actifs (moins de %d modifs) ==\n' % lim_peu
-t = t + peuactifs
+t += u'\n== Les bots peu actifs (moins de %d modifs) ==\n' % lim_peu
+t += u'{{début de colonnes|nombre=3}}\n'
+for pa in sorted(peuactifs.keys()):
+    t += u'\n* {{u|%s}}' % pa
+t += u'{{fin de colonnes}}\n'
 
+p.text = t
 BeBot.save(p, commentaire='Recalculationnement du classement', debug=False)
