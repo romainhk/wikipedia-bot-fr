@@ -54,12 +54,20 @@ class Trad_maintenance:
     def retirer_le_modele_Traduction(self, page):
         """ Retire le {{Traduction}} d'une page
         """
+        ns = page.namespace()
+        if ns == 2 or ns == 3:
+            pywikibot.output('Page utilisateur %d (retirer_modele) -> exit : %s' % (ns, b.title()))
+            return
         text = self.re_trad.sub(r'', page.text)
         if text != page.text:
             page.text = text
             BeBot.save(page, commentaire=self.resume+u' : Retrait du modèle {{Traduction}}', minor=True, debug=self.debug)
         
     def suppr_mod(self, b, titres):
+        ns = b.namespace()
+        if ns == 2 or ns == 3:
+            #pywikibot.output('Page utilisateur %d (suppr_mod) -> exit : %s' % (ns, b.title()))
+            return
         self.retirer_le_modele_Traduction(b) # si traduction active
         for a in re.finditer(self.re_appel, b.text):
             trouve = a.group(1).encode('ascii', 'ignore')
@@ -92,16 +100,17 @@ class Trad_maintenance:
                 self.stats['suppr'] += 1
 
         #taille = BeBot.taille_page(page, 1) # < 2800
-        taille = 7777
+        #taille = 7777
+        taille = 0
         m = self.re_discus.search(page.text)
         if m:
             taille = len(m.group(1))
         if taille < 260:
             BeBot.delete(page, self.resume+u' : Traduction abandonnée', debug=self.debug)
+            self.stats['suppr'] += 1
         else:
-            pywikibot.output(u"><> Vérifier contenu : http://fr.wikipedia.org/wiki/%s -- %d" % (page.title(), taille))
+            pywikibot.output(u"><> Discussion détectée sur : http://fr.wikipedia.org/wiki/%s -- taille:%d" % (page.title(), taille))
             self.gros_suivi.append(page.title())
-        self.stats['suppr'] += 1
         
     def clore_traduction(self, page):
         """ Clôt une traduction
@@ -125,14 +134,19 @@ class Trad_maintenance:
             if n:
                 a = BeBot.modeletodic(n.group(0))
                 if not a.has_key(1) or not a.has_key(2):
-                    pywikibot.warning(u"Impossible de trouver le nom ou la langue d'origine pour %s" % page.title())
+                    pywikibot.warning(u";;; Impossible de trouver le nom ou la langue d'origine pour %s" % page.title())
                     return False
                 langue = a[1]
                 article = a[2].replace('_', ' ')
-                statut = a['status']
+                if 'status' in a:
+                    statut = a['status']
+                else:
+                    pywikibot.output(";;; Statut introuvable -> on passe")
+                    pywikibot.output(a)
+                    return False
                 if statut == "1":
                     pywikibot.output(";;; Statut 'Demande' -> ne pas ajouter le {{Traduit de}}")
-                    return False
+                    return True
                 plus = u''
                 if a.has_key(u'oldid') and a['oldid'] != u'' and a['oldid'] != u'830165' :
                     # On utilise le oldid pour retrouver la date
@@ -154,12 +168,11 @@ class Trad_maintenance:
                                 date = o[1]
                                 break;
                     except: #Nopage
-                        pywikibot.warning(u"Impossible de lire l'historique pour %s:%s" % (langue, orig.title()))
+                        pywikibot.warning(u";;; Impossible de lire l'historique pour %s:%s" % (langue, orig.title()))
                         return False
                     #pywikibot.output(date.__str__()[8:10])
                     date = date.__str__()
                     if date != u'':
-                        pywikibot.output(date)
                         jour  = date[8:10].lstrip('0')
                         mois  = date[5:7].lstrip('0')
                         annee = date[0:4]
@@ -167,25 +180,26 @@ class Trad_maintenance:
                     else:
                         pywikibot.warning(u"Ne peut dater une ancienne révision de %s" % page.title())
                 appel = u'{{Traduit de|%s|%s%s}}\n' % (langue, article, plus)
-                BeBot.diff(disc.text, appel + disc.text)
+                #BeBot.diff(disc.text, appel + disc.text)
                 disc.text = appel + disc.text
                 BeBot.save(disc, commentaire=self.resume+u' : Ajout du bandeau de licence', debug=self.debug)
                 self.stats['traduitde'] += 1
                 return True
             else:
                 pywikibot.warning(u'Impossible de trouver les infos de traduction pour %s' % page.title())
-        return False
+        return True
         
     def run(self):
         if self.debug:
             pywikibot.warning(u"== Mode débuggage actif ; aucunes modifications effectuées ==")
         parannee = pywikibot.Category(self.site, u"Catégorie:Traduction par année")
         for c in parannee.subcategories(recurse=False): #parcours des traductions par année
-            for p in c.articles(content=False, total=9): # Pour chaque traduction
+            for p in c.articles(content=False, total=25): # Pour chaque traduction
                 pywikibot.output(">>>>> %s <<<<<" % p.title())
-                self.traduit_de(p)
+                td = self.traduit_de(p)
                 #self.clore_traduction(p)
-                self.supprimer(p)
+                if td: # erreur grave à vérifier
+                    self.supprimer(p)
 
 def main():
     site = pywikibot.getSite()
