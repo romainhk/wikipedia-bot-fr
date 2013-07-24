@@ -10,13 +10,13 @@ class Atom_Labellisations:
     """ Atom Labellisations
         Génère un flux Atom des articles labellisés
     """
-    def __init__(self, site, debug):
+    def __init__(self, site, bddsqlite, debug):
         self.site = site
         self.debug = debug
         self.ajd = datetime.datetime.today()
         self.re_modele = re.compile(u"\{\{((Article de qualité|Bon article|Portail de qualité|Bon portail).+?\}\})", re.LOCALE|re.IGNORECASE|re.MULTILINE|re.DOTALL|re.UNICODE)
         self.re_date = re.compile(u"(\d+)[ /-]([^\s]+)[ /-](\d+)", re.LOCALE|re.IGNORECASE|re.UNICODE)
-        self.cats = [u"Catégorie:Article de qualité", u"Catégorie:Bon article"]
+        self.cats = [u"Catégorie:Article de qualité", u"Catégorie:Bon article", u"Catégorie:Portail de qualité", u"Catégorie:Bon portail"]
         # Le flux
         self.fp = open('labellisations.atom', 'w')
         self.feed = feedgenerator.Atom1Feed(
@@ -26,7 +26,6 @@ class Atom_Labellisations:
             language=u"fr")
 
         #DB
-        bddsqlite = "atom_labellisations.sqlite"
         try:
             self.conn = sqlite3.connect(bddsqlite)
         except:
@@ -118,11 +117,16 @@ def main():
     if BeBot.blocage(site):
         sys.exit(7)
     debug = False
+    if len(sys.argv) not in "1 2":
+        pywikibot.error("Syntaxe: atom_labellisations.py BASE_SQLITE [DEBUG]")
+        sys.exit(1)
+
+    bddsqlite = sys.argv[1]
     for par in sys.argv:
         if par.lower() == "debug":
             debug = True
 
-    al = Atom_Labelisations(site, debug)
+    al = Atom_Labelisations(site, bddsqlite, debug)
     al.run()
 
 if __name__ == "__main__":
