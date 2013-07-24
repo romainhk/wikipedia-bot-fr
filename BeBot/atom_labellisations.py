@@ -10,7 +10,7 @@ class Atom_Labellisations:
     """ Atom Labellisations
         Génère un flux Atom des articles labellisés
     """
-    def __init__(self, site, bddsqlite, debug):
+    def __init__(self, site, bddsqlite, fluxatom, debug):
         self.site = site
         self.debug = debug
         self.ajd = datetime.datetime.today()
@@ -18,7 +18,7 @@ class Atom_Labellisations:
         self.re_date = re.compile(u"(\d+)[ /-]([^\s]+)[ /-](\d+)", re.LOCALE|re.IGNORECASE|re.UNICODE)
         self.cats = [u"Catégorie:Article de qualité", u"Catégorie:Bon article", u"Catégorie:Portail de qualité", u"Catégorie:Bon portail"]
         # Le flux
-        self.fp = open('labellisations.atom', 'w')
+        self.fp = open(fluxatom, 'w') # OUTPUT
         self.feed = feedgenerator.Atom1Feed(
             title=u"Labellisations sur WP:fr",
             link=u"http://romainhk.hd.free.fr/labellisations.atom",
@@ -54,13 +54,15 @@ class Atom_Labellisations:
             req = u'INSERT INTO %s ' % self.nom_base \
                 + u'(titre, label, date) VALUES ("%s", "%s", "%s")' \
                 % (page.title(), categorie, date)
+            if self.debug:
+                pywikibot.output("Ajout de %s" % page.title())
+                return
             try:
                 curseur.execute(req)
             except sqlite3.Error as e:
                 pywikibot.error(u"Erreur lors de l'INSERT :\n%s" % (e.args[0]))
             self.conn.commit()
 
-            pywikibot.output("Ajout de %s" % page.title())
             return True
         pywikibot.error(u"Impossible de trouver le modèle AdQ/BA sur la page %s" % page.title())
         return False
@@ -69,12 +71,14 @@ class Atom_Labellisations:
         curseur = self.conn.cursor()
         req = u'DELETE FROM %s ' % self.nom_base \
             + u'WHERE titre="%s"' % page.title()
+        if self.debug:
+            pywikibot.output("Suppression de %s" % page.title())
+            return
         try:
             curseur.execute(req)
         except sqlite3.Error as e:
             pywikibot.error(u"Erreur lors du DELETE :\n%s" % (e.args[0]))
         self.conn.commit()
-        pywikibot.output("Suppression de %s" % page.title())
         
     def ajouterauflux(self, page, date, categorie):
         self.feed.add_item(
@@ -109,7 +113,8 @@ class Atom_Labellisations:
             date = datetime.datetime.strptime(r['date'], '%Y-%m-%d %H:%M:%S')
             categorie = r['label']
             self.ajouterauflux(p, date, categorie)
-        self.feed.write(self.fp, 'utf-8')
+        if not self.debug:
+            self.feed.write(self.fp, 'utf-8')
         self.fp.close()
 
 def main():
@@ -117,16 +122,17 @@ def main():
     if BeBot.blocage(site):
         sys.exit(7)
     debug = False
-    if len(sys.argv) not in "1 2":
-        pywikibot.error("Syntaxe: atom_labellisations.py BASE_SQLITE [DEBUG]")
+    if unicode(len(sys.argv)) not in u"2 3":
+        pywikibot.error("Syntaxe: atom_labellisations.py BASE_SQLITE FLUX_ATOM [DEBUG]")
         sys.exit(1)
 
     bddsqlite = sys.argv[1]
+    fluxatom = sys.argv[2]
     for par in sys.argv:
         if par.lower() == "debug":
             debug = True
 
-    al = Atom_Labelisations(site, bddsqlite, debug)
+    al = Atom_Labelisations(site, bddsqlite, fluxatom, debug)
     al.run()
 
 if __name__ == "__main__":
