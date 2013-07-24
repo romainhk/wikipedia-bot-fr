@@ -6,8 +6,8 @@ import BeBot
 import pywikibot
 locale.setlocale(locale.LC_ALL, '')
 
-class RSS_Labels:
-    """ RSS_Labels
+class Atom_Labellisations:
+    """ Atom Labellisations
         Génère un flux Atom des articles labellisés
     """
     def __init__(self, site, debug):
@@ -20,8 +20,8 @@ class RSS_Labels:
         # Le flux
         self.fp = open('labellisations.atom', 'w')
         self.feed = feedgenerator.Atom1Feed(
-            title=u"Labellisation sur WP:fr",
-            link=u"http://romainhk.hd.free.fr",
+            title=u"Labellisations sur WP:fr",
+            link=u"http://romainhk.hd.free.fr/labellisations.atom",
             description=u"Les labellisations sur la wikipédia francophone.",
             language=u"fr")
 
@@ -52,7 +52,7 @@ class RSS_Labels:
                     pywikibot.error(u"Impossible de reconnaitre le format de date pour %s" % page.title())
             # Sauvegarde
             curseur = self.conn.cursor()
-            req = u'INSERT INTO %s' % self.nom_base \
+            req = u'INSERT INTO %s ' % self.nom_base \
                 + u'(titre, label, date) VALUES ("%s", "%s", "%s")' \
                 % (page.title(), categorie, date)
             try:
@@ -110,7 +110,6 @@ class RSS_Labels:
             date = datetime.datetime.strptime(r['date'], '%Y-%m-%d %H:%M:%S')
             categorie = r['label']
             self.ajouterauflux(p, date, categorie)
-
         self.feed.write(self.fp, 'utf-8')
         self.fp.close()
 
@@ -123,8 +122,8 @@ def main():
         if par.lower() == "debug":
             debug = True
 
-    rl = RSS_Labels(site, debug)
-    rl.run()
+    al = Atom_Labelisations(site, debug)
+    al.run()
 
 if __name__ == "__main__":
     try:
