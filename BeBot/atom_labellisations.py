@@ -14,8 +14,8 @@ class Atom_Labellisations:
         self.site = site
         self.debug = debug
         self.ajd = datetime.datetime.today()
-        self.re_modele = re.compile(u"\{\{((Article de qualité|Bon article|Portail de qualité|Bon portail).+?\}\})", re.LOCALE|re.IGNORECASE|re.MULTILINE|re.DOTALL|re.UNICODE)
-        self.re_date = re.compile(u"(\d+)[ /-]([^\s]+)[ /-](\d+)", re.LOCALE|re.IGNORECASE|re.UNICODE)
+        self.re_modele = re.compile(u"\{\{((Article[ _]de[ _]qualité|Bon[ _]article|Portail[ _]de[ _]qualité|Bon[ _]portail).+?\}\})", re.LOCALE|re.IGNORECASE|re.MULTILINE|re.DOTALL|re.UNICODE)
+        self.re_date = re.compile(u"([^ _]+)[ /-]([^\s]+)[ /-](\d+)", re.LOCALE|re.IGNORECASE|re.UNICODE)
         self.cats = [u"Catégorie:Article de qualité", u"Catégorie:Bon article", u"Catégorie:Portail de qualité", u"Catégorie:Bon portail"]
         # Le flux
         self.fp = open(fluxatom, 'w') # OUTPUT
@@ -35,7 +35,8 @@ class Atom_Labellisations:
         self.nom_base = u'labels'
 
     def ajouteralabdd(self, page):
-        n = self.re_modele.search(page.text) # Récupération des infos de traduction
+        p = page.text.replace('{{1er}}', '1') # Suppression d'un modèle chiant pour le calcul de date
+        n = self.re_modele.search(p) # Récupération des infos de traduction
         if n:
             mod = BeBot.modeletodic(n.group(0))
             categorie = n.group(2)
@@ -49,6 +50,7 @@ class Atom_Labellisations:
                     date = datetime.datetime(annee, mois, jour)
                 else:
                     pywikibot.error(u"Impossible de reconnaitre le format de date pour %s" % page.title())
+                    return False
             # Sauvegarde
             curseur = self.conn.cursor()
             req = u'INSERT INTO %s ' % self.nom_base \
@@ -97,7 +99,7 @@ class Atom_Labellisations:
 
         for cat in self.cats:
             labels = pywikibot.Category(self.site, cat)
-            for a in labels.articles(total=5):
+            for a in labels.articles():
                 adq_wp.append(a)
         # Différences
         nouveaux = list(set(adq_wp) - set(adq_base))
@@ -132,7 +134,7 @@ def main():
         if par.lower() == "debug":
             debug = True
 
-    al = Atom_Labelisations(site, bddsqlite, fluxatom, debug)
+    al = Atom_Labellisations(site, bddsqlite, fluxatom, debug)
     al.run()
 
 if __name__ == "__main__":
