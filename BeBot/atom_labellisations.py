@@ -35,8 +35,10 @@ class Atom_Labellisations:
         self.nom_base = u'labels'
 
     def ajouteralabdd(self, page):
-        p = page.text.replace('{{1er}}', '1') # Suppression d'un modèle chiant pour le calcul de date
-        n = self.re_modele.search(p) # Récupération des infos de traduction
+        # Suppression d'un modèle chiant pour le calcul de date
+        p = page.text.replace('{{1er}}', '1').replace('{{er}}', '')
+        # Récupération des infos de traduction
+        n = self.re_modele.search(p)
         if n:
             mod = BeBot.modeletodic(n.group(0))
             categorie = n.group(2)
@@ -44,9 +46,13 @@ class Atom_Labellisations:
             if 'date' in mod:
                 o = self.re_date.search(mod['date'])
                 if o:
-                    jour = int(o.group(1))
-                    mois = BeBot.moistoint(o.group(2))
-                    annee = int(o.group(3))
+                    try:
+                        jour = int(o.group(1))
+                        mois = BeBot.moistoint(o.group(2))
+                        annee = int(o.group(3))
+                    except:
+                        pywikibot.error(u"Problème de conversion de la date '%s' sur [[%s]]" % (o.group(0), page.title()))
+                        return False
                     date = datetime.datetime(annee, mois, jour)
                 else:
                     pywikibot.error(u"Impossible de reconnaitre le format de date pour %s" % page.title())
