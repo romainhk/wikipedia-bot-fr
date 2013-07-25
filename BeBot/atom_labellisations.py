@@ -70,7 +70,6 @@ class Atom_Labellisations:
             except sqlite3.Error as e:
                 pywikibot.error(u"Erreur lors de l'INSERT :\n%s" % (e.args[0]))
             self.conn.commit()
-
             return True
         pywikibot.error(u"Impossible de trouver le modèle AdQ/BA sur la page %s" % page.title())
         return False
@@ -92,7 +91,7 @@ class Atom_Labellisations:
         self.feed.add_item(
             title=page.title(),
             link=u"http://fr.wikipedia.org/wiki/%s" % page.title(asUrl=True),
-            description=u"",
+            description=categorie,
             pubdate=date,
             categories=[categorie])
 
@@ -115,7 +114,7 @@ class Atom_Labellisations:
         for a in dechus:
             self.supprimerdelabdd(a)
         # Génération du flux
-        res = BeBot.charger_bdd(self.conn, self.nom_base, ordre='"date" DESC')
+        res = BeBot.charger_bdd(self.conn, self.nom_base, lim=50, ordre='"date" DESC')
         for r in res:
             p = pywikibot.Page(self.site, r['titre'])
             date = datetime.datetime.strptime(r['date'], '%Y-%m-%d %H:%M:%S')
