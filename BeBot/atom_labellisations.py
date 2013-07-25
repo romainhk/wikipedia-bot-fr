@@ -8,7 +8,7 @@ locale.setlocale(locale.LC_ALL, '')
 
 class Atom_Labellisations:
     """ Atom Labellisations
-        Génère un flux Atom des articles labellisés
+        Génère un flux Atom des articles récemment labellisés
     """
     def __init__(self, site, bddsqlite, fluxatom, debug):
         self.site = site
@@ -20,9 +20,9 @@ class Atom_Labellisations:
         # Le flux
         self.fp = open(fluxatom, 'w') # OUTPUT
         self.feed = feedgenerator.Atom1Feed(
-            title=u"Labellisations sur WP:fr",
+            title=u"[WP:fr] Labellisations",
             link=u"http://romainhk.hd.free.fr/labellisations.atom",
-            description=u"Les labellisations sur la wikipédia francophone.",
+            description=u"Les articles récemment labellisés (AdQ, BA, PdQ, BP) sur la wikipédia francophone.",
             language=u"fr")
 
         #DB
