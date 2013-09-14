@@ -161,7 +161,7 @@ Legend = left:70 top:295"""[1:] % (largeur, width, maxi, graduation, graduation/
         self.msg += '</timeline>'
 
         # Publication
-        page = pywikibot.Page(self.site, u'Projet:Wikipédia_1.0/Évolution')
+        page = pywikibot.Page(self.site, u'Projet:Évaluation/Évolution')
         page.text = BeBot.ER_BotSection.sub(self.BotSectionEdit, page.text)
         BeBot.save(page, commentaire=self.resume, debug=False)
 
