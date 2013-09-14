@@ -106,12 +106,13 @@ class Infolettre:
                     self.rm_old(page)
         return True
 
-    def newsboy(self, lecteur, msg):
+    def newsboy(self, lecteur, msg, purge=True):
         """ Distribut l'infolettre
         """
         if lecteur.isRedirectPage():
             lecteur = lecteur.getRedirectTarget()
-        self.rm_old(lecteur)
+        if purge:
+            self.rm_old(lecteur)
         lecteur.text += msg
         BeBot.save(lecteur, commentaire=self.resume, debug=self.debug)
 
@@ -125,18 +126,21 @@ class Infolettre:
             sys.exit(1)
 
         # Liste des abonnés
-        r = re.compile(u"\*\* \{\{u\|(.+?)\}\}", re.LOCALE|re.UNICODE)
-        liste = []
+        r = re.compile(u"\*\* \{\{u\|(R.+?)\}\}\s*(\{\{BeBot nopurge\}\})?", re.LOCALE|re.UNICODE|re.IGNORECASE)
+        liste = [] # [ Nom d'utilisateur ; bool : purge des anciens ]
         for i in BeBot.page_ligne_par_ligne(self.site, self.abn[self.infolettre]):
             m = r.search(i)
             if m is not None:
-                liste.append(m.group(1))
+                purge = True
+                if m.group(2) is not None:
+                    purge = False
+                liste.append([m.group(1), purge])
 
         # Distribution
         if hasattr(self, "resume"):
-            for l in liste:
+            for l,p in liste:
                 boiteauxlettres = pywikibot.Page(self.site, u"Utilisateur:"+l).toggleTalkPage()
-                self.newsboy(boiteauxlettres, msg)
+                self.newsboy(boiteauxlettres, msg, p)
 
 def main():
     site = pywikibot.getSite()
