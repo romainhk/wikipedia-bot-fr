@@ -126,7 +126,7 @@ class Infolettre:
             sys.exit(1)
 
         # Liste des abonnés
-        r = re.compile(u"\*\* \{\{u\|(R.+?)\}\}\s*(\{\{BeBot nopurge\}\})?", re.LOCALE|re.UNICODE|re.IGNORECASE)
+        r = re.compile(u"\*\* \{\{u\|(.+?)\}\}\s*(\{\{BeBot nopurge\}\})?", re.LOCALE|re.UNICODE|re.IGNORECASE)
         liste = [] # [ Nom d'utilisateur ; bool : purge des anciens ]
         for i in BeBot.page_ligne_par_ligne(self.site, self.abn[self.infolettre]):
             m = r.search(i)
