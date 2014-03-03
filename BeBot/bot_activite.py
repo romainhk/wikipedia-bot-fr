@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
 import re
+import datetime
 from operator import itemgetter
 import BeBot
 import pywikibot
@@ -33,7 +34,7 @@ for b in bots.articles():
 classement = sorted(classement.items(), key=itemgetter(1), reverse=True)
 
 # Affichage des résultats
-t = u'{|class=\"wikitable sortable\"\n|+calculé le {date}!Nom!!Contribs ces {x} derniers jours!!Timestamp de dernière modif'.format(date=datetime.date.today().isoformat(),x=lim_jours)
+t = u'{{|class=\"wikitable sortable\"\n|+calculé le {date}\n!Nom!!Contribs ces {x} derniers jours!!Timestamp de dernière modif'.format(date=datetime.date.today().isoformat(),x=lim_jours)
 for nom, nb in classement:
     t += u'\n|-\n|{{u|%s}}||%d||%s' % (nom, nb, last[nom])
 t += u'\n|}'
