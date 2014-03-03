@@ -11,6 +11,8 @@ class GraphiqueEvaluations:
     """ Graphique Évaluations
         Génère un graphique à barres sur l'évolution du nombre des évaluations :
         nombre d'articles d'importance maximum ou élevée et total
+
+        TODO : ne pas insérer 2 mesures pour un même mois (sinon, les valeurs des mois suivant seront ignorées)
     """
     def __init__(self, site, bddsqlite):
         self.site = site
@@ -67,7 +69,6 @@ class GraphiqueEvaluations:
         except sqlite3.Error as e:
             pywikibot.error(u"Erreur lors de l'INSERT :\n%s" % (e.args[0]))
         self.conn.commit()
-        
         # Dessin
         largeur = 600 #largeur du graphique
         maxi = 0 #valeur max en hauteur
@@ -95,7 +96,7 @@ class GraphiqueEvaluations:
                     val[k] = res[ri][k]
                 if maxi < val['total']:
                     maxi = val['total'] # point le plus haut
-                ri += 1
+                ri = ri + 1
             vals.append(val)
         vals.reverse()
         #Majoration du maximum

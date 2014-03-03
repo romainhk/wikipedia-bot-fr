@@ -7,6 +7,9 @@ import pywikibot
 
 """
     Analyse l'activité des bots
+    TODO:
+        * total de bot actif / total
+        * contribution moyenne
 """
 
 site = pywikibot.getSite()
@@ -30,7 +33,7 @@ for b in bots.articles():
 classement = sorted(classement.items(), key=itemgetter(1), reverse=True)
 
 # Affichage des résultats
-t = u'{|class=\"wikitable sortable\"\n!Nom!!Contribs ces %i derniers jours!!Date de dernière activitée' % lim_jours
+t = u'{|class=\"wikitable sortable\"\n|+calculé le {date}!Nom!!Contribs ces {x} derniers jours!!Timestamp de dernière modif'.format(date=datetime.date.today().isoformat(),x=lim_jours)
 for nom, nb in classement:
     t += u'\n|-\n|{{u|%s}}||%d||%s' % (nom, nb, last[nom])
 t += u'\n|}'
