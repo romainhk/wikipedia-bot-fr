@@ -26,6 +26,7 @@ from-pass=      # mot de passe du mail de l'expédieur
         crochet / accolade : traitement récursif ? 
  exp : {{guil|[[Wikipédia:Sondage/Discussion pages liées|Avis sur une proposition de changement de message système concernant les liens « pages liées » et « Suivi des pages liées »]]}}
         transclusion des actualités : traiter aussi les modèles
+        Wikipédia:Wikimag/2014/16 : sur le champ "entretien", détecter les {{u-}}
     """
     def __init__(self, site, fichier_conf, epreuve):
         self.site = site

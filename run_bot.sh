@@ -2,7 +2,7 @@
 # > Lance le script d'un bot
 # Paramètre 1 : chemin relatif du script à lancer
 # Paramètre 2... : arguments
-export PYTHONPATH=$PYTHONPATH:$HOME/pywikibot/core
+export PYTHONPATH=$PYTHONPATH:$HOME/pywikibot/core:$HOME/pywikibot/core/externals
 export LC_ALL="fr_FR.UTF-8"
 
 WPBOTFR=`readlink -f $0 | sed -E "s/(.*)\/[^\/]*/\\1/"`
