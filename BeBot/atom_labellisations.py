@@ -37,11 +37,13 @@ class Atom_Labellisations:
     def ajouteralabdd(self, page):
         # Suppression d'un modèle chiant pour le calcul de date
         p = page.text.replace('{{1er}}', '1').replace('{{er}}', '')
-        # Récupération des infos de traduction
+        # Récupération des infos
         n = self.re_modele.search(p)
         if n:
             mod = BeBot.modeletodic(n.group(0))
-            categorie = n.group(2)
+            categorie = n.group(2).replace('_', ' ')
+            # Remise au propre de la casse
+            categorie = categorie[0].upper() + categorie[1:].lower()
             date = datetime.datetime(1970, 1, 1)
             if 'date' in mod:
                 o = self.re_date.search(mod['date'])
@@ -71,7 +73,8 @@ class Atom_Labellisations:
                 pywikibot.error(u"Erreur lors de l'INSERT :\n%s" % (e.args[0]))
             self.conn.commit()
             return True
-        pywikibot.error(u"Impossible de trouver le modèle AdQ/BA sur la page %s" % page.title())
+        if page.namespace() == 0:
+            pywikibot.error(u"Impossible de trouver le modèle AdQ/BA sur l'article %s" % page.title())
         return False
 
     def supprimerdelabdd(self, page):
@@ -113,6 +116,8 @@ class Atom_Labellisations:
             self.ajouteralabdd(a)
         for a in dechus:
             self.supprimerdelabdd(a)
+        if len(dechus) > 0:
+            pywikibot.output("Articles déchus de leur status : {0}".format(dechus))
         # Génération du flux
         res = BeBot.charger_bdd(self.conn, self.nom_base, lim=50, ordre='"date" DESC')
         for r in res:
@@ -122,6 +127,7 @@ class Atom_Labellisations:
             self.ajouterauflux(p, date, categorie)
         if not self.debug:
             self.feed.write(self.fp, 'utf-8')
+        pywikibot.output("Nombre de modifications sur la base : {0}".format(self.conn.total_changes))
         self.fp.close()
 
 def main():
