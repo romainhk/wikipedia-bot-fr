@@ -116,9 +116,6 @@ class Atom_Labellisations:
             self.ajouteralabdd(a)
         for a in dechus:
             self.supprimerdelabdd(a)
-        # Affichage des changements
-        if len(nouveaux) > 0:
-            pywikibot.output("Articles promus : {0}".format(nouveaux))
         if len(dechus) > 0:
             pywikibot.output("Articles déchus de leur status : {0}".format(dechus))
         # Génération du flux
@@ -130,6 +127,7 @@ class Atom_Labellisations:
             self.ajouterauflux(p, date, categorie)
         if not self.debug:
             self.feed.write(self.fp, 'utf-8')
+        pywikibot.output("Nombre de modifications sur la base : {0}".format(self.conn.total_changes))
         self.fp.close()
 
 def main():
