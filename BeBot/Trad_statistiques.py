@@ -46,7 +46,7 @@ class Stats_ProjetTraduction:
         self.put_resultats()
 
 def main():
-    site = pywikibot.getSite()
+    site = pywikibot.Site()
     if BeBot.blocage(site):
         sys.exit(7)
     spt = Stats_ProjetTraduction(site)

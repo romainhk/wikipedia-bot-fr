@@ -13,7 +13,7 @@ import pywikibot
         * contribution moyenne
 """
 
-site = pywikibot.getSite()
+site = pywikibot.Site()
 p = pywikibot.Page(site, 'Utilisateur:BeBot/Activité des bots') # Page des résultats
 classement = {} # classement par nb de modifs
 last = {} # date de dernière modif

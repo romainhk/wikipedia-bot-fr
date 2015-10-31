@@ -147,7 +147,7 @@ class Atom_Labellisations:
         self.fp.close()
 
 def main():
-    site = pywikibot.getSite()
+    site = pywikibot.Site()
     if BeBot.blocage(site):
         sys.exit(7)
     debug = False

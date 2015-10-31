@@ -143,7 +143,7 @@ class Infolettre:
                 self.newsboy(boiteauxlettres, msg, p)
 
 def main():
-    site = pywikibot.getSite()
+    site = pywikibot.Site()
     if BeBot.blocage(site):
         sys.exit(7)
     if len(sys.argv) <= 1:

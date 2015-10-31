@@ -3,7 +3,7 @@
 import BeBot
 import pywikibot
 
-site = pywikibot.getSite()
+site = pywikibot.Site()
 page = pywikibot.Page(site, u'Utilisateur:BeBot/Test')
 page.text = ' '
 BeBot.save(page, commentaire=u'Login', minor=True)

@@ -164,10 +164,10 @@ Legend = left:70 top:295"""[1:] % (largeur, width, maxi, graduation, graduation/
         # Publication
         page = pywikibot.Page(self.site, 'Projet:Évaluation/Évolution')
         page.text = BeBot.ER_BotSection.sub(self.BotSectionEdit, page.text)
-        #BeBot.save(page, commentaire=self.resume, debug=False)
+        BeBot.save(page, commentaire=self.resume, debug=False)
 
 def main():
-    site = pywikibot.getSite()
+    site = pywikibot.Site()
     if len(sys.argv) == 2:
         bddsqlite = sys.argv[1]
         ge = GraphiqueEvaluations(site, bddsqlite)

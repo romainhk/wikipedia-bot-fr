@@ -224,7 +224,7 @@ class PreparationWikimag:
             BeBot.WM_prevenir_redacteurs(self.site, msg, resume)
 
 def main():
-    site = pywikibot.getSite()
+    site = pywikibot.Site()
     if BeBot.blocage(site):
         sys.exit(7)
     pw = PreparationWikimag(site)
