@@ -1,4 +1,6 @@
 BeBot est un bot sous licence GPLv3 écrit en python et utilisant le framework pywikipedia.
 
+Selon les script, peut nécessiter l'installation de : python-sqlite, pyatom
+
 Pour plus d'infos, se reporter à sa page utilisateur http://fr.wikipedia.org/wiki/Utilisateur:BeBot
 

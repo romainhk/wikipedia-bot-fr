@@ -17,7 +17,7 @@ class GraphiqueEvaluations:
     def __init__(self, site, bddsqlite):
         self.site = site
         self.date = datetime.date.today()
-        self.resume = u'Mise à jour mensuelle du graphique des évaluations'
+        self.resume = 'Mise à jour mensuelle du graphique des évaluations'
         self.groupe = re.compile('(.*\d)(\d{3}.*)', re.IGNORECASE|re.LOCALE)
         #DB
         try:
@@ -26,18 +26,18 @@ class GraphiqueEvaluations:
             pywikibot.output("Impossible d'ouvrir la base sqlite {0}".format(bddsqlite))
             exit(2)
         self.conn.row_factory = sqlite3.Row
-        self.nom_base = u'graphique_evaluations'
+        self.nom_base = 'graphique_evaluations'
     def __del__(self):
         self.conn.close()
 
     def BotSectionEdit(self, match):
-        return u'%s\n%s\n%s' % (BeBot.BeginBotSection, self.msg, BeBot.EndBotSection)
+        return '%s\n%s\n%s' % (BeBot.BeginBotSection, self.msg, BeBot.EndBotSection)
 
     def nombreverschaine(self, nombre):
         """ Convertit un grand nombre en une chaine "par paquets"
             ex: 1489321 => 1 489 321
         """
-        s = unicode(nombre)
+        s = str(nombre)
         m = self.groupe.search(s)
         while m:
             s = m.group(1) + u" " + m.group(2)
@@ -59,10 +59,10 @@ class GraphiqueEvaluations:
             total += a
         # Sauvegarde
         curseur = self.conn.cursor()
-        req = u'INSERT INTO %s' % self.nom_base \
-            + u'(date, maximum, élevée, moyenne, faible, inconnue, total) ' \
-            + u'VALUES ("%s", %d, %d, %d, %d, %d, %d)' \
-            % (self.date.strftime("%Y-%m-%d"), l['maximum'], l[u'élevée'], \
+        req = 'INSERT INTO %s' % self.nom_base \
+            + '(date, maximum, élevée, moyenne, faible, inconnue, total) ' \
+            + 'VALUES ("%s", %d, %d, %d, %d, %d, %d)' \
+            % (self.date.strftime("%Y-%m-%d"), l['maximum'], l['élevée'], \
                     l['moyenne'], l['faible'], l['inconnue'], total)
         try:
             curseur.execute(req)
@@ -147,7 +147,7 @@ Legend = left:70 top:295"""[1:] % (largeur, width, maxi, graduation, graduation/
         #Valeurs : importants
         self.msg += '\nPlotData=\n  color:rouge width:$width align:left\n\n'
         for r in range(0, nb_bande):
-            p = vals[r]['maximum'] + vals[r]['\xc3\xa9lev\xc3\xa9e'] # = élevée
+            p = vals[r]['maximum'] + vals[r]['élevée']
             self.msg += '  bar:%d from:0 till: %d\n' % (r+1, p)
         #Labels
         self.msg += '\nPlotData=\n'
@@ -156,15 +156,15 @@ Legend = left:70 top:295"""[1:] % (largeur, width, maxi, graduation, graduation/
                 p = vals[r]['total']
                 s = self.nombreverschaine(p)
                 self.msg += '  bar:%d at: %d fontsize:S text:"%s" shift:(-20,5)\n' % (r+1, p, s)
-                q = vals[r]['maximum'] + vals[r]['\xc3\xa9lev\xc3\xa9e']
+                q = vals[r]['maximum'] + vals[r]['élevée']
                 s = self.nombreverschaine(q)
                 self.msg += '  bar:%d at: %d fontsize:S text:"%s" shift:(-20,5)\n' % (r+1, q, s)
         self.msg += '</timeline>'
 
         # Publication
-        page = pywikibot.Page(self.site, u'Projet:Évaluation/Évolution')
+        page = pywikibot.Page(self.site, 'Projet:Évaluation/Évolution')
         page.text = BeBot.ER_BotSection.sub(self.BotSectionEdit, page.text)
-        BeBot.save(page, commentaire=self.resume, debug=False)
+        #BeBot.save(page, commentaire=self.resume, debug=False)
 
 def main():
     site = pywikibot.getSite()

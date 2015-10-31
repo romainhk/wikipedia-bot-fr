@@ -14,14 +14,14 @@ import pywikibot
 """
 
 site = pywikibot.getSite()
-p = pywikibot.Page(site, u'Utilisateur:BeBot/Activité des bots') # Page des résultats
+p = pywikibot.Page(site, 'Utilisateur:BeBot/Activité des bots') # Page des résultats
 classement = {} # classement par nb de modifs
 last = {} # date de dernière modif
 lim_jours = 182 # nombre de jours à prendre en compte
 peuactifs = {} # bots peu actifs
 lim_peu = 10 # limite de modifications pour les bots peu actifs
 
-bots = pywikibot.Category(site, u'Catégorie:Wikipédia:Bot/Autorisé')
+bots = pywikibot.Category(site, 'Catégorie:Wikipédia:Bot/Autorisé')
 for b in bots.articles():
     nb, derniere = BeBot.userdailycontribs(site, b.title(), days=lim_jours)
     nom = b.title(withNamespace=False)
@@ -34,16 +34,16 @@ for b in bots.articles():
 classement = sorted(classement.items(), key=itemgetter(1), reverse=True)
 
 # Affichage des résultats
-t = u'{{|class=\"wikitable sortable\"\n|+calculé le {date}\n!Nom!!Contribs ces {x} derniers jours!!Timestamp de dernière modif'.format(date=datetime.date.today().isoformat(),x=lim_jours)
+t = '{{|class=\"wikitable sortable\"\n|+calculé le {date}\n!Nom!!Contribs ces {x} derniers jours!!Timestamp de dernière modif'.format(date=datetime.date.today().isoformat(),x=lim_jours)
 for nom, nb in classement:
-    t += u'\n|-\n|{{u|%s}}||%d||%s' % (nom, nb, last[nom])
-t += u'\n|}'
+    t += '\n|-\n|{{u|%s}}||%d||%s' % (nom, nb, last[nom])
+t += '\n|}'
 
-t += u'\n== Les bots peu actifs (moins de %d modifs) ==\n' % lim_peu
-t += u'{{début de colonnes|nombre=3}}\n'
+t += '\n== Les bots peu actifs (moins de %d modifs) ==\n' % lim_peu
+t += '{{début de colonnes|nombre=3}}\n'
 for pa in sorted(peuactifs.keys()):
-    t += u'\n* {{u|%s}}' % pa
-t += u'{{fin de colonnes}}\n'
+    t += '\n* {{u|%s}}' % pa
+t += '{{fin de colonnes}}\n'
 
 p.text = t
 BeBot.save(p, commentaire='Recalculationnement du classement', debug=False)

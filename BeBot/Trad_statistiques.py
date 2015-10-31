@@ -11,34 +11,34 @@ class Stats_ProjetTraduction:
     """
     def __init__(self, site):
         self.site = site
-        self.resume = u"Calcul de statistiques"
+        self.resume = "Calcul de statistiques"
         self.resultats = {
             "nb_pages" : 0}
-        self.categories = [ u'Traduction demand\xe9e', u'Traduction en cours', u'Traduction \xe0 relire', u'Traduction termin\xe9e' ]
+        self.categories = ( 'Traduction demand\xe9e', 'Traduction en cours', 'Traduction \xe0 relire', 'Traduction termin\xe9e' )
         self.paravancement = {} # décompte selon l'avancement
 
     def put_resultats(self):
         """ Affichage des résultats
         """
         total = self.resultats['nb_pages']
-        msg = u'== Statistiques ==\nAu %s\n' % datetime.datetime.today().strftime("%d/%m/%Y")
-        msg += u"* Nombre total de pages : %i\n" % total
-        msg += u"* Par statut:\n"
+        msg = '== Statistiques ==\nAu %s\n' % datetime.datetime.today().strftime("%d/%m/%Y")
+        msg += "* Nombre total de pages : %i\n" % total
+        msg += "* Par statut:\n"
         for c, nbpages in self.paravancement.items():
-            msg += u"** %s : %i\n" % (c, nbpages)
-        cat = pywikibot.Category(self.site, u"Catégorie:Projet:Traduction/Articles liés")
-        msg += u"* Pages de suivi actives : %i\n" % len(list(cat.articles()))
-        msg += u"\n[[Catégorie:Maintenance du Projet Traduction|*]]\n"
+            msg += "** %s : %i\n" % (c, nbpages)
+        cat = pywikibot.Category(self.site, "Catégorie:Projet:Traduction/Articles liés")
+        msg += "* Pages de suivi actives : %i\n" % len(list(cat.articles()))
+        msg += "\n[[Catégorie:Maintenance du Projet Traduction|*]]\n"
 
-        res = pywikibot.Page(self.site, u"Projet:Traduction/Statistiques")
-        stats = re.compile(u"^== Statistiques ==[^=]*", re.DOTALL|re.MULTILINE)
+        res = pywikibot.Page(self.site, "Projet:Traduction/Statistiques")
+        stats = re.compile("^== Statistiques ==[^=]*", re.DOTALL|re.MULTILINE)
         res.text = stats.sub(r'', res.text)
         res.text = res.text + msg
         BeBot.save(res, commentaire=self.resume)
 
     def run(self):
         for c in self.categories:
-            cat = pywikibot.Category(self.site, u"Catégorie:%s" % c)
+            cat = pywikibot.Category(self.site, "Catégorie:%s" % c)
             nbpages = len(list(cat.articles()))
             self.paravancement[c] = nbpages
             self.resultats["nb_pages"] += nbpages
