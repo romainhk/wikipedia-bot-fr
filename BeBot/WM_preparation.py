@@ -9,7 +9,6 @@ class PreparationWikimag:
     """ Préparation d'un wikimag : 
         annonces, images, promotions AdQ/BA de la semaine courante ; alerte si pas de mag.
     TODO: problème de reconnaissance des dates: {{Article de qualité|...|date=1{{er}} février 2011}}
-    TODO: ne lit plus les propositions, ni les annonces
     """
     def __init__(self, site):
         self.site = site
@@ -146,7 +145,7 @@ class PreparationWikimag:
         """ Liste les propositions
             (cf. self.articles_promus() )
         """
-        semRE = re.compile("^; Semaine du \d+ .*?au (\d+) (.+?) (\d{4})", \
+        semRE = re.compile("^; Semaine du \d+ .*?au \{*(\d+)[^\s]* (.+?) (\d{4})", \
                 re.LOCALE|re.MULTILINE)
         articles = []
         extremum = self.date_fin - datetime.timedelta(days=1)

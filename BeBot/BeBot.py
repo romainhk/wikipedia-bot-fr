@@ -22,8 +22,8 @@ Rassemble plusieurs fonctions génériques :
 * diff 
 """
 
-BeginBotSection = u'<!-- BEGIN BOT SECTION -->'
-EndBotSection   = u'<!-- END BOT SECTION -->'
+BeginBotSection = '<!-- BEGIN BOT SECTION -->'
+EndBotSection   = '<!-- END BOT SECTION -->'
 ER_BotSection = re.compile("%s(.*)%s" % (BeginBotSection, EndBotSection), re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
 RE_Modele = re.compile('\{\{(.+?)\}\}', re.IGNORECASE|re.LOCALE|re.DOTALL|re.MULTILINE)
 RE_Comment = re.compile("(<!--.*?-->)", re.MULTILINE|re.DOTALL) # commentaire html
@@ -34,19 +34,19 @@ def moistoint(mois):
     """
     mois = mois.lower()
     if mois in  'janvier    january  januar':   return 1
-    elif mois in u'février  febuary  februar':  return 2
-    elif mois in u'mars    march   märz  maerz':   return 3
+    elif mois in 'février  febuary  februar':  return 2
+    elif mois in 'mars    march   märz  maerz':   return 3
     elif mois in 'avril    april   ':        return 4
     elif mois in 'mai      may     ':        return 5
     elif mois in 'juin     june    juni':    return 6
     elif mois in 'juillet  july    juli':    return 7
-    elif mois in u'août    august  ':        return 8
+    elif mois in 'août    august  ':        return 8
     elif mois in 'septembre  september  ':   return 9
     elif mois in 'octobre    october    oktober':   return 10
     elif mois in 'novembre   november   ':          return 11
-    elif mois in u'décembre  december   dezember':  return 12
+    elif mois in 'décembre  december   dezember':  return 12
     else:
-        pywikibot.warning(u'mois "%s" non reconnu.' % mois)
+        pywikibot.warning('mois "%s" non reconnu.' % mois)
     return 0
 
 def page_ligne_par_ligne(site, nompage):
@@ -55,7 +55,7 @@ def page_ligne_par_ligne(site, nompage):
     try:
         page = pywikibot.Page(site, nompage).get()
     except pywikibot.exceptions.NoPage:
-        pywikibot.warning(u"la page « %s » n'est pas accessible." % nompage)
+        pywikibot.warning("la page « %s » n'est pas accessible." % nompage)
         return
     for ligne in page.split("\n"):
         yield ligne
@@ -78,14 +78,14 @@ def togglePageTrad(page):
                 page.toggleTalkPage().title()+"/Traduction"))
     if page.isRedirectPage():
         page = page.getRedirectTarget()
-    trad = re.compile(u"/Traduction$", re.LOCALE)
+    trad = re.compile("/Traduction$", re.LOCALE)
     if trad.search(page.title()):
         #Déjà une
         return pywikibot.Page(site, page.toggleTalkPage().title().split('/Traduction')[0])
     else:
         return pywikibot.Page(site, page.toggleTalkPage().title()+"/Traduction")
 
-def stat_consultations(page, codelangue=u'fr', date=False):
+def stat_consultations(page, codelangue='fr', date=False):
     """ Nombre de consultation d'un article au mois donné (mois précédant par défaut)
     """
     if not date:
@@ -99,7 +99,7 @@ def stat_consultations(page, codelangue=u'fr', date=False):
     try:
         res = simplejson.load(urllib.urlopen(url))
     except (urllib.URLError, urllib.HTTPError):
-        pywikibot.warning(u"impossible de récupérer les stats à l'adresse %s" % url)
+        pywikibot.warning("impossible de récupérer les stats à l'adresse %s" % url)
         return 0
     return res['total_views']
 
@@ -117,7 +117,7 @@ def charger_bdd(db, nom_base, champs="*", cond=None, lim=None, ordre=None):
     try:
         curseur.execute(req)
     except:
-        pywikibot.error(u"Erreur lors du chargement de la BDD - Requête : {0}\n".format(req))
+        pywikibot.error("Erreur lors du chargement de la BDD - Requête : {0}\n".format(req))
 
     return curseur.fetchall()
 
@@ -161,51 +161,51 @@ def fichier_conf(fichier):
 def reverse(chaine):
     """ Retourne la chaine de caractères mise à l'envers
     """
-    rep = u''
+    rep = ''
     i = len(chaine)
     while i > 0:
         i -= 1
         rep += chaine[i]
     return rep
 
-def save(page, commentaire=u'', minor=False, debug=False):
+def save(page, commentaire='', minor=False, debug=False):
     """ Sauvegarde la page
     """
     if debug:
-        pywikibot.output(u'Sav -> %s' % page.title())
+        pywikibot.output('Sav -> %s' % page.title())
     else:
         try:
             page.save(summary=commentaire, minor=minor)
         except pywikibot.EditConflict:
-            pywikibot.warning(u"Abandonne la modification de %s à cause d'un conflit d'édition"
+            pywikibot.warning("Abandonne la modification de %s à cause d'un conflit d'édition"
                               % (page,))
         except pywikibot.SpamfilterError as e:
-            pywikibot.warning(u"Ne peut pas modifier %s à cause d'un blacklistage %s"
+            pywikibot.warning("Ne peut pas modifier %s à cause d'un blacklistage %s"
                               % (page, e.url))
         except pywikibot.PageNotSaved as error:
-            pywikibot.warning(u"Erreur lors de l'écriture de %s" % error)
+            pywikibot.warning("Erreur lors de l'écriture de %s" % error)
         except pywikibot.LockedPage:
-            pywikibot.warning(u'Abandonne la modification de %s (page verrouillée)' % (page,))
+            pywikibot.warning('Abandonne la modification de %s (page verrouillée)' % (page,))
         except pywikibot.ServerError as e:
-            pywikibot.warning(u'Erreur Serveur : %s' % e)
+            pywikibot.warning('Erreur Serveur : %s' % e)
         except:
-            pywikibot.warning(u'Erreur inconnue lors du traitement de %s' % page.title())
+            pywikibot.warning('Erreur inconnue lors du traitement de %s' % page.title())
 
 def delete(page, raison, debug=False):
     """ Supprime la page
     """
     if debug:
-        redir = u''
+        redir = ''
         if page.isRedirectPage():
-            redir = u" (redirection)"
-        pywikibot.output(u'Del -> %s%s' % (page.title(), redir))
+            redir = " (redirection)"
+        pywikibot.output('Del -> %s%s' % (page.title(), redir))
     else:
         try:
             page.delete(reason=raison, prompt=False)
         except pywikibot.NoUsername as e:
-            pywikibot.warning(u'Suppression de %s impossible - Utilisateur inconnu' % page)
+            pywikibot.warning('Suppression de %s impossible - Utilisateur inconnu' % page)
         except:
-            pywikibot.warning(u'Suppression de %s impossible' % page)
+            pywikibot.warning('Suppression de %s impossible' % page)
 
 def modeletodic(modele):
     """ Transforme un chaine "modèle" en tableau
@@ -231,19 +231,19 @@ def modeletodic(modele):
                     r[pos] = b
                     pos +=1
     else:
-        pywikibot.warning(u"BeBot.modeletodic() ; il a été impossible de lire le modèle suivant\n%s" % modele)
+        pywikibot.warning("BeBot.modeletodic() ; il a été impossible de lire le modèle suivant\n%s" % modele)
     return r
 
 def blocage(site):
     """ Vérifie que BeBot n'a pas eu d'alerte bloquante de la part des utilisateurs
     """
-    page = pywikibot.Page(site, u'Utilisateur:BeBot/Blocage')
+    page = pywikibot.Page(site, 'Utilisateur:BeBot/Blocage')
     if len(page.text) > 0:
         last = page.getVersionHistory()[0]
         user = last[2]
         time = last[1]
-        pywikibot.output(u'BeBot a été bloqué par %s (timestamp:%s)' % (user, time))
-        pywikibot.output(u'Message : %s' % page.text)
+        pywikibot.output('BeBot a été bloqué par %s (timestamp:%s)' % (user, time))
+        pywikibot.output('Message : %s' % page.text)
         return True
     return False
 
@@ -253,7 +253,7 @@ def userdailycontribs(site, user, days=1):
     # TODO : à partir d'un autre jour
     """
     contrib = 0
-    last = u''
+    last = ''
     ajd = site.getcurrenttime()
     fin = ajd - datetime.timedelta(days=days)
     for c in site.usercontribs(user, start=ajd, end=fin):
@@ -265,8 +265,8 @@ def userdailycontribs(site, user, days=1):
 def WM_verif_feneantise(site, semaine, annee):
     """ Vérifie qu'un wikimag a bien été rédigé
     """
-    num = u"%s/%s" % (annee, semaine)
-    wm = pywikibot.Page(site, u"Wikipédia:Wikimag/%s" % num)
+    num = "%s/%s" % (annee, semaine)
+    wm = pywikibot.Page(site, "Wikipédia:Wikimag/%s" % num)
     if not wm.exists() or taille_page(wm, 1) < 500 :
         return True
     return False
@@ -275,7 +275,7 @@ def WM_prevenir_redacteurs(site, message):
     """ Prévient les rédacteurs du wikimag
     """
     redac = [] # les rédacteurs déjà prévenus
-    cat = pywikibot.Category(site, u'Utilisateur rédacteur Wikimag')
+    cat = pywikibot.Category(site, 'Utilisateur rédacteur Wikimag')
     for r in cat.articles():
         can = r.title().split('/')
         if len(can) > 0:
