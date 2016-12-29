@@ -1,0 +1,9 @@
+0   0   1   *   *   $HOME/wikipedia-bot-fr/run_bot.sh BeBot/graphique_evaluations.py $HOME/Graphique_evaluations.sqlite
+0   1   1   *   *   $HOME/wikipedia-bot-fr/run_bot.sh BeBot/bot_activite.py
+0   2   1   *   *   $HOME/wikipedia-bot-fr/run_bot.sh BeBot/Trad_statistiques.py
+55  2,5,8,11,14,17,20,23 *   *   *   $HOME/wikipedia-bot-fr/run_bot.sh BeBot/atom_labellisations.py $HOME/atom_labellisations.sqlite /srv/http/labellisations.atom
+# Wikimag
+23  12  *   *   0   $HOME/wikipedia-bot-fr/run_bot.sh BeBot/WM_preparation.py
+3   15  *   *   0   $HOME/wikipedia-bot-fr/run_bot.sh BeBot/WM_mail.py $HOME/wikipedia-bot-fr/mail_wikimag.conf -e
+3   5   *   *   1   $HOME/wikipedia-bot-fr/run_bot.sh BeBot/infolettre_pddis.py wikimag
+3   10  *   *   1   $HOME/wikipedia-bot-fr/run_bot.sh BeBot/WM_mail.py $HOME/wikipedia-bot-fr/mail_wikimag.conf
