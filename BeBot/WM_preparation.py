@@ -237,7 +237,7 @@ def main():
     page_resultat = pywikibot.Page(site, 'Utilisateur:BeBot/Préparation Wikimag')
     page_resultat.text = pw
     if not args.debug:
-        BeBot.save(page_resultat, comment=pw.resume, debug=False)
+        BeBot.save(page_resultat, commentaire=pw.resume, debug=False)
     else:
         print(page_resultat.text)
 
