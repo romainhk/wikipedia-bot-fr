@@ -6,7 +6,7 @@ import pywikibot
 """
 # Bibliothèque BeBot
 
-Rassemble plusieurs fonctions génériques : 
+Rassemble plusieurs fonctions génériques :
 * conversion mois vers entier
 * lecture ligne par ligne d'un article
 * taille d'une page
@@ -19,15 +19,15 @@ Rassemble plusieurs fonctions génériques :
 * supprimer une page
 * vérifier qu'il n'y ait pas de blocage par un utilisateur
 * nombre de contribs d'un utilisateur, date de dernière modif
-* diff 
+* diff
 """
 
 BeginBotSection = '<!-- BEGIN BOT SECTION -->'
 EndBotSection   = '<!-- END BOT SECTION -->'
-ER_BotSection = re.compile("%s(.*)%s" % (BeginBotSection, EndBotSection), re.LOCALE|re.UNICODE|re.MULTILINE|re.DOTALL)
-RE_Modele = re.compile('\{\{(.+?)\}\}', re.IGNORECASE|re.LOCALE|re.DOTALL|re.MULTILINE)
+ER_BotSection = re.compile("%s(.*)%s" % (BeginBotSection, EndBotSection), re.UNICODE|re.MULTILINE|re.DOTALL)
+RE_Modele = re.compile('\{\{(.+?)\}\}', re.IGNORECASE|re.DOTALL|re.MULTILINE)
 RE_Comment = re.compile("(<!--.*?-->)", re.MULTILINE|re.DOTALL) # commentaire html
-RE_Pipe = re.compile("\[\[((.+?)\|[^\]]+?)\]\]", re.LOCALE|re.MULTILINE|re.DOTALL) # lien avec pipe
+RE_Pipe = re.compile("\[\[((.+?)\|[^\]]+?)\]\]", re.MULTILINE|re.DOTALL) # lien avec pipe
 
 def moistoint(mois):
     """ Convertit une chaine mois, en entier entre 1 et 12.

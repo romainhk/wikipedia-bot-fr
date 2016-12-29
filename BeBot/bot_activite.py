@@ -1,10 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
-import re
+import argparse
 import datetime
 from operator import itemgetter
-import BeBot
 import pywikibot
+import re
+
+import BeBot
 
 """
     Analyse l'activité des bots
@@ -45,5 +47,13 @@ for pa in sorted(peuactifs.keys()):
     t += '\n* {{u|%s}}' % pa
 t += '{{fin de colonnes}}\n'
 
-p.text = t
-BeBot.save(p, commentaire='Recalculationnement du classement', debug=False)
+
+parser = argparse.ArgumentParser(prog='bebot')
+parser.add_argument('--debug', action='store_true', default=False, help="Activate debug mode (no publication)")
+args = parser.parse_args()
+
+if not args.debug:
+    p.text = t
+    BeBot.save(p, commentaire='Recalculationnement du classement', debug=False)
+else:
+    print(t)

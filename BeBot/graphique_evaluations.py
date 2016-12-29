@@ -40,14 +40,14 @@ class GraphiqueEvaluations:
         s = str(nombre)
         m = self.groupe.search(s)
         while m:
-            s = m.group(1) + u" " + m.group(2)
+            s = m.group(1) + " " + m.group(2)
             m = self.groupe.search(s)
         return s
 
     def run(self):
         # Dénombrement
         l = {}
-        cat = pywikibot.Category(self.site, u"Catégorie:Article par importance")
+        cat = pywikibot.Category(self.site, "Catégorie:Article par importance")
         for c in cat.subcategories(recurse=False):
             nom = c.title().split(' ')[-1]
             l[nom] = 0
@@ -67,7 +67,7 @@ class GraphiqueEvaluations:
         try:
             curseur.execute(req)
         except sqlite3.Error as e:
-            pywikibot.error(u"Erreur lors de l'INSERT :\n%s" % (e.args[0]))
+            pywikibot.error("Erreur lors de l'INSERT :\n%s" % (e.args[0]))
         self.conn.commit()
         # Dessin
         largeur = 600 #largeur du graphique
@@ -81,7 +81,7 @@ class GraphiqueEvaluations:
         mois = []
         for j in range(0, nb_bande):
             d = self.date + relativedelta(months=-j)
-            mois.append(d.strftime(u"%Y-%m"))
+            mois.append(d.strftime("%Y-%m"))
         # Récupération et tri des valeurs
         vals = []
         ri = 0 # ressource index : index sur les enregistrements utilisés
@@ -90,7 +90,7 @@ class GraphiqueEvaluations:
             if m != res[ri]['date'][0:7]:
                 for k in res[ri].keys():
                     val[k] = 0
-                val['date'] = m + u"-02"
+                val['date'] = m + "-02"
             else:
                 for k in res[ri].keys():
                     val[k] = res[ri][k]
@@ -109,7 +109,7 @@ class GraphiqueEvaluations:
         maxi = maxi + math.floor(graduation/2)
         maxi = int(math.floor(maxi*pow(10,3-rang))*pow(10,rang-3)) # 3 premiers chiffre significatifs
 
-        self.msg = dedent(u"""
+        self.msg = dedent("""
 <timeline>
 Colors=
   id:lightgrey value:gray(0.9)

@@ -15,8 +15,8 @@ class Atom_Labellisations:
         self.site = site
         self.debug = debug
         self.ajd = datetime.datetime.today()
-        self.re_modele = re.compile("\{\{((Article[ _]de[ _]qualité|Bon[ _]article|Portail[ _]de[ _]qualité|Bon[ _]portail).+?\}\})", re.LOCALE|re.IGNORECASE|re.MULTILINE|re.DOTALL|re.UNICODE)
-        self.re_date = re.compile("([^ _]+)[ /-]([^\s]+)[ /-](\d+)", re.LOCALE|re.IGNORECASE|re.UNICODE)
+        self.re_modele = re.compile("\{\{((Article[ _]de[ _]qualité|Bon[ _]article|Portail[ _]de[ _]qualité|Bon[ _]portail).+?\}\})", re.IGNORECASE|re.MULTILINE|re.DOTALL|re.UNICODE)
+        self.re_date = re.compile("([^ _]+)[ /-]([^\s]+)[ /-](\d+)", re.IGNORECASE|re.UNICODE)
         self.cats = ["Catégorie:Article de qualité", "Catégorie:Bon article", "Catégorie:Portail de qualité", "Catégorie:Bon portail"]
         # Le flux
         self.fp = open(fluxatom, 'w') # OUTPUT
@@ -97,7 +97,7 @@ class Atom_Labellisations:
         except sqlite3.Error as e:
             pywikibot.error("Erreur lors du DELETE :\n%s" % (e.args[0]))
         self.conn.commit()
-        
+
     def ajouterauflux(self, page, date, categorie):
         #self.feed.add_item(
         #    title=page.title(),

@@ -1,21 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
+import argparse
 import re, datetime, locale, sys
-import BeBot
 import pywikibot
+import BeBot
 locale.setlocale(locale.LC_ALL, '')
 
 class Stats_ProjetTraduction:
     """ Stats_ProjetTraduction
         Produit une analyse du Projet:Traduction
     """
-    def __init__(self, site):
+    def __init__(self, site, debug):
+        self.debug = debug
         self.site = site
         self.resume = "Calcul de statistiques"
         self.resultats = {
             "nb_pages" : 0}
         self.categories = ( 'Traduction demand\xe9e', 'Traduction en cours', 'Traduction \xe0 relire', 'Traduction termin\xe9e' )
-        self.paravancement = {} # décompte selon l'avancement
+        self.paravancement = {}  # décompte selon l'avancement
 
     def put_resultats(self):
         """ Affichage des résultats
@@ -34,7 +36,10 @@ class Stats_ProjetTraduction:
         stats = re.compile("^== Statistiques ==[^=]*", re.DOTALL|re.MULTILINE)
         res.text = stats.sub(r'', res.text)
         res.text = res.text + msg
-        BeBot.save(res, commentaire=self.resume)
+        if not self.debug:
+            BeBot.save(res, commentaire=self.resume)
+        else:
+            print(res.text)
 
     def run(self):
         for c in self.categories:
@@ -46,10 +51,14 @@ class Stats_ProjetTraduction:
         self.put_resultats()
 
 def main():
+    parser = argparse.ArgumentParser(prog='bebot')
+    parser.add_argument('--debug', action='store_true', default=False, help="Activate debug mode (no publication)")
+    args = parser.parse_args()
+
     site = pywikibot.Site()
     if BeBot.blocage(site):
         sys.exit(7)
-    spt = Stats_ProjetTraduction(site)
+    spt = Stats_ProjetTraduction(site, args.debug)
     spt.run()
 
 if __name__ == "__main__":

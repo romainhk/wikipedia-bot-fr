@@ -1,0 +1,6 @@
+feedparser
+simplejson
+pywikibot
+requests
+pywikibot
+argparse

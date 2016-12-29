@@ -1,12 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
+import argparse
 import re, datetime, locale, sys, feedparser
 import BeBot
 import pywikibot
 locale.setlocale(locale.LC_ALL, '')
 
 class PreparationWikimag:
-    """ Préparation d'un wikimag : 
+    """ Préparation d'un wikimag :
         annonces, images, promotions AdQ/BA de la semaine courante ; alerte si pas de mag.
     TODO: problème de reconnaissance des dates: {{Article de qualité|...|date=1{{er}} février 2011}}
     """
@@ -39,13 +40,12 @@ class PreparationWikimag:
         self.annee = self.date.year
 
         self.resume = 'BeBot : Préparation du wikimag débutant le ' + self.lasemaine
-        pywikibot.setAction(self.resume)
         if self.date_fin.month == 'janvier':
             pywikibot.output(self.date.strftime("%Y/%m/%d")+" : Attention, certaines données de l'année %i ne seront pas prises en compte" % int(self.date_fin.year)-1)
         self.articleRE = re.compile("\* [^\{]*\{\{a-label\|([^\|\}]+)\}\}")
 
     def __str__(self):
-        """ Page à publier 
+        """ Page à publier
         """
         resultat = "''Préparation du [[Wikipédia:Wikimag|wikimag]] allant du " \
             + self.lasemaine + " au " + self.date_fin.strftime("%A %e %B %Y") + ".''\n"
@@ -100,7 +100,7 @@ class PreparationWikimag:
         if self.date.month != self.date_fin.month: mois.append(self.date_fin.month)
         articles = []
         r = []
-        moisRE = re.compile("=== *([^\s\d=]+) *===", re.LOCALE)
+        moisRE = re.compile("=== *([^\s\d=]+) *===")
 
         # Listage des articles des mois courants
         for ligne in BeBot.page_ligne_par_ligne(self.site, nompage):
@@ -115,7 +115,7 @@ class PreparationWikimag:
                     articles.append( a.group(1) )
 
         # Vérification des dates exactes
-        dateRE = re.compile("(\d{1,2}) ([^0-9\|\} ]{3,9}) (\d{2,4})", re.LOCALE)
+        dateRE = re.compile("(\d{1,2}) ([^0-9\|\} ]{3,9}) (\d{2,4})")
         for a in articles:
             try:
                 page = pywikibot.Page(self.site, a).get()
@@ -135,8 +135,6 @@ class PreparationWikimag:
                     date_adq = datetime.date(day=int(jour), month=mois, year=int(annee))
                     if not (self.date > date_adq) and not (self.date_fin <= date_adq):
                         r.append(a)
-                    #else:
-                    #    pywikibot.output("Date %s en dehors de la plage %s - %s" % (d.group(), unicode(self.date.strftime("%e %B %Y"), "utf-8"), unicode(self.date_fin.strftime("%e %B %Y"), "utf-8") ))
                 else:
                     self.inconnu.append(a)
         return r
@@ -145,22 +143,20 @@ class PreparationWikimag:
         """ Liste les propositions
             (cf. self.articles_promus() )
         """
-        semRE = re.compile("^; Semaine du \d+ .*?au \{*(\d+)[^\s]* (.+?) (\d{4})", \
-                re.LOCALE|re.MULTILINE)
+        semRE = re.compile("^; Semaine du \d+ .*?au \{*(\d+)[^\s]* (.+?) (\d{4})", re.MULTILINE)
         articles = []
         extremum = self.date_fin - datetime.timedelta(days=1)
-        #cetteSemaine = unicode(extremum.strftime("%e#%B#%Y").strip(), errors='ignore')
         cetteSemaine = extremum.strftime("%e#%B#%Y").strip()
         trouve = False
         for ligne in BeBot.page_ligne_par_ligne(self.site, nompage):
             s = semRE.search(ligne)
-            if s is not None:              # Changement de semaine
+            if s is not None:  # Changement de semaine
                 mois = s.group(2).replace('û', '').replace('é', '')
                 fin = s.group(1)+'#'+mois+'#'+s.group(3)
                 if fin == cetteSemaine and not trouve:
                     trouve = True
                 else:
-                    return articles    # Abandon au premier changement
+                    return articles  # Abandon au premier changement
             elif trouve:
                 s = RE.search(ligne)
                 if s is not None:
@@ -168,39 +164,44 @@ class PreparationWikimag:
                     if len(s.groups()) >= 2 and s.group(2) is not None:
                         icone = s.group(2)
                     articles.append([s.group(1), icone])
-        return articles    # Impossible ; en cas de foirage complet
+        return articles  # Impossible ; en cas de foirage complet
 
     def run(self):
         pywikibot.output("Préparation du wikimag débutant le " + self.lasemaine)
+
         # Annonces
-        moisRE = re.compile("==== *(.+) *====", re.LOCALE)
+        moisRE = re.compile("==== *(.+) *====")
         annonceRE = re.compile("\{\{[aA]nnonce[^\|]*\|(\d+)\|")
         mois_courant = int(self.date.strftime("%m"))
         for ligne in BeBot.page_ligne_par_ligne(self.site, 'Wikipédia:Annonces'):
-            if re.match(r'== *Voir ', ligne): break     # Fin des annonces
+            if re.match(r'== *Voir ', ligne):
+                break  # Fin des annonces
             m = moisRE.search(ligne)
-            if m is not None:                           # Changement de mois
+            if m is not None:  # Changement de mois
                 mois_courant = BeBot.moistoint(m.group(1))
                 continue
             a = annonceRE.match(ligne)
-            if a is not None:                           # Une annonce
+            if a is not None:  # Une annonce
                 val = int( re.sub(r'{{.*}}', '', a.group(1)) )
                 date_annonce = datetime.date(day=val, month=mois_courant, year=self.date.year)
                 if self.date <= date_annonce < self.date_fin:
                     self.annonces.append(ligne)
+
         # AdQ, BA
-        modeleRE = re.compile("\{\{[aA]rticle de qualit[^\}]*\| *date *=([^\|\}]+)", re.LOCALE)
+        modeleRE = re.compile("\{\{[aA]rticle de qualit[^\}]*\| *date *=([^\|\}]+)")
         self.adq= self.articles_promus('Wikipédia:Articles de qualité/Justification de leur promotion/%i' \
                 % self.date.year, modeleRE)
-        modeleRE = re.compile("\{\{[bB]on article[^\}]*\| *date *=([^\|\}]+)", re.LOCALE)
+        modeleRE = re.compile("\{\{[bB]on article[^\}]*\| *date *=([^\|\}]+)")
         self.ba = self.articles_promus('Wikipédia:Bons articles/Justification de leur promotion/%i' \
                 % self.date.year, modeleRE)
+
         # Propositions
-        modeleRE = re.compile("^\* \d+ : \{\{Sous-page:a2\|Discuter\|([^\|\}]+)\|.+?\}\}.*?(\{\{Icône wikiconcours\|.*?\}\})?.*?$", re.LOCALE|re.MULTILINE)
+        modeleRE = re.compile("^\* \d+ : \{\{Sous-page:a2\|Discuter\|([^\|\}]+)\|.+?\}\}.*?(\{\{Icône wikiconcours\|.*?\}\})?.*?$", re.MULTILINE)
         self.propositions_adq = self.articles_propositions( \
                 'Wikipédia:Articles de qualité/Propositions', modeleRE)
         self.propositions_ba  = self.articles_propositions( \
                 'Wikipédia:Bons articles/Propositions', modeleRE)
+
         # Planète wikimedia
         feed = feedparser.parse('http://fr.planet.wikimedia.org/atom.xml')
         for ent in feed.entries:
@@ -213,16 +214,20 @@ class PreparationWikimag:
                     if l.rel == "alternate":
                         self.planete.append( (l.href, ent.title) )
                         break
-        self.planete.reverse() # ordre chronologique
+        self.planete.reverse()  # ordre chronologique
 
         if (BeBot.WM_verif_feneantise(self.site, self.semaine, self.annee) and self.date.strftime("%w") == 0):
-            #NB: que le dimanche
+            # NB: que le dimanche
             msg  = "\n\n== Wikimag - Semaine %s ==\n" % self.semaine
             msg += "Attention, le [[WP:WM|wikimag]] ''[[Wikipédia:Wikimag/%s|de cette semaine]]'' n'est pas encore rédigé. Dépéchez vous ! (Aide: [[Utilisateur:BeBot/Préparation Wikimag]]) ~~~~\n" % self.annee
             msg += "\n{{Petit|Ce message a été déposé automatiquement grâce à [[:Catégorie:Utilisateur rédacteur Wikimag]]}}" # A supprimer un jour
             BeBot.WM_prevenir_redacteurs(self.site, msg, resume)
 
 def main():
+    parser = argparse.ArgumentParser(prog='bebot')
+    parser.add_argument('--debug', action='store_true', default=False, help="Activate debug mode (no publication)")
+    args = parser.parse_args()
+
     site = pywikibot.Site()
     if BeBot.blocage(site):
         sys.exit(7)
@@ -231,7 +236,10 @@ def main():
 
     page_resultat = pywikibot.Page(site, 'Utilisateur:BeBot/Préparation Wikimag')
     page_resultat.text = pw
-    BeBot.save(page_resultat, debug=False)
+    if not args.debug:
+        BeBot.save(page_resultat, comment=pw.resume, debug=False)
+    else:
+        print(page_resultat.text)
 
 if __name__ == "__main__":
     try:
